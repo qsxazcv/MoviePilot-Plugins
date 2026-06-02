@@ -27,7 +27,7 @@ class UnicomDailyClockin(_PluginBase):
     plugin_desc = "每天自动执行中国联通立减金签到，支持多账号、立即运行、Cron 定时和通知结果。"
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/main/icons/notice.png"
     plugin_version = "1.1.9"
-    plugin_author = "MoviePilot Agent"
+    plugin_author = "qsxazcv"
     author_url = "https://github.com/jxxghp/MoviePilot"
     plugin_config_prefix = "unicomdailyclockin_"
     plugin_order = 27
