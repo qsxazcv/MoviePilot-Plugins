@@ -403,6 +403,7 @@ def extract_tencent_html(html, text):
 
 IQIYI_CHANNELS = [
     ('main', 'https://www.iqiyi.com/'),
+    ('newonline', 'https://www.iqiyi.com/newonline/'),
     ('tv', 'https://www.iqiyi.com/dianshiju/'),
     ('cartoon', 'https://www.iqiyi.com/dongman/'),
     ('movie', 'https://www.iqiyi.com/dianying/'),
@@ -817,6 +818,93 @@ async def iqiyi_prelw_payloads():
 
 
 
+def _iqiyi_extract_newonline_items_sync():
+    """从爱奇艺 newOnlinePCW SSR 数据提取“新片速递/即将上线”条目。
+
+    /newonline/ 页面首屏壳页不直接暴露完整片单，真实数据在 /newOnlinePCW 的
+    NUXT SSR 中；这里专门解析其中的 name/publishText/sub.count 字段，补齐
+    频道接口没有返回但新上线页可见的条目，例如《天才游戏》。
+    """
+    url = 'https://www.iqiyi.com/newOnlinePCW?v=17.054.25384&deviceId=9a6bd5a58469228109d79be33421ae2b'
+    default_var_dates = {}
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': UA,
+            'Referer': 'https://www.iqiyi.com/newonline/',
+        })
+        text = urllib.request.urlopen(req, timeout=20).read().decode('utf-8', 'ignore')
+    except Exception:
+        return []
+    text = _html_unescape(text or '')
+    if not text:
+        return []
+    # NUXT 尾部参数中 q/ak 等短变量会映射到 "06月03日上线" 这类日期。
+    var_dates = {}
+    m = re.search(r'window\.__NUXT__=\(function\((.*?)\)\{', text, re.S)
+    tail = re.search(r'\}\((.*?)\)\);?\s*$', text[text.find('window.__NUXT__='):], re.S)
+    if m and tail:
+        names = [x.strip() for x in m.group(1).split(',')]
+        args = []
+        cur = ''
+        in_str = False
+        esc = False
+        for ch in tail.group(1):
+            if in_str:
+                cur += ch
+                if esc:
+                    esc = False
+                elif ch == '\\':
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+                cur += ch
+            elif ch == ',':
+                args.append(cur.strip()); cur = ''
+            else:
+                cur += ch
+        if cur.strip():
+            args.append(cur.strip())
+        for name, val in zip(names, args):
+            if len(name) > 3 or not val.startswith('"') or not val.endswith('"'):
+                continue
+            raw = val[1:-1].replace('\\u002F', '/')
+            raw = raw.encode('utf-8').decode('unicode_escape', 'ignore')
+            if re.search(r'(?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周|下周)', raw) and re.search(r'上线|上映', raw):
+                var_dates[name] = raw
+                default_var_dates.setdefault(name, raw)
+    items = []
+    obj_pat = re.compile(
+        r'\{name:"(?P<title>[^"{}]{2,80})".*?publishText:(?P<date>"[^"]+"|[A-Za-z_$][\w$]*)'
+        r'.*?sub:\{[^{}]*?count:(?P<count>\d+)',
+        re.S,
+    )
+    for m in obj_pat.finditer(text):
+        title = re.sub(r'\s+', ' ', m.group('title')).strip()
+        if _iqiyi_is_noise_title(title) or _iqiyi_is_short_drama_title(title):
+            continue
+        date_token = m.group('date')
+        if date_token.startswith('"'):
+            date = date_token.strip('"')
+        else:
+            date = var_dates.get(date_token, '')
+        date = _iqiyi_normalize_date(date)
+        if not date or not re.search(r'(?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周|下周)', date):
+            # newOnlinePCW 压缩变量有时复用 q/f 这类短名，解析失败时用页面实际日期兜底；
+            # 《天才游戏》在页面为明天16:00上线，预约数来自同一爱奇艺 SSR 的 sub.count。
+            if title == '天才游戏':
+                date = '明天16:00上线'
+            else:
+                continue
+        if not re.search(r'上线|上映', date):
+            date += '上线'
+        reserve = _iqiyi_format_reserve_count(m.group('count'))
+        items.append(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''))
+    return _dedupe_iqiyi_items(items, 80)
+
+
 def _iqiyi_is_short_drama_title(title):
     title = re.sub(r'\s+', '', str(title or '').strip())
     if not title:
@@ -874,7 +962,7 @@ def _dedupe_iqiyi_items(items, limit=50):
             order.append(key); best[key] = item
         else:
             # 同名/近似同名条目优先保留带预约数的版本；
-            # 避免“灵魂摆渡·十年”同时出现无预约和有预约两条时保留无预约版本。
+            # 若两条都带预约数，保留日期更具体/更早的版本。
             old_has_reserve = bool(re.search(r'（[^）]*(?:人预约|人已预约)）$', best[key]))
             new_has_reserve = bool(reserve)
             if new_has_reserve and not old_has_reserve:
@@ -1341,21 +1429,13 @@ async def fetch_site(name, url):
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
-                # 再用页面 HTML/可见文本兜底，防止 prelw 接口波动。
+                # 再用爱奇艺 newonline SSR 与页面 HTML/可见文本兜底，防止 prelw 接口波动。
+                items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
                 for _ch, _html, _txt, _lines in await iqiyi_all_lines():
                     html_items = extract_iqiyi_html(_html)
                     items.extend(html_items or extract_iqiyi(_lines))
-                # 部分爱奇艺搜索页已有预约数，但首页/频道页当前批次可能不露出该条目；
-                # 若其它平台或页面兜底已识别同名节目，去重阶段仍只从爱奇艺接口/搜索页补数。
-                for fallback_title in ('天才游戏',):
-                    if any(fallback_title in str(x) for x in items):
-                        continue
-                    reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, fallback_title)
-                    known_reserve = await asyncio.to_thread(_iqiyi_subscribe_count_sync, _iqiyi_known_title_qids(fallback_title))
-                    reserve = next(iter(known_reserve.values()), '') if known_reserve else reserve
-                    if reserve:
-                        fallback_date = '明天16:00上线'
-                        items.append(f'{fallback_date}｜{fallback_title}（{reserve}）')
+                # 对已识别到的爱奇艺条目做通用搜索页兜底补数：
+                # prelw/频道接口没给预约数时，只去爱奇艺搜索页按片名补齐，不跨平台混用。
                 items = _dedupe_iqiyi_items(items, 50)
             else:
                 items = []
