@@ -1,5 +1,5 @@
 {
-  "ProgramPreview": {
+  "programpreview": {
     "name": "四大平台节目预告",
     "description": "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，并按 Cron 周期推送通知。",
     "labels": "插件",
@@ -8,8 +8,7 @@
     "author": "qsxazcv",
     "level": 2,
     "history": {
-      "1.0.1": "初始版本",
-
+      "1.0.1": "初始版本"
     }
   },
   "unicomdailyclockin": {
@@ -21,6 +20,7 @@
     "author": "qsxazcv",
     "level": 2,
     "history": {
-      "1.1.9": "初始版本",
+      "1.1.9": "初始版本"
     }
   }
+}
