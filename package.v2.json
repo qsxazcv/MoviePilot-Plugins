@@ -1,0 +1,26 @@
+{
+  "ProgramPreview": {
+    "name": "四大平台节目预告",
+    "description": "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，并按 Cron 周期推送通知。",
+    "labels": "插件",
+    "version": "1.0.1",
+    "icon": "https://raw.githubusercontent.com/xijin285/MoviePilot-Plugins/refs/heads/main/icons/ikuai.png",
+    "author": "qsxazcv",
+    "level": 2,
+    "history": {
+      "1.0.1": "初始版本",
+
+    }
+  },
+  "unicomdailyclockin": {
+    "name": "联通签到立减金",
+    "description": "每天自动执行中国联通立减金签到，支持多账号、立即运行、Cron 定时和通知结果。",
+    "labels": "签到",
+    "version": "1.1.9",
+    "icon": "https://raw.githubusercontent.com/xijin285/MoviePilot-Plugins/refs/heads/main/icons/cnlang.png",
+    "author": "qsxazcv",
+    "level": 2,
+    "history": {
+      "1.1.9": "初始版本",
+    }
+  }
