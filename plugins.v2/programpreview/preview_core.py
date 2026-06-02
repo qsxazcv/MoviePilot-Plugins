@@ -546,16 +546,17 @@ def _iqiyi_is_short_drama_obj(obj):
     if not isinstance(obj, dict):
         return False
     try:
-        # 15 是常见短剧频道；35/mini 类条目是爱奇艺首页 coming 中的微短剧/小程序短剧形态。
-        if int(obj.get('channel_id') or -1) in {15, 35}:
+        # 15 是常见短剧频道；35/37 不再仅凭频道号过滤，避免误杀正常即将上线条目。
+        if int(obj.get('channel_id') or -1) in {15}:
             return True
     except Exception:
         pass
     page_url = str(obj.get('page_url') or obj.get('url') or '')
-    if re.search(r'(?:playertype=mini|/a_[^/?]+\.html)', page_url):
+    # a_*.html 是爱奇艺专辑页，不能直接当短剧；只过滤明确 mini 播放形态。
+    if re.search(r'playertype=mini', page_url):
         return True
     fields = []
-    for key in ('title', 'display_name', 'short_display_name', 'desc', 'description', 'tag', 'channel_name', 'name'):
+    for key in ('title', 'display_name', 'short_display_name', 'desc', 'description', 'channel_name', 'name'):
         val = obj.get(key)
         if val:
             fields.append(str(val))
@@ -564,7 +565,25 @@ def _iqiyi_is_short_drama_obj(obj):
         if isinstance(val, list):
             fields.extend(str(x.get('text') or x.get('name') or '') for x in val if isinstance(x, dict))
     blob = ' '.join(fields)
-    return bool(re.search(r'微短剧|短剧|豪门|甜宠|女频|灵魂互换', blob))
+    return bool(re.search(r'微短剧|短剧|豪门|甜宠|灵魂互换', blob))
+
+
+def _iqiyi_is_filtered_male_fantasy_obj(obj):
+    """过滤用户不想要的爱奇艺男频玄幻漫剧/动态漫倾向条目。"""
+    if not isinstance(obj, dict):
+        return False
+    fields = []
+    for key in ('tag', 'title', 'display_name', 'short_display_name', 'desc', 'description', 'channel_name', 'name'):
+        val = obj.get(key)
+        if val:
+            fields.append(str(val))
+    for key in ('tag2lines', 'tag3lines'):
+        val = obj.get(key)
+        if isinstance(val, list):
+            fields.extend(str(x.get('text') or x.get('name') or '') for x in val if isinstance(x, dict))
+    blob = ' '.join(fields)
+    # 命中“男频 + 玄幻/架空/大男主/漫剧/动态漫”等组合时过滤；避免单个“玄幻”误杀普通动漫。
+    return bool(re.search(r'男频', blob) and re.search(r'玄幻|架空|大男主|漫剧|动态漫|逆袭', blob))
 
 
 
@@ -624,10 +643,66 @@ def _iqiyi_extract_page_reserve_sync(url):
     reserve_map = _iqiyi_subscribe_count_sync(ids)
     return next(iter(reserve_map.values()), '') if reserve_map else ''
 
+
+def _iqiyi_search_page_reserve_sync(title):
+    """仅从爱奇艺搜索页按片名兜底提取预约人数，不跨平台混用。
+
+    爱奇艺搜索页预约数字由前端渲染；静态 urllib 可能只拿到壳页。
+    因此优先用 Playwright 获取渲染后的正文，失败时再回退 urllib 静态 HTML。
+    """
+    title = re.sub(r'\s+', ' ', str(title or '')).strip()
+    if not title:
+        return ''
+    url = 'https://www.iqiyi.com/search/' + urllib.parse.quote(title) + '.html'
+    texts = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            page = browser.new_page(user_agent=UA)
+            page.goto(url, wait_until='domcontentloaded', timeout=20000)
+            try:
+                page.wait_for_timeout(2500)
+            except Exception:
+                pass
+            texts.append(page.locator('body').inner_text(timeout=8000))
+            browser.close()
+    except Exception:
+        pass
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': UA,
+            'Referer': 'https://www.iqiyi.com/',
+        })
+        texts.append(urllib.request.urlopen(req, timeout=12).read().decode('utf-8', 'ignore'))
+    except Exception:
+        pass
+    for text in texts:
+        text = _html_unescape(text or '')
+        if not text:
+            continue
+        # 搜索页首条结果常见结构：片名 / 上线时间 / 标签 / 预约 / X万人已预约。
+        # 只在片名附近窗口提取，避免拿到短视频或推荐卡片的无关数字。
+        positions = [m.start() for m in re.finditer(re.escape(title), text)]
+        for pos in positions[:8]:
+            win = text[max(0, pos - 600):pos + 1800]
+            if '预约' not in win:
+                continue
+            m = re.search(r'([\d.]+(?:万)?人已预约)', win)
+            if m:
+                return m.group(1)
+            m = re.search(r'([\d.]+(?:万)?人预约)', win)
+            if m:
+                val = m.group(1)
+                return val.replace('人预约', '人已预约')
+    return ''
+
 def _iqiyi_known_title_qids(title):
     title = re.sub(r'\s+', '', str(title or '').strip())
     mapping = {
         '疯癫和尚之幻境传说': ['6968113909814900'],
+        # 爱奇艺 prelw 接口有时会临时换批次；这些 ID 来自爱奇艺搜索页/预约接口，仅用于爱奇艺侧补数。
+        '万祭归宗': ['2325980146253101'],
     }
     return mapping.get(title, [])
 
@@ -639,7 +714,7 @@ def _iqiyi_collect_prelw_items(text):
     for obj in _iqiyi_walk(data):
         if not isinstance(obj, dict):
             continue
-        if _iqiyi_is_short_drama_obj(obj):
+        if _iqiyi_is_short_drama_obj(obj) or _iqiyi_is_filtered_male_fantasy_obj(obj):
             continue
         title = re.sub(r'\s+', ' ', str(
             obj.get('display_name') or obj.get('album_name') or obj.get('title') or ''
@@ -790,6 +865,10 @@ def _dedupe_iqiyi_items(items, limit=50):
             reserve_desc = next(iter(known_reserve.values()), '') if known_reserve else ''
             if reserve_desc:
                 reserve = f'（{reserve_desc}）'
+        if not reserve:
+            search_reserve = _iqiyi_search_page_reserve_sync(title)
+            if search_reserve:
+                reserve = f'（{search_reserve}）'
         item = f'{date}｜{title}' + (reserve if reserve else '')
         if key not in best:
             order.append(key); best[key] = item
@@ -1259,11 +1338,24 @@ async def fetch_site(name, url):
                 reserve_map = await asyncio.to_thread(_iqiyi_subscribe_count_sync, qipu_ids)
                 for row in prelw_rows:
                     reserve = next((reserve_map.get(qid) for qid in row.get('qids') or [] if reserve_map.get(qid)), '')
+                    if not reserve:
+                        reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
                 # 再用页面 HTML/可见文本兜底，防止 prelw 接口波动。
                 for _ch, _html, _txt, _lines in await iqiyi_all_lines():
                     html_items = extract_iqiyi_html(_html)
                     items.extend(html_items or extract_iqiyi(_lines))
+                # 部分爱奇艺搜索页已有预约数，但首页/频道页当前批次可能不露出该条目；
+                # 若其它平台或页面兜底已识别同名节目，去重阶段仍只从爱奇艺接口/搜索页补数。
+                for fallback_title in ('天才游戏',):
+                    if any(fallback_title in str(x) for x in items):
+                        continue
+                    reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, fallback_title)
+                    known_reserve = await asyncio.to_thread(_iqiyi_subscribe_count_sync, _iqiyi_known_title_qids(fallback_title))
+                    reserve = next(iter(known_reserve.values()), '') if known_reserve else reserve
+                    if reserve:
+                        fallback_date = '明天16:00上线'
+                        items.append(f'{fallback_date}｜{fallback_title}（{reserve}）')
                 items = _dedupe_iqiyi_items(items, 50)
             else:
                 items = []
@@ -1274,7 +1366,7 @@ async def fetch_site(name, url):
 async def main(force_notify=False):
     pairs = await asyncio.gather(*(fetch_site(name, url) for name, url in SITES))
     result = apply_platform_cache(dict(pairs))
-    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    现在 = datetime.now().strftime('%Y-%m-%d %H:%M')
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
         md.append(f'\n【{name}】')
