@@ -911,7 +911,12 @@ def _iqiyi_is_short_drama_title(title):
         return False
     # 爱奇艺首页 coming 的 mini 短剧有时没有“短剧”字段，只能从频道/URL/题材过滤；
     # 若后续仍从 HTML/文本兜底进来，则用已确认的 mini 短剧标题兜底过滤。
-    return title in {'何须借我赴荣华', '穿成昏君，国师带我平天下'}
+    return title in {
+        '何须借我赴荣华',
+        '穿成昏君，国师带我平天下',
+        '凤刃',
+        '男友半糖半盐',
+    }
 
 def _iqiyi_is_noise_title(title):
     """爱奇艺题材/分类/状态标签不能作为节目名。"""
@@ -1446,7 +1451,7 @@ async def fetch_site(name, url):
 async def main(force_notify=False):
     pairs = await asyncio.gather(*(fetch_site(name, url) for name, url in SITES))
     result = apply_platform_cache(dict(pairs))
-    现在 = datetime.now().strftime('%Y-%m-%d %H:%M')
+    now = datetime.now().strftime('%Y-%m-%d %H:%M')
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
         md.append(f'\n【{name}】')
