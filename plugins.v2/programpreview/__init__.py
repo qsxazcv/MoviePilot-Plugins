@@ -26,7 +26,7 @@ class ProgramPreview(_PluginBase):
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/main/icons/notice.png"
     plugin_version = "1.0.1"
     plugin_author = "qsxazcv"
-    author_url = "https://github.com/jxxghp/MoviePilot"
+    author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "programpreview_"
     plugin_order = 26
     auth_level = 1
