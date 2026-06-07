@@ -1023,6 +1023,46 @@ def _iqiyi_title_alias_key(title):
         return '灵魂摆渡十年'
     return key
 
+def _iqiyi_item_has_reserve(item):
+    return bool(re.search(r'（[^）]*(?:人预约|人已预约)）$', str(item or '')))
+
+
+def _iqiyi_attach_search_reserve(item):
+    """对单条爱奇艺预告强制执行搜索页补数；失败时原样返回，保留后续重试空间。"""
+    left, sep, right = str(item or '').partition('｜')
+    if not sep or _iqiyi_item_has_reserve(item):
+        return item
+    title, reserve = _iqiyi_split_title_reserve(right)
+    if reserve or not title or _iqiyi_is_short_drama_title(title):
+        return item
+    reserve_desc = ''
+    known_reserve = _iqiyi_subscribe_count_sync(_iqiyi_known_title_qids(title))
+    if known_reserve:
+        reserve_desc = next(iter(known_reserve.values()), '')
+    for query_title in dict.fromkeys([title, re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期)$', '', title).strip()]):
+        if not reserve_desc and query_title:
+            reserve_desc = _iqiyi_search_page_reserve_sync(query_title)
+    # 搜索页偶发空结果时不写入“0”或占位文案，保持无预约数条目，下一次定时任务会再次尝试补齐。
+    if not reserve_desc:
+        return item
+    return f'{_iqiyi_normalize_date(left)}｜{title}（{reserve_desc}）'
+
+
+def _iqiyi_force_search_reserve_items(items):
+    """对已识别到的爱奇艺条目逐条补预约数，保证 HTML/文本兜底条目也会重试。
+
+    搜索页是兜底能力，不应让某次页面渲染失败把已识别条目丢掉；失败时原样返回，
+    下次定时任务会继续重试。
+    """
+    enriched = []
+    for item in items or []:
+        try:
+            enriched.append(_iqiyi_attach_search_reserve(item))
+        except Exception:
+            enriched.append(item)
+    return enriched
+
+
 def _dedupe_iqiyi_items(items, limit=50):
     best = {}
     order = []
@@ -1037,29 +1077,40 @@ def _dedupe_iqiyi_items(items, limit=50):
             continue
         title_key = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期)$', '', title)
         key = _iqiyi_title_alias_key(title_key)
-        if not reserve:
-            known_reserve = _iqiyi_subscribe_count_sync(_iqiyi_known_title_qids(title))
-            reserve_desc = next(iter(known_reserve.values()), '') if known_reserve else ''
-            if reserve_desc:
-                reserve = f'（{reserve_desc}）'
-        if not reserve:
-            search_reserve = _iqiyi_search_page_reserve_sync(title)
-            if search_reserve:
-                reserve = f'（{search_reserve}）'
         item = f'{date}｜{title}' + (reserve if reserve else '')
         if key not in best:
             order.append(key); best[key] = item
         else:
             # 同名/近似同名条目优先保留带预约数的版本；
             # 若两条都带预约数，保留日期更具体/更早的版本。
-            old_has_reserve = bool(re.search(r'（[^）]*(?:人预约|人已预约)）$', best[key]))
-            new_has_reserve = bool(reserve)
+            old_has_reserve = _iqiyi_item_has_reserve(best[key])
+            new_has_reserve = _iqiyi_item_has_reserve(item)
             if new_has_reserve and not old_has_reserve:
                 best[key] = item
             elif new_has_reserve == old_has_reserve and _iqiyi_sort_key(item) < _iqiyi_sort_key(best[key]):
                 best[key] = item
-    return sorted([best[k] for k in order[:limit]], key=_iqiyi_sort_key)
+    deduped = sorted([best[k] for k in order], key=_iqiyi_sort_key)
+    # 去重后先对全部候选强制补数，再重新排序；搜索页失败的条目保持无预约数，下一次定时任务会继续重试。
+    enriched = _iqiyi_force_search_reserve_items(deduped)
+    return sorted(enriched, key=_iqiyi_sort_key)[:limit]
 
+
+
+
+def _iqiyi_final_fill_missing_reserves(items):
+    """最终输出前补齐爱奇艺缺失预约数。
+
+    这是最后一道保险：无论条目来自 prelw、newOnline、HTML 还是可见文本，
+    只要最终列表里还没有预约数，就按片名再查一次爱奇艺搜索页；
+    查不到则原样保留，留给下次定时任务继续重试。
+    """
+    result = []
+    for item in items or []:
+        try:
+            result.append(_iqiyi_attach_search_reserve(item))
+        except Exception:
+            result.append(item)
+    return result
 
 def extract_iqiyi_html(html_text):
     """优先从爱奇艺卡片 HTML 解析标题/简介/日期，避免纯文本把简介、类别或上一卡片串成片名。"""
@@ -1530,6 +1581,8 @@ async def fetch_site(name, url):
                 # 对已识别到的爱奇艺条目做通用搜索页兜底补数：
                 # prelw/频道接口没给预约数时，只去爱奇艺搜索页按片名补齐，不跨平台混用。
                 items = _dedupe_iqiyi_items(items, 50)
+                # 最终输出前再补一次，确保电影频道 xinpian 文本兜底等来源不会漏合并预约数。
+                items = _iqiyi_final_fill_missing_reserves(items)
             else:
                 items = []
         return name, items or ['暂未从公开页面提取到明确“即将上线/预约”条目']

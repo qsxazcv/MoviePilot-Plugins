@@ -22,9 +22,9 @@ from app.plugins.programpreview import preview_core
 
 class ProgramPreview(_PluginBase):
     plugin_name = "四大平台节目预告"
-    plugin_desc = "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，支持爱奇艺搜索页兜底补齐漏项与预约数，并按 Cron 周期推送通知。"
+    plugin_desc = "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，强化爱奇艺搜索页最终补数与重试兜底，并按 Cron 周期推送通知。"
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/main/icons/notice.png"
-    plugin_version = "1.0.2"
+    plugin_version = "1.0.3"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "programpreview_"
