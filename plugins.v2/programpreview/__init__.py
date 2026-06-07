@@ -17,7 +17,7 @@ from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas.types import NotificationType
 
-from app.plugins.programpreview import preview_core
+from . import preview_core
 
 
 class ProgramPreview(_PluginBase):
