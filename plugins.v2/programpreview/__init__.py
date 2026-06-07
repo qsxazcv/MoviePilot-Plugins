@@ -20,7 +20,7 @@ from app.schemas.types import NotificationType
 from . import preview_core
 
 
-class ProgramPreview(_PluginBase):
+class programpreview(_PluginBase):
     plugin_name = "四大平台节目预告"
     plugin_desc = "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，强化爱奇艺搜索页最终补数与重试兜底，并按 Cron 周期推送通知。"
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/main/icons/notice.png"
@@ -92,7 +92,7 @@ class ProgramPreview(_PluginBase):
         if self._enabled and self._cron:
             try:
                 return [{
-                    "id": "ProgramPreview",
+                    "id": "programpreview",
                     "name": "四大平台节目预告",
                     "trigger": CronTrigger.from_crontab(self._cron),
                     "func": self.run_preview,
