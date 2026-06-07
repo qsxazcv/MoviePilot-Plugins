@@ -16,6 +16,7 @@ JOB_DIR = Path('/config/plugins/programpreview')
 STATE_FILE = JOB_DIR / 'state.json'
 OUT_FILE = JOB_DIR / 'latest_preview.md'
 PLATFORM_CACHE_FILE = JOB_DIR / 'platform_cache.json'
+JOB_DIR.mkdir(parents=True, exist_ok=True)
 
 SITES = [
     ('爱奇艺', 'https://www.iqiyi.com/'),
@@ -1599,6 +1600,7 @@ async def main(force_notify=False):
         for it in result[name]:
             md.append(f'- {it}')
     msg = '\n'.join(md)
+    JOB_DIR.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(msg, encoding='utf-8')
     old = {}
     if STATE_FILE.exists():
