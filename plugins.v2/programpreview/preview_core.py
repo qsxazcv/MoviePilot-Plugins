@@ -698,6 +698,90 @@ def _iqiyi_search_page_reserve_sync(title):
                 return val.replace('人预约', '人已预约')
     return ''
 
+
+def _iqiyi_search_page_items_sync(titles):
+    """从爱奇艺搜索页补齐频道/prelw 漏出的已定档预约节目。
+
+    只按已知候选片名在爱奇艺搜索页附近窗口取结果，不跨平台混用；
+    同时要求窗口内有明确上线/上映日期和预约态，避免把推荐流或短视频混进来。
+    """
+    uniq = []
+    seen = set()
+    for title in titles or []:
+        title = re.sub(r'\s+', ' ', str(title or '')).strip()
+        if not title or title in seen or _iqiyi_is_noise_title(title) or _iqiyi_is_short_drama_title(title):
+            continue
+        seen.add(title)
+        uniq.append(title)
+    if not uniq:
+        return []
+    items = []
+    try:
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            for title in uniq:
+                url = 'https://www.iqiyi.com/search/' + urllib.parse.quote(title) + '.html'
+                texts = []
+                try:
+                    page = browser.new_page(user_agent=UA)
+                    page.goto(url, wait_until='domcontentloaded', timeout=20000)
+                    try:
+                        page.wait_for_timeout(2200)
+                    except Exception:
+                        pass
+                    texts.append(page.locator('body').inner_text(timeout=8000))
+                    page.close()
+                except Exception:
+                    try:
+                        page.close()
+                    except Exception:
+                        pass
+                try:
+                    req = urllib.request.Request(url, headers={
+                        'User-Agent': UA,
+                        'Referer': 'https://www.iqiyi.com/',
+                    })
+                    texts.append(urllib.request.urlopen(req, timeout=12).read().decode('utf-8', 'ignore'))
+                except Exception:
+                    pass
+                for text in texts:
+                    text = _html_unescape(text or '')
+                    if not text:
+                        continue
+                    for mpos in re.finditer(re.escape(title), text):
+                        win = text[max(0, mpos.start() - 800):mpos.start() + 2200]
+                        if '预约' not in win:
+                            continue
+                        dm = re.search(
+                            r'((?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周周[一二三四五六日天]|下周周[一二三四五六日天])\s*\d{0,2}:?\d{0,2}(?:上线|上映)?)',
+                            win,
+                        )
+                        date = ''
+                        if dm:
+                            date = _iqiyi_normalize_date(dm.group(1))
+                            if not re.search(r'上线|上映', date):
+                                date += '上线'
+                        else:
+                            rel = re.search(r'(下周[一二三四五六日天]|本周[一二三四五六日天]|近\d+[周月]上新)', win)
+                            if not rel:
+                                continue
+                            date = f'{rel.group(1)}上线'
+                        reserve = ''
+                        rm = re.search(r'([\d.]+(?:万)?人已预约)', win)
+                        if rm:
+                            reserve = rm.group(1)
+                        else:
+                            rm = re.search(r'([\d.]+(?:万)?人预约)', win)
+                            if rm:
+                                reserve = rm.group(1).replace('人预约', '人已预约')
+                        items.append(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''))
+                        break
+            browser.close()
+    except Exception:
+        return []
+    return _dedupe_iqiyi_items(items, 50)
+
 def _iqiyi_known_title_qids(title):
     title = re.sub(r'\s+', '', str(title or '').strip())
     mapping = {
@@ -1436,6 +1520,10 @@ async def fetch_site(name, url):
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
                 # 再用爱奇艺 newonline SSR 与页面 HTML/可见文本兜底，防止 prelw 接口波动。
                 items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
+                # 已知公开页/接口偶发漏出的爱奇艺预约片名，用爱奇艺搜索页补候选与预约数。
+                # 这里只从爱奇艺搜索页取数，不跨平台混用；若频道恢复返回，去重逻辑会自动优先带预约数版本。
+                search_fallback_titles = ['恶念', '天才游戏']
+                items.extend(await asyncio.to_thread(_iqiyi_search_page_items_sync, search_fallback_titles))
                 for _ch, _html, _txt, _lines in await iqiyi_all_lines():
                     html_items = extract_iqiyi_html(_html)
                     items.extend(html_items or extract_iqiyi(_lines))
