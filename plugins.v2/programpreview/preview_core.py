@@ -12,11 +12,13 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-JOB_DIR = Path('/config/plugins/programpreview')
-STATE_FILE = JOB_DIR / 'state.json'
-OUT_FILE = JOB_DIR / 'latest_preview.md'
-PLATFORM_CACHE_FILE = JOB_DIR / 'platform_cache.json'
-JOB_DIR.mkdir(parents=True, exist_ok=True)
+PLUGIN_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path('/config/plugins/programpreview')
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+OUT_FILE = PLUGIN_DIR / 'latest_preview.md'
+STATE_FILE = DATA_DIR / 'state.json'
+PLATFORM_CACHE_FILE = DATA_DIR / 'platform_cache.json'
+OUT_FILE.touch(exist_ok=True)
 
 SITES = [
     ('爱奇艺', 'https://www.iqiyi.com/'),
@@ -1600,7 +1602,7 @@ async def main(force_notify=False):
         for it in result[name]:
             md.append(f'- {it}')
     msg = '\n'.join(md)
-    JOB_DIR.mkdir(parents=True, exist_ok=True)
+    OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(msg, encoding='utf-8')
     old = {}
     if STATE_FILE.exists():
