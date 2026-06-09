@@ -9,7 +9,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 PLUGIN_DIR = Path(__file__).resolve().parent
@@ -414,6 +414,15 @@ IQIYI_CHANNELS = [
 ]
 
 
+IQIYI_LIST_CHANNELS = [
+    ('newonline', 0, 'https://www.iqiyi.com/newonline/'),
+    ('tv', 2, 'https://www.iqiyi.com/list/tv/%E5%85%A8%E9%83%A8%E5%89%A7%E9%9B%86.html'),
+    ('movie', 1, 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
+    ('variety', 6, 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
+    ('comic', 4, 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+]
+
+
 def _iqiyi_normalize_date(date):
     date = re.sub(r'\s+', ' ', str(date or '')).strip()
     date = re.sub(r'^(今日)', '今天', date)
@@ -429,29 +438,44 @@ def _iqiyi_sort_key(item):
     item = re.sub(r'（[^）]*(?:人预约|人已预约)）$', '', str(item))
     date = item.split('｜', 1)[0]
     now = datetime.now()
+
+    def day_minute(text):
+        tm = re.search(r'(\d{1,2}):(\d{2})', text)
+        return int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
+
+    def calendar_key(mon, day, minute):
+        year = now.year
+        # 抓取“即将上线”时，跨年条目可能是明年一月；保证仍排在当前日期之后。
+        if (int(mon), int(day)) < (now.month, now.day):
+            year += 1
+        return (0, year, int(mon), int(day), minute, item)
+
+    m = re.search(r'(?:\d{4}[./-])?(\d{1,2})[./-](\d{1,2})', date)
+    if m:
+        return calendar_key(m.group(1), m.group(2), day_minute(date))
     m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
     if m:
-        tm = re.search(r'(\d{1,2}):(\d{2})', date)
-        day_min = int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
-        return (0, int(m.group(1)), int(m.group(2)), day_min, item)
+        return calendar_key(m.group(1), m.group(2), day_minute(date))
+
     rel = {'今天': 0, '明天': 1, '后天': 2}
     for k, off in rel.items():
         if date.startswith(k):
-            tm = re.search(r'(\d{1,2}):(\d{2})', date)
-            day_min = int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
-            return (0, now.month, now.day + off, day_min, item)
+            target = now + timedelta(days=off)
+            return (0, target.year, target.month, target.day, day_minute(date), item)
+
     week_order = {'周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7, '周天': 7}
-    m = re.search(r'(本周|下周)(周[一二三四五六日天])', date)
+    m = re.search(r'(本周|下周)(?:周)?([一二三四五六日天])', date)
     if m:
-        target = week_order.get(m.group(2), 9)
-        today = now.isoweekday()
-        off = (target - today) % 7
+        target = week_order.get('周' + m.group(2), 9)
+        off = (target - now.isoweekday()) % 7
         if m.group(1) == '下周':
             off += 7
-        tm = re.search(r'(\d{1,2}):(\d{2})', date)
-        day_min = int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
-        return (0, now.month, now.day + off, day_min, item)
-    return (9, 99, 99, 0, item)
+        target_day = now + timedelta(days=off)
+        return (0, target_day.year, target_day.month, target_day.day, day_minute(date), item)
+
+    if '即将上线' in date:
+        return (8, now.year, 99, 99, 0, item)
+    return (9, now.year, 99, 99, 0, item)
 
 
 def _iqiyi_split_title_reserve(right):
@@ -648,12 +672,8 @@ def _iqiyi_extract_page_reserve_sync(url):
     return next(iter(reserve_map.values()), '') if reserve_map else ''
 
 
-def _iqiyi_search_page_reserve_sync(title):
-    """仅从爱奇艺搜索页按片名兜底提取预约人数，不跨平台混用。
-
-    爱奇艺搜索页预约数字由前端渲染；静态 urllib 可能只拿到壳页。
-    因此优先用 Playwright 获取渲染后的正文，失败时再回退 urllib 静态 HTML。
-    """
+def _iqiyi_search_page_reserve_once_sync(title):
+    """单次从爱奇艺搜索页按片名兜底提取预约人数，不跨平台混用。"""
     title = re.sub(r'\s+', ' ', str(title or '')).strip()
     if not title:
         return ''
@@ -699,6 +719,23 @@ def _iqiyi_search_page_reserve_sync(title):
             if m:
                 val = m.group(1)
                 return val.replace('人预约', '人已预约')
+    return ''
+
+
+def _iqiyi_search_page_reserve_sync(title, retries=3):
+    """从爱奇艺搜索页补预约数，最多重试 3 次。
+
+    搜索页由前端渲染，偶发空结果；每次只接受真实预约数字。
+    三次都没有结果时返回空字符串，保持条目原样，等待下次定时任务继续重试。
+    """
+    try:
+        retries = max(1, int(retries or 1))
+    except Exception:
+        retries = 3
+    for _ in range(min(retries, 3)):
+        reserve = _iqiyi_search_page_reserve_once_sync(title)
+        if reserve:
+            return reserve
     return ''
 
 
@@ -884,6 +921,203 @@ def extract_iqiyi_prelw_json(text, reserve_map=None):
             reserve = _iqiyi_extract_page_reserve_sync(row.get('page_url'))
         items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
     return _dedupe_iqiyi_items(items, 50)
+
+
+def _iqiyi_list_extract_ids_from_url(url):
+    ids = []
+    url = str(url or '')
+    for key in ('album_id', 'tv_id', 'r'):
+        for val in re.findall(rf'[?&]{key}=([^&]+)', url):
+            val = urllib.parse.unquote(val)
+            candidates = [val]
+            try:
+                import base64
+                candidates.append(base64.b64decode(val).decode('utf-8', 'ignore'))
+            except Exception:
+                pass
+            for cand in candidates:
+                for num in re.findall(r'(\d{6,})', cand):
+                    if num not in ids:
+                        ids.append(num)
+    return ids
+
+
+def _iqiyi_videolib_date_from_obj(obj):
+    if not isinstance(obj, dict):
+        return ''
+    fields = []
+    for key in (
+        'show_time', 'publishText', 'publish_text', 'online_time', 'release_date',
+        'tagline', 'taglines', 'tag2lines', 'tag3lines', 'period', 'subtitle', 'desc', 'description',
+    ):
+        val = obj.get(key)
+        if isinstance(val, str):
+            fields.append(val)
+        elif isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    fields.extend(str(item.get(k) or '') for k in ('text', 'name', 'title', 'value'))
+                else:
+                    fields.append(str(item))
+        elif isinstance(val, dict):
+            fields.extend(str(val.get(k) or '') for k in ('text', 'name', 'title', 'value'))
+    blob = ' '.join(re.sub(r'\s+', ' ', x).strip() for x in fields if x)
+    # 片库只作为“即将上线/预约”来源，不把“今日/明日更新”“近1周上新”等已上线更新流混入预告。
+    if not re.search(r'即将上线|预约|上线|上映|开播|首播', blob):
+        return ''
+    if re.search(r'近\d+[周月]上新|热度破|豆瓣高分|集全|限免|今日\d{0,2}:?\d{0,2}更新|明日\d{0,2}:?\d{0,2}更新|本周[一二三四五六日天]更新|下周[一二三四五六日天]更新', blob):
+        return ''
+    m = re.search(
+        r'((?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周周[一二三四五六日天]|下周周[一二三四五六日天]|本周[一二三四五六日天]|下周[一二三四五六日天])\s*\d{0,2}:?\d{0,2}\s*(?:上线|上映|开播|首播)?)',
+        blob,
+    )
+    if not m:
+        m = re.search(
+            r'((?:\d{4}[./-])?\d{1,2}[./-]\d{1,2}\s*\d{0,2}:?\d{0,2}\s*(?:上线|上映|开播|首播)?)',
+            blob,
+        )
+    if m:
+        date = _iqiyi_normalize_date(m.group(1))
+        if not re.search(r'上线|上映|开播|首播', date):
+            date += '上线'
+        # 片库会返回大量已上线旧综艺，若日期早于今天且不是明确“即将上线”状态，跳过。
+        dm = re.search(r'(?:\d{4}[./-])?(\d{1,2})[./-](\d{1,2})|(?:\d{1,2}月\d{1,2}日)', date)
+        try:
+            if re.search(r'\d{1,2}月\d{1,2}日', date):
+                mm = re.search(r'(\d{1,2})月(\d{1,2})日', date)
+                mon, day = int(mm.group(1)), int(mm.group(2))
+            else:
+                mon, day = int(dm.group(1)), int(dm.group(2))
+            now = datetime.now()
+            if (mon, day) < (now.month, now.day) and '即将上线' not in blob and '预约' not in blob:
+                return ''
+        except Exception:
+            pass
+        return date
+    if re.search(r'即将上线|预约', blob):
+        return '即将上线'
+    return ''
+
+
+def _iqiyi_collect_videolib_items(data):
+    rows = []
+    for obj in _iqiyi_walk(data):
+        if not isinstance(obj, dict):
+            continue
+        if _iqiyi_is_short_drama_obj(obj) or _iqiyi_is_filtered_male_fantasy_obj(obj):
+            continue
+        title = re.sub(r'\s+', ' ', str(
+            obj.get('album_name') or obj.get('display_name') or obj.get('short_display_name') or obj.get('title') or obj.get('name') or ''
+        )).strip()
+        if not title or _iqiyi_is_noise_title(title) or _iqiyi_is_short_drama_title(title):
+            continue
+        date = _iqiyi_videolib_date_from_obj(obj)
+        if not date:
+            continue
+        qids = []
+        for key in ('album_id', 'albumId', 'tv_id', 'tvId', 'entity_id', 'entityId', 'qipu_id', 'qipuId'):
+            val = obj.get(key)
+            if val is not None:
+                for num in re.findall(r'\b(\d{6,})\b', str(val)):
+                    if num not in qids:
+                        qids.append(num)
+        page_url = str(obj.get('page_url') or obj.get('url') or obj.get('play_url') or obj.get('native_url') or '')
+        for qid in _iqiyi_list_extract_ids_from_url(page_url):
+            if qid not in qids:
+                qids.append(qid)
+        for qid in _iqiyi_known_title_qids(title):
+            if qid not in qids:
+                qids.append(qid)
+        rows.append({'date': date, 'title': title, 'qids': qids, 'page_url': page_url})
+    return rows
+
+
+async def _iqiyi_videolib_payloads():
+    """抓取爱奇艺片库“即将上线”数据。
+
+    片库页面本身是前端壳页；优先用浏览器切换“即将上线”筛选并捕获
+    mesh.if.iqiyi.com/portal/lw/videolib/data 响应。若页面/网络拦截失败，
+    再按已知 videolib 接口参数做轻量 urllib 兜底。
+    """
+    payloads = []
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
+            async def capture(resp):
+                if 'mesh.if.iqiyi.com/portal/lw/videolib/data' not in resp.url:
+                    return
+                try:
+                    data = await resp.json()
+                except Exception:
+                    try:
+                        data = json.loads(await resp.text())
+                    except Exception:
+                        return
+                payloads.append(data)
+            page.on('response', lambda resp: asyncio.create_task(capture(resp)))
+            for _name, _channel_id, url in IQIYI_LIST_CHANNELS:
+                try:
+                    await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                    await page.wait_for_timeout(1800)
+                    for selector in ('text=即将上线', 'button:has-text("即将上线")', 'a:has-text("即将上线")'):
+                        try:
+                            loc = page.locator(selector).first
+                            if await loc.count():
+                                await loc.click(timeout=2500)
+                                await page.wait_for_timeout(2200)
+                                break
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+            await browser.close()
+    except Exception:
+        pass
+    # 静态接口兜底：有些环境浏览器无法跨域捕获，但服务端直连偶尔可用。
+    async def one(channel_id, referer):
+        if not channel_id:
+            return None
+        params = urllib.parse.urlencode({
+            'channel_id': channel_id,
+            'data_type': 1,
+            'from': 'PCW_VIDEOLIB',
+            'version': '1.0',
+            'ret_num': 48,
+            'page_id': 1,
+            'filter': json.dumps({'mode': '11'}, ensure_ascii=False, separators=(',', ':')),
+        })
+        url = f'https://mesh.if.iqiyi.com/portal/lw/videolib/data?{params}'
+        try:
+            req = urllib.request.Request(url, headers={
+                'User-Agent': UA,
+                'Referer': referer,
+                'Accept': 'application/json, text/plain, */*',
+            })
+            text = await asyncio.to_thread(lambda: urllib.request.urlopen(req, timeout=15).read().decode('utf-8', 'ignore'))
+            return json.loads(text)
+        except Exception:
+            return None
+    fallback = await asyncio.gather(*(one(channel_id, url) for _name, channel_id, url in IQIYI_LIST_CHANNELS if channel_id))
+    payloads.extend(x for x in fallback if x)
+    return payloads
+
+
+def extract_iqiyi_videolib_items(payloads, reserve_map=None):
+    rows = []
+    for payload in payloads or []:
+        rows.extend(_iqiyi_collect_videolib_items(payload))
+    reserve_map = reserve_map or {}
+    items = []
+    for row in rows:
+        reserve = next((reserve_map.get(qid) for qid in row.get('qids') or [] if reserve_map.get(qid)), '')
+        if not reserve and row.get('page_url'):
+            reserve = _iqiyi_extract_page_reserve_sync(row.get('page_url'))
+        if not reserve:
+            reserve = _iqiyi_search_page_reserve_sync(row.get('title'))
+        items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
+    return _dedupe_iqiyi_items(items, 80)
 
 
 async def iqiyi_prelw_payloads():
@@ -1572,11 +1806,27 @@ async def fetch_site(name, url):
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
-                # 再用爱奇艺 newonline SSR 与页面 HTML/可见文本兜底，防止 prelw 接口波动。
+                # 再用爱奇艺 newonline SSR 与片库 videolib/list 兜底，防止 prelw 接口波动。
                 items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
+                videolib_payloads = await _iqiyi_videolib_payloads()
+                videolib_rows = []
+                videolib_qids = []
+                for payload in videolib_payloads:
+                    rows = _iqiyi_collect_videolib_items(payload)
+                    videolib_rows.extend(rows)
+                    for row in rows:
+                        videolib_qids.extend(row.get('qids') or [])
+                videolib_reserve_map = await asyncio.to_thread(_iqiyi_subscribe_count_sync, videolib_qids)
+                for row in videolib_rows:
+                    reserve = next((videolib_reserve_map.get(qid) for qid in row.get('qids') or [] if videolib_reserve_map.get(qid)), '')
+                    if not reserve and row.get('page_url'):
+                        reserve = await asyncio.to_thread(_iqiyi_extract_page_reserve_sync, row.get('page_url'))
+                    if not reserve:
+                        reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
+                    items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
                 # 已知公开页/接口偶发漏出的爱奇艺预约片名，用爱奇艺搜索页补候选与预约数。
                 # 这里只从爱奇艺搜索页取数，不跨平台混用；若频道恢复返回，去重逻辑会自动优先带预约数版本。
-                search_fallback_titles = ['恶念', '天才游戏']
+                search_fallback_titles = ['恶念', '天才游戏', '豪门大嫂要掀桌，门风不正直接怼', '狄仁杰之血谜棺']
                 items.extend(await asyncio.to_thread(_iqiyi_search_page_items_sync, search_fallback_titles))
                 for _ch, _html, _txt, _lines in await iqiyi_all_lines():
                     html_items = extract_iqiyi_html(_html)
@@ -1585,7 +1835,8 @@ async def fetch_site(name, url):
                 # prelw/频道接口没给预约数时，只去爱奇艺搜索页按片名补齐，不跨平台混用。
                 items = _dedupe_iqiyi_items(items, 50)
                 # 最终输出前再补一次，确保电影频道 xinpian 文本兜底等来源不会漏合并预约数。
-                items = _iqiyi_final_fill_missing_reserves(items)
+                # 这里必须放到线程里执行：搜索页补数使用 Playwright sync API，不能直接跑在 async event loop 内。
+                items = await asyncio.to_thread(_iqiyi_final_fill_missing_reserves, items)
             else:
                 items = []
         return name, items or ['暂未从公开页面提取到明确“即将上线/预约”条目']
