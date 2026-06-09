@@ -17,7 +17,7 @@
     "name": "微云Cookie助手",
     "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "author": "qsxazcv",
     "level": 1,
     "history": {
@@ -41,9 +41,10 @@
       "v0.1.17": "新增“二维码公网地址”配置：TG 默认继续使用本机抓图地址；微信通知可使用公网可访问的二维码图片 URL，解决企业微信无法显示 127.0.0.1 图片的问题。",
       "v0.1.18": "优化微信二维码图文通知：发送二维码图片时同步设置 link 为二维码图片 URL，点击微信图文可直接打开完整二维码。",
       "v0.1.19": "插件详情页二维码改为图片 API 渲染并每 3 秒探测状态；扫码成功清除 qrcode 后当前页面会自动隐藏二维码区域。",
-      "v0.1.20": "新增 /weiyun_status、/weiyun_check 英文命令；检测通知合并为单条结果，状态通知隐藏有效字段；完整 Cookie 显示框支持拖动；优化微信二维码截图等待、Telegram 二维码文件推送和二维码图片地址。"
+      "v0.1.20": "新增 /weiyun_status、/weiyun_check 英文命令；检测通知合并为单条结果，状态通知隐藏有效字段；完整 Cookie 显示框支持拖动；优化微信二维码截图等待、Telegram 二维码文件推送和二维码图片地址。",
+      "v0.1.21": "修复插件清单 release 标记：改为文件列表安装，避免未创建 GitHub Release 时安装报 404。"
     },
     "v2": true,
-    "release": true
+    "release": false
   }
 }

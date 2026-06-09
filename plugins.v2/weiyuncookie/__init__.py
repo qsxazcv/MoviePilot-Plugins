@@ -44,7 +44,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
     plugin_icon = "https://www.weiyun.com/favicon.ico"
-    plugin_version = "0.1.20"
+    plugin_version = "0.1.21"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
