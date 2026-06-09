@@ -43,7 +43,7 @@ except Exception:  # pragma: no cover
 class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
-    plugin_icon = "https://www.weiyun.com/favicon.ico"
+    plugin_icon = "https://github.com/qsxazcv/MoviePilot-Plugins/blob/main/icons/weiyuncookie.png"
     plugin_version = "0.1.21"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
