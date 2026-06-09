@@ -7,7 +7,7 @@
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
 | `programpreview` | 四大平台节目预告 | `1.0.4` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.21` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.22` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。 |
 
 ## 插件源地址
 
@@ -180,6 +180,8 @@ git status --short --branch
 ## 版本历史
 
 ### `weiyuncookie`
+
+- `0.1.22`：更换插件图标为仓库 `icons/weiyuncookie.png`。
 
 - `0.1.21`：修复插件清单 `release` 标记，改为文件列表安装，避免未创建 GitHub Release 时安装报 404。
 

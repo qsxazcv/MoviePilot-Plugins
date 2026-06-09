@@ -26,6 +26,10 @@
 
 ## 版本说明
 
+### v0.1.22
+
+- 更换插件图标为仓库 `icons/weiyuncookie.png`。
+
 ### v0.1.21
 
 - 修复插件清单 `release` 标记，改为文件列表安装，避免未创建 GitHub Release 时安装报 404。
