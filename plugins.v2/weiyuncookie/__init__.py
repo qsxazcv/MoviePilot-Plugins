@@ -516,7 +516,7 @@ class weiyuncookie(_PluginBase):
                                             {
                                                 "component": "VCol",
                                                 "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VTextField", "props": {"model": "openlist_storage_id", "label": "存储 ID", "type": "number", "placeholder": "2", "variant": "outlined", "density": "comfortable"}}],
+                                                "content": [{"component": "VTextField", "props": {"model": "openlist_storage_id", "label": "存储 ID", "type": "number", "variant": "outlined", "density": "comfortable"}}],
                                             },
                                         ],
                                     },
