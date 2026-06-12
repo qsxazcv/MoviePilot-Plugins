@@ -1850,8 +1850,13 @@ async def main(force_notify=False):
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
         md.append(f'\n【{name}】')
-        for it in result[name]:
-            md.append(f'- {it}')
+        if name == '爱奇艺':
+            for it in result[name]:
+                if not it.startswith('即将上线｜'):
+                    md.append(f'- {it}')
+        else:
+            for it in result[name]:
+                md.append(f'- {it}')
     msg = '\n'.join(md)
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(msg, encoding='utf-8')
