@@ -16,9 +16,9 @@
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",
-    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。",
+    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；配置页和详情页升级为 z256 风格 Vue 联邦 UI。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.22",
+    "version": "0.1.23",
     "author": "qsxazcv",
     "level": 1,
     "history": {
@@ -44,7 +44,8 @@
       "v0.1.19": "插件详情页二维码改为图片 API 渲染并每 3 秒探测状态；扫码成功清除 qrcode 后当前页面会自动隐藏二维码区域。",
       "v0.1.20": "新增 /weiyun_status、/weiyun_check 英文命令；检测通知合并为单条结果，状态通知隐藏有效字段；完整 Cookie 显示框支持拖动；优化微信二维码截图等待、Telegram 二维码文件推送和二维码图片地址。",
       "v0.1.21": "修复插件清单 release 标记：改为文件列表安装，避免未创建 GitHub Release 时安装报 404。",
-      "v0.1.22": "更换插件图标为仓库 icons/weiyuncookie.png。"
+      "v0.1.22": "更换插件图标为仓库 icons/weiyuncookie.png。",
+      "v0.1.23": "按 z2561221/MoviePilot-Plugins 设计语言重构为 Vue 联邦 UI：配置页采用左侧导航、二级标签、卡片化分区和统一操作区；详情页采用 sticky toolbar、状态卡片、二维码与 Cookie 管理面板。"
     },
     "v2": true,
     "release": false,
