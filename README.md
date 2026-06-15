@@ -7,7 +7,7 @@
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
 | `programpreview` | 四大平台节目预告 | `1.0.5` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.22` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.27` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；Vue 联邦 UI 支持快速弹出二维码并提供二维码占位图。 |
 
 ## 插件源地址
 
@@ -111,7 +111,8 @@ Cron 示例：
 
 - 支持 QQ / 微信扫码登录腾讯微云。
 - 通过 MoviePilot 后端浏览器打开微云登录页，扫码后自动提取 `weiyun.com` / `qq.com` 相关 Cookie。
-- 插件配置页和详情页均可展示完整 Cookie，显示框支持手动拖动调整高度。
+- 插件配置页和详情页已升级为 Vue 联邦 UI，采用左侧导航、二级标签、状态卡片和 sticky toolbar。
+- 详情页支持快速弹出二维码、扫码成功自动隐藏；二维码链接未就绪时会显示友好占位图。
 - 支持 Cookie 有效性检测：可按 Cron 定时检测，也可手动立即检测。
 - Cookie 失效时可通过 MoviePilot 通知提醒重新登录，并避免重复提醒。
 - 支持将最新 Cookie 同步到 OpenList 腾讯微云存储。
@@ -134,7 +135,8 @@ Cron 示例：
 | 启用插件 | 关闭 | 开启插件功能。 |
 | 立即运行一次 | 关闭 | 保存配置后启动一次扫码登录。 |
 | 登录方式 | `QQ 扫码登录` | 支持 QQ / 微信扫码登录。 |
-| 浏览器模式 | `插件内置` | 可选择插件内置 Playwright 或兼容模式。 |
+| 浏览器内核 | `CloakBrowser` | 可选择 `Playwright Chromium` 或 `CloakBrowser`。 |
+| 浏览器预热 | 开启 | 插件启用后后台预热浏览器内核，减少首次扫码冷启动等待。 |
 | 无头浏览器 | 开启 | 后端无界面运行浏览器。 |
 | 包含 QQ 域 Cookie | 开启 | 同步提取 `qq.com` 相关 Cookie。 |
 | 扫码等待秒数 | `180` | 等待用户扫码登录的最长时间。 |
@@ -160,7 +162,7 @@ Cron 示例：
 
 `programpreview` 带有独立的 `requirements.txt`。安装插件后，如运行环境缺少依赖，请按 MoviePilot 插件依赖安装方式处理。
 
-`weiyuncookie` 依赖 MoviePilot 运行环境中的后端浏览器能力。优先使用插件内置 Playwright；如环境需要可切换兼容模式。
+`weiyuncookie` 依赖 MoviePilot 运行环境中的后端浏览器能力。可选择 `Playwright Chromium` 或 `CloakBrowser`；如首次扫码较慢，建议开启浏览器预热。
 
 ## 维护与校验
 
@@ -181,6 +183,16 @@ git status --short --branch
 ## 版本历史
 
 ### `weiyuncookie`
+
+- `0.1.27`：修复二维码图片链接过早打开显示 `qrcode not ready`；扫码任务运行中会短暂等待二维码生成，未就绪时返回友好 SVG 占位图。
+
+- `0.1.26`：浏览器模式命名调整为真实内核名：`Playwright Chromium` / `CloakBrowser`。
+
+- `0.1.25`：新增浏览器预热开关，插件启用后后台预热 Chromium / CloakBrowser，减少首次扫码冷启动等待。
+
+- `0.1.24`：优化启动扫码后的二维码弹出速度，缩短页面等待、二维码就绪检测和截图超时，并提升前端状态轮询频率。
+
+- `0.1.23`：按 z2561221/MoviePilot-Plugins 设计语言重构为 Vue 联邦 UI，配置页采用左侧导航和二级标签，详情页采用 sticky toolbar、状态卡片、二维码与 Cookie 管理面板。
 
 - `0.1.22`：更换插件图标为仓库 `icons/weiyuncookie.png`。
 

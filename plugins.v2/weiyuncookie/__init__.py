@@ -44,7 +44,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.24"
+    plugin_version = "0.1.27"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -83,6 +83,8 @@ class weiyuncookie(_PluginBase):
     _last_openlist_sync_status: str = "未同步"
     _login_running: bool = False
     _login_thread: Optional[threading.Thread] = None
+    _preheat_browser: bool = True
+    _preheat_running: bool = False
 
     def init_plugin(self, config: dict = None):
         config = config or {}
@@ -94,6 +96,7 @@ class weiyuncookie(_PluginBase):
         self._timeout_seconds = self.__to_int(config.get("timeout_seconds"), 180, 30, 600)
         self._include_qq_domain = bool(config.get("include_qq_domain", True))
         self._browser_mode = self.__normalize_browser_mode(config.get("browser_mode"))
+        self._preheat_browser = bool(config.get("preheat_browser", True))
         self._notify_enabled = bool(config.get("notify_enabled", True))
         self._notify_login_result = bool(config.get("notify_login_result", True))
         self._notify_openlist_result = bool(config.get("notify_openlist_result", True))
@@ -142,6 +145,8 @@ class weiyuncookie(_PluginBase):
             self._openlist_sync_onlyonce = False
             self.__update_config()
             threading.Thread(target=self.sync_cookie_to_openlist, name="WeiyunCookieOpenListSyncOnce", daemon=True).start()
+        if self._enabled and self._preheat_browser:
+            self.__start_preheat_thread()
 
     def get_state(self) -> bool:
         return self._enabled
@@ -251,6 +256,7 @@ class weiyuncookie(_PluginBase):
             "login_type": self._login_type,
             "login_url": self._login_url,
             "browser_mode": self._browser_mode,
+            "preheat_browser": self._preheat_browser,
             "timeout_seconds": self._timeout_seconds,
             "include_qq_domain": self._include_qq_domain,
             "notify_enabled": self._notify_enabled,
@@ -283,13 +289,29 @@ class weiyuncookie(_PluginBase):
         return None
 
     def __api_qrcode_image(self):
+        """返回二维码图片；扫码任务刚启动时短暂等待二维码生成，避免前端/外链过早请求显示 not ready。"""
         qrcode = self.get_data("qrcode") or ""
+        if not qrcode and self._login_running:
+            deadline = time.time() + 8
+            while time.time() < deadline:
+                time.sleep(0.2)
+                qrcode = self.get_data("qrcode") or ""
+                if qrcode:
+                    break
         data, media_type = self.__decode_data_image(qrcode)
         if not data:
+            svg = (
+                "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'>"
+                "<rect width='320' height='320' rx='18' fill='#f5f5f5'/>"
+                "<text x='160' y='142' text-anchor='middle' font-size='18' fill='#666'>二维码未就绪</text>"
+                "<text x='160' y='174' text-anchor='middle' font-size='14' fill='#999'>请先点击启动扫码登录</text>"
+                "<text x='160' y='202' text-anchor='middle' font-size='14' fill='#999'>或登录已完成，二维码已自动隐藏</text>"
+                "</svg>"
+            )
             return Response(
-                content=b"qrcode not ready",
-                media_type="text/plain",
-                status_code=404,
+                content=svg.encode("utf-8"),
+                media_type="image/svg+xml",
+                status_code=200,
                 headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
             )
         return Response(
@@ -737,6 +759,48 @@ class weiyuncookie(_PluginBase):
         )
         self.save_data("cookie_invalid_notified", True)
 
+    def __start_preheat_thread(self) -> None:
+        """后台预热浏览器内核，减少首次扫码时的冷启动等待。"""
+        if self._preheat_running:
+            return
+        thread = threading.Thread(target=self.__preheat_browser_once, name="WeiyunCookieBrowserPreheat", daemon=True)
+        thread.start()
+
+    def __preheat_browser_once(self) -> None:
+        """快速启动并关闭一次浏览器，让 Chromium/CloakBrowser 内核、字体和缓存提前就绪。"""
+        self._preheat_running = True
+        browser = None
+        context = None
+        playwright = None
+        started_at = time.time()
+        try:
+            logger.info("微云 Cookie 助手开始预热浏览器：mode=%s, headless=%s", self._browser_mode, self._headless)
+            if self._browser_mode == "cloakbrowser":
+                context = self.__launch_cloakbrowser_context()
+            else:
+                if sync_playwright is None:
+                    logger.warning("微云 Cookie 助手预热跳过：当前环境未安装 Playwright")
+                    return
+                playwright = sync_playwright().start()
+                browser = playwright.chromium.launch(headless=bool(self._headless), args=self.__browser_args())
+                context = browser.new_context(locale="zh-CN", viewport={"width": 1280, "height": 900})
+            page = context.new_page()
+            page.goto("about:blank", wait_until="commit", timeout=10000)
+            logger.info("微云 Cookie 助手浏览器预热完成：耗时 %.2fs", time.time() - started_at)
+        except Exception as err:
+            logger.warning("微云 Cookie 助手浏览器预热失败，将在扫码时正常冷启动：%s", err)
+        finally:
+            try:
+                if context:
+                    context.close()
+                elif browser:
+                    browser.close()
+                if playwright:
+                    playwright.stop()
+            except Exception:
+                pass
+            self._preheat_running = False
+
     def __start_login_thread(self, source: str = "manual") -> bool:
         if self._login_running:
             logger.warning("微云 Cookie 助手扫码登录任务已在运行，忽略本次请求：source=%s", source)
@@ -1016,6 +1080,7 @@ class weiyuncookie(_PluginBase):
             "login_type": self._login_type,
             "login_url": self._login_url,
             "browser_mode": self._browser_mode,
+            "preheat_browser": self._preheat_browser,
             "timeout_seconds": self._timeout_seconds,
             "include_qq_domain": self._include_qq_domain,
             "notify_enabled": self._notify_enabled,
@@ -1090,4 +1155,4 @@ class weiyuncookie(_PluginBase):
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def stop_service(self) -> None:
-        pass
+        self._preheat_running = False
