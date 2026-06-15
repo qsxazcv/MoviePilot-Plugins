@@ -44,7 +44,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.23"
+    plugin_version = "0.1.24"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -773,7 +773,7 @@ class weiyuncookie(_PluginBase):
                 context = browser.new_context(locale="zh-CN", viewport={"width": 1280, "height": 900})
             page = context.new_page()
             logger.info("微云 Cookie 助手打开登录页：%s", self._login_url)
-            page.goto(self._login_url, wait_until="domcontentloaded", timeout=60000)
+            page.goto(self._login_url, wait_until="commit", timeout=30000)
             logger.info("微云 Cookie 助手登录页加载完成：url=%s", page.url)
             self.__select_login_type(page, login_type)
             self.__wait_qrcode_ready(page, login_type)
@@ -906,9 +906,9 @@ class weiyuncookie(_PluginBase):
             try:
                 locator = page.get_by_text(text, exact=False).first
                 if locator.count():
-                    locator.click(timeout=3000)
+                    locator.click(timeout=1500)
                     logger.info("微云 Cookie 助手已点击登录入口：%s", text)
-                    time.sleep(1)
+                    time.sleep(0.2)
                     return
             except Exception as err:
                 logger.debug("微云 Cookie 助手点击登录入口失败：%s, err=%s", text, err)
@@ -917,7 +917,7 @@ class weiyuncookie(_PluginBase):
     def __wait_qrcode_ready(self, page, login_type: str) -> None:
         """等待二维码元素就绪后再截图，避免截到未加载完成的页面。"""
         logger.info("微云 Cookie 助手等待二维码就绪：login_type=%s", login_type)
-        deadline = datetime.now() + timedelta(seconds=15)
+        deadline = datetime.now() + timedelta(seconds=6)
         while datetime.now() < deadline:
             try:
                 if login_type == "qq":
@@ -928,18 +928,18 @@ class weiyuncookie(_PluginBase):
                     locator = page.locator(selector).first
                     if locator.count() and locator.bounding_box():
                         logger.info("微云 Cookie 助手二维码元素已就绪：selector=%s", selector)
-                        time.sleep(0.5)
+                        time.sleep(0.15)
                         return
                 iframe_selectors = ["iframe[src*='ptlogin']", "iframe"]
                 for selector in iframe_selectors:
                     locator = page.locator(selector).first
                     if locator.count() and locator.bounding_box():
                         logger.info("微云 Cookie 助手 iframe 登录框已就绪：selector=%s", selector)
-                        time.sleep(0.5)
+                        time.sleep(0.15)
                         return
-                time.sleep(0.5)
+                time.sleep(0.15)
             except Exception:
-                time.sleep(0.5)
+                time.sleep(0.15)
         logger.warning("微云 Cookie 助手等待二维码就绪超时，将使用当前页面截图")
 
     def __capture_qrcode(self, page) -> str:
@@ -952,7 +952,7 @@ class weiyuncookie(_PluginBase):
             try:
                 locator = page.locator(selector).first
                 if locator.count():
-                    data = locator.screenshot(type="png", timeout=5000)
+                    data = locator.screenshot(type="png", timeout=1500)
                     logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
                     return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
