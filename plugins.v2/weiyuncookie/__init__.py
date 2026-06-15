@@ -384,6 +384,7 @@ class weiyuncookie(_PluginBase):
             "last_openlist_sync_status": self._last_openlist_sync_status,
             "cookie": self.get_data("cookie") or "",
             "has_qrcode": bool(self.get_data("qrcode")),
+            "qrcode_image_url": self.__qrcode_image_path(),
         }
 
     def __api_clear_cookie(self) -> Dict[str, Any]:
