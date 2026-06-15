@@ -15,7 +15,7 @@ from pathlib import Path
 PLUGIN_DIR = Path(__file__).resolve().parent
 DATA_DIR = Path('/config/plugins/programpreview')
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-OUT_FILE = PLUGIN_DIR / 'latest_preview.md'
+OUT_FILE = DATA_DIR / 'latest_preview.md'
 STATE_FILE = DATA_DIR / 'state.json'
 PLATFORM_CACHE_FILE = DATA_DIR / 'platform_cache.json'
 OUT_FILE.touch(exist_ok=True)

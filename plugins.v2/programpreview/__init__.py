@@ -11,6 +11,7 @@ import traceback
 import pytz
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from fastapi import BackgroundTasks
 
 from app.core.config import settings
 from app.log import logger
@@ -24,7 +25,7 @@ class programpreview(_PluginBase):
     plugin_name = "四大平台节目预告"
     plugin_desc = "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入爱奇艺片库 videolib 即将上线抓取、搜索页最终补数与重试兜底，并按 Cron 周期推送通知。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/programpreview.png"
-    plugin_version = "1.0.5"
+    plugin_version = "1.0.9"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "programpreview_"
@@ -86,7 +87,40 @@ class programpreview(_PluginBase):
         return []
 
     def get_api(self) -> List[Dict[str, Any]]:
-        return []
+        return [
+            {
+                "path": "/status",
+                "endpoint": self.__api_status,
+                "methods": ["GET"],
+                "auth": "bear",
+                "summary": "查询四大平台节目预告状态",
+            },
+            {
+                "path": "/run",
+                "endpoint": self.__api_run,
+                "methods": ["POST", "GET"],
+                "auth": "bear",
+                "summary": "立即执行四大平台节目预告",
+            },
+        ]
+
+    def __api_status(self) -> Dict[str, Any]:
+        return {
+            "success": True,
+            "enabled": self._enabled,
+            "notify": self._notify,
+            "force_notify": self._force_notify,
+            "cron": self._cron,
+            "last_run": self._last_run,
+            "last_status": self._last_status,
+            "latest_preview": self._read_latest_preview(),
+        }
+
+    def __api_run(self) -> Dict[str, Any]:
+        threading.Thread(target=self.run_preview, name="ProgramPreviewApiRun", daemon=True).start()
+        self._last_status = "立即运行已触发"
+        self._update_config()
+        return {"success": True, "message": "已提交四大平台节目预告任务"}
 
     def get_service(self) -> List[Dict[str, Any]]:
         if self._enabled and self._cron:
@@ -128,37 +162,26 @@ class programpreview(_PluginBase):
         finally:
             self._update_config()
 
-    def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
-        version = getattr(settings, "VERSION_FLAG", "v1")
-        cron_component = "VCronField" if version == "v2" else "VTextField"
-        return [
-            {
-                "component": "VForm",
-                "content": [
-                    {
-                        "component": "VRow",
-                        "content": [
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VSwitch", "props": {"model": "enabled", "label": "启用插件"}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VSwitch", "props": {"model": "notify", "label": "开启通知"}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VSwitch", "props": {"model": "force_notify", "label": "每次强制推送"}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VSwitch", "props": {"model": "onlyonce", "label": "立即运行一次"}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 6}, "content": [{"component": cron_component, "props": {"model": "cron", "label": "执行周期 Cron", "placeholder": "0 8 * * *", "hint": "例如：0 8 * * * 表示每天 08:00；30 21 * * * 表示每天 21:30", "persistent-hint": True}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VTextField", "props": {"model": "last_run", "label": "上次运行", "readonly": True}}]},
-                            {"component": "VCol", "props": {"cols": 12, "md": 3}, "content": [{"component": "VTextField", "props": {"model": "last_status", "label": "运行状态", "readonly": True}}]},
-                            {"component": "VCol", "props": {"cols": 12}, "content": [{"component": "VAlert", "props": {"type": "info", "variant": "tonal", "text": "保存配置后，插件会按 Cron 自动执行。抓取规则沿用现有四大平台节目预告逻辑。"}}]},
-                        ],
-                    }
-                ],
-            }
-        ], {
-            "enabled": False,
+    @staticmethod
+    def get_render_mode() -> Tuple[str, str]:
+        """使用 Vue 联邦组件渲染配置页与详情页。"""
+        return "vue", "dist/assets"
+
+    def get_form(self) -> Tuple[Optional[List[dict]], Dict[str, Any]]:
+        """Vue 模式下配置页由联邦 Config 组件渲染。"""
+        return None, {
+            "enabled": self._enabled,
             "onlyonce": False,
-            "notify": True,
-            "force_notify": True,
-            "cron": "0 8 * * *",
+            "notify": self._notify,
+            "force_notify": self._force_notify,
+            "cron": self._cron,
             "last_run": self._last_run,
             "last_status": self._last_status,
         }
+
+    def get_page(self) -> Optional[List[dict]]:
+        """Vue 模式下详情页由联邦 Page 组件渲染。"""
+        return None
 
     @staticmethod
     def _read_latest_preview() -> str:
@@ -177,41 +200,6 @@ class programpreview(_PluginBase):
     def _preview_to_textarea(text: str) -> str:
         """详情页使用只读文本域展示 Markdown 原文，避免组件不兼容。"""
         return text
-
-    def get_page(self) -> List[dict]:
-        latest_preview = self._read_latest_preview()
-        return [
-            {
-                "component": "VCard",
-                "props": {"variant": "outlined", "class": "mb-3"},
-                "content": [
-                    {
-                        "component": "VCardTitle",
-                        "text": "四大平台节目预告结果",
-                    },
-                    {
-                        "component": "VCardSubtitle",
-                        "text": f"上次运行：{self._last_run or '未运行'}｜状态：{self._last_status or '未知'}",
-                    },
-                    {
-                        "component": "VCardText",
-                        "content": [
-                            {
-                                "component": "VTextarea",
-                                "props": {
-                                    "model-value": self._preview_to_textarea(latest_preview),
-                                    "readonly": True,
-                                    "auto-grow": True,
-                                    "rows": 18,
-                                    "variant": "outlined",
-                                    "label": "最新节目预告",
-                                },
-                            }
-                        ],
-                    },
-                ],
-            }
-        ]
 
     def stop_service(self) -> None:
         try:
