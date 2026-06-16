@@ -16,12 +16,13 @@
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",
-    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。",
+    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；配置页与详情页升级为 Vue 联邦 UI。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.22",
+    "version": "0.1.25",
     "author": "qsxazcv",
     "level": 1,
     "history": {
+      "v0.1.23": "升级为 Vue 联邦 UI：重做配置页与扫码登录工作台，保留现有 QQ/微信扫码、Cookie 提取、有效性检测和 OpenList 同步逻辑。",
       "v0.1.0": "初始版本：支持后端浏览器打开微云登录页、扫码登录、提取并保存 Cookie。",
       "v0.1.1": "新增插件详情页“立即运行一次/刷新状态/清除 Cookie”按钮，配置页一次性运行开关，并补充完整运行日志。",
       "v0.1.2": "支持选择 QQ/微信扫码登录；插件页面精简为二维码、状态和完整 Cookie；扫码后等待页面跳转并保存 Cookie。",
@@ -44,7 +45,9 @@
       "v0.1.19": "插件详情页二维码改为图片 API 渲染并每 3 秒探测状态；扫码成功清除 qrcode 后当前页面会自动隐藏二维码区域。",
       "v0.1.20": "新增 /weiyun_status、/weiyun_check 英文命令；检测通知合并为单条结果，状态通知隐藏有效字段；完整 Cookie 显示框支持拖动；优化微信二维码截图等待、Telegram 二维码文件推送和二维码图片地址。",
       "v0.1.21": "修复插件清单 release 标记：改为文件列表安装，避免未创建 GitHub Release 时安装报 404。",
-      "v0.1.22": "更换插件图标为仓库 icons/weiyuncookie.png。"
+      "v0.1.22": "更换插件图标为仓库 icons/weiyuncookie.png。",
+      "v0.1.24": "修复 Vue 联邦 Page 组件空白：补充 __api_status 返回 enabled/has_cookie/login_type_title/browser_mode_title/qrcode/check_cron 字段。",
+      "v0.1.25": "修复 Vue 联邦 Page 组件括号不匹配导致的空白问题。"
     },
     "v2": true,
     "release": false,

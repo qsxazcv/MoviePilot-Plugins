@@ -44,7 +44,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.22"
+    plugin_version = "0.1.25"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -234,378 +234,17 @@ class weiyuncookie(_PluginBase):
             },
         ]
 
-    def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
-        login_types = [
-            {"title": "QQ 扫码登录", "value": "qq"},
-            {"title": "微信扫码登录", "value": "wechat"},
-        ]
-        browser_modes = [
-            {"title": "插件内置", "value": "playwright"},
-            {"title": "兼容模式", "value": "cloakbrowser"},
-        ]
-        form = [
-            {
-                "component": "VForm",
-                "content": [
-                    {
-                        "component": "VCard",
-                        "props": {"variant": "outlined", "class": "mx-auto", "max-width": "980"},
-                        "content": [
-                            {"component": "VCardTitle", "text": "微云 Cookie 助手配置"},
-                            {
-                                "component": "VCardText",
-                                "content": [
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSwitch",
-                                                        "props": {"model": "enabled", "label": "启用插件", "density": "comfortable"},
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSwitch",
-                                                        "props": {
-                                                            "model": "onlyonce",
-                                                            "label": "立即运行一次",
-                                                            "hint": "保存配置后启动扫码。",
-                                                            "persistent-hint": True,
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSelect",
-                                                        "props": {
-                                                            "model": "login_type",
-                                                            "label": "登录方式",
-                                                            "items": login_types,
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSelect",
-                                                        "props": {
-                                                            "model": "browser_mode",
-                                                            "label": "浏览器模式",
-                                                            "items": browser_modes,
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSwitch",
-                                                        "props": {"model": "headless", "label": "无头浏览器", "density": "comfortable"},
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VSwitch",
-                                                        "props": {"model": "include_qq_domain", "label": "包含 QQ 域 Cookie", "density": "comfortable"},
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VTextField",
-                                                        "props": {
-                                                            "model": "timeout_seconds",
-                                                            "label": "扫码等待秒数",
-                                                            "type": "number",
-                                                            "placeholder": "180",
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [
-                                                    {
-                                                        "component": "VTextField",
-                                                        "props": {
-                                                            "model": "last_cookie_count",
-                                                            "label": "Cookie 数量",
-                                                            "readonly": True,
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "notify_enabled", "label": "启用 MP 通知", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "notify_login_result", "label": "登录结果通知", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "notify_openlist_result", "label": "OpenList 同步通知", "density": "comfortable"}}],
-                                            }
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12},
-                                                "content": [{"component": "VTextField", "props": {"model": "qrcode_public_base_url", "label": "二维码公网地址", "placeholder": "例如：https://你的域名", "hint": "微信通知需要企业微信能访问的公网地址；留空时 TG 使用本机抓图地址。", "persistent-hint": True, "variant": "outlined", "density": "comfortable"}}],
-                                            }
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [
-                                                    {
-                                                        "component": "VTextField",
-                                                        "props": {
-                                                            "model": "login_url",
-                                                            "label": "微云登录地址",
-                                                            "placeholder": "https://www.weiyun.com/",
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [
-                                                    {
-                                                        "component": "VTextField",
-                                                        "props": {
-                                                            "model": "last_run",
-                                                            "label": "上次运行",
-                                                            "readonly": True,
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "check_enabled", "label": "自动检测 Cookie", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "check_notify", "label": "失效后通知", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "check_onlyonce", "label": "立即检测一次", "hint": "保存配置后执行。", "persistent-hint": True, "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VCronField", "props": {"model": "check_cron", "label": "检测周期 Cron", "placeholder": "0 */6 * * *", "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "last_check", "label": "上次检测", "readonly": True, "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "last_check_status", "label": "检测状态", "readonly": True, "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VDivider",
-                                        "props": {"class": "my-3"},
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "openlist_enabled", "label": "启用 OpenList 同步", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "openlist_auto_sync", "label": "每次扫码后同步", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "openlist_sync_after_relogin", "label": "失效重登后同步", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VTextField", "props": {"model": "openlist_storage_id", "label": "存储 ID", "type": "number", "placeholder": "2", "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "openlist_url", "label": "OpenList 地址", "placeholder": "http://192.168.5.100:5244", "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "openlist_token", "label": "OpenList Token", "type": "password", "placeholder": "请在插件配置页填写管理员 Token", "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "align-center mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "sm": 6, "md": 3},
-                                                "content": [{"component": "VSwitch", "props": {"model": "openlist_sync_onlyonce", "label": "立即同步一次", "hint": "保存配置后执行。", "persistent-hint": True, "density": "comfortable"}}],
-                                            }
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "last_openlist_sync", "label": "上次 OpenList 同步", "readonly": True, "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12, "md": 6},
-                                                "content": [{"component": "VTextField", "props": {"model": "last_openlist_sync_status", "label": "OpenList 同步状态", "readonly": True, "variant": "outlined", "density": "comfortable"}}],
-                                            },
-                                        ],
-                                    },
-                                    {
-                                        "component": "VRow",
-                                        "props": {"dense": True, "class": "mt-1"},
-                                        "content": [
-                                            {
-                                                "component": "VCol",
-                                                "props": {"cols": 12},
-                                                "content": [
-                                                    {
-                                                        "component": "VTextField",
-                                                        "props": {
-                                                            "model": "last_status",
-                                                            "label": "状态",
-                                                            "readonly": True,
-                                                            "variant": "outlined",
-                                                            "density": "comfortable",
-                                                        },
-                                                    }
-                                                ],
-                                            }
-                                        ],
-                                    },
-                                    {
-                                        "component": "VTextarea",
-                                        "props": {
-                                            "model": "cookie_full",
-                                            "label": "完整 Cookie",
-                                            "readonly": True,
-                                            "auto-grow": False,
-                                            "rows": 3,
-                                            "variant": "outlined",
-                                            "class": "mt-2",
-                                            "style": "resize: vertical; min-height: 80px;",
-                                        },
-                                    },
-                                ],
-                            },
-                        ],
-                    }
-                ],
-            }
-        ]
-        return form, {
+
+    def get_render_mode(self) -> Tuple[str, str]:
+        """使用 Vue 联邦组件渲染配置页与详情页。"""
+        return "vue", "dist/assets"
+
+    def get_form(self) -> Tuple[Optional[List[dict]], Dict[str, Any]]:
+        """Vue 模式下配置页由联邦 Config 组件渲染；这里仅返回默认模型。"""
+        return None, self.__build_form_model()
+
+    def __build_form_model(self) -> Dict[str, Any]:
+        return {
             "enabled": self._enabled,
             "onlyonce": False,
             "headless": self._headless,
@@ -639,146 +278,9 @@ class weiyuncookie(_PluginBase):
             "cookie_full": self.get_data("cookie") or "",
         }
 
-    def get_page(self) -> List[dict]:
-        qrcode = self.get_data("qrcode") or ""
-        cookie = self.get_data("cookie") or ""
-        copy_button_props = {
-            "color": "success",
-            "variant": "tonal",
-            "prepend-icon": "mdi-content-copy",
-            "disabled": not bool(cookie),
-            "block": True,
-        }
-        if cookie:
-            copy_button_props["href"] = self.__clipboard_javascript_url()
-        content: List[dict] = [
-            {
-                "component": "VRow",
-                "props": {"class": "align-center mb-2", "dense": True},
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "sm": 4},
-                        "content": [
-                            {
-                                "component": "VBtn",
-                                "props": {
-                                    "color": "primary",
-                                    "variant": "elevated",
-                                    "prepend-icon": "mdi-play-circle-outline",
-                                    "block": True,
-                                },
-                                "text": "立即运行一次",
-                                "events": {"click": {"api": "plugin/weiyuncookie/start_login", "method": "post"}},
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "sm": 4},
-                        "content": [
-                            {
-                                "component": "VBtn",
-                                "props": copy_button_props,
-                                "text": "复制 Cookie",
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "sm": 4},
-                        "content": [
-                            {
-                                "component": "VBtn",
-                                "props": {
-                                    "color": "error",
-                                    "variant": "tonal",
-                                    "prepend-icon": "mdi-delete-outline",
-                                    "block": True,
-                                },
-                                "text": "清除 Cookie",
-                                "events": {"click": {"api": "plugin/weiyuncookie/clear_cookie", "method": "post"}},
-                            }
-                        ],
-                    },
-                ],
-            }
-        ]
-        if qrcode:
-            content.append({"component": "div", "html": self.__qrcode_auto_hide_html()})
-        content.extend([
-            {
-                "component": "VRow",
-                "props": {"dense": True, "class": "mt-1"},
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 6},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model-value": self.__login_type_title(),
-                                    "readonly": True,
-                                    "label": "当前登录方式",
-                                    "variant": "outlined",
-                                    "density": "comfortable",
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 6},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model-value": self._last_status or "未知",
-                                    "readonly": True,
-                                    "label": "状态",
-                                    "variant": "outlined",
-                                    "density": "comfortable",
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
-            {
-                "component": "VTextarea",
-                "props": {
-                    "model-value": cookie,
-                    "readonly": True,
-                    "auto-grow": False,
-                    "rows": 3,
-                    "variant": "outlined",
-                    "label": "完整 Cookie",
-                    "class": "mt-2",
-                    "style": "resize: vertical; min-height: 80px;",
-                },
-            },
-            {
-                "component": "textarea",
-                "props": {
-                    "id": "weiyun-cookie-full",
-                    "readonly": True,
-                    "aria-label": "完整 Cookie 隐藏复制源",
-                    "style": "position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none;",
-                },
-                "text": cookie,
-            },
-        ])
-        return [
-            {
-                "component": "VCard",
-                "props": {"variant": "outlined", "class": "mx-auto", "max-width": "980"},
-                "content": [
-                    {"component": "VCardTitle", "text": "微云 Cookie 助手"},
-                    {"component": "VCardText", "content": content},
-                ],
-            }
-        ]
+    def get_page(self) -> Optional[List[dict]]:
+        """Vue 模式下详情页由联邦 Page 组件渲染。"""
+        return None
 
     def __api_qrcode_image(self):
         qrcode = self.get_data("qrcode") or ""
@@ -869,19 +371,29 @@ class weiyuncookie(_PluginBase):
         return {"success": True, "message": "已启动微云扫码登录，请刷新插件详情页查看二维码"}
 
     def __api_status(self) -> Dict[str, Any]:
+        cookie = self.get_data("cookie") or ""
+        qrcode = self.get_data("qrcode") or ""
+        browser_mode = self._browser_mode or "playwright"
         return {
             "success": True,
+            "enabled": self._enabled,
             "running": self._login_running,
             "login_type": self._login_type,
+            "login_type_title": self.__login_type_title(),
+            "browser_mode": browser_mode,
+            "browser_mode_title": "兼容模式" if browser_mode == "cloakbrowser" else "插件内置",
             "last_status": self._last_status,
             "last_run": self._last_run,
             "cookie_count": self._last_cookie_count,
+            "has_cookie": bool(cookie),
+            "has_qrcode": bool(qrcode),
+            "qrcode": qrcode,
             "last_check": self._last_check,
             "last_check_status": self._last_check_status,
+            "check_cron": self._check_cron,
             "last_openlist_sync": self._last_openlist_sync,
             "last_openlist_sync_status": self._last_openlist_sync_status,
-            "cookie": self.get_data("cookie") or "",
-            "has_qrcode": bool(self.get_data("qrcode")),
+            "cookie": cookie,
         }
 
     def __api_clear_cookie(self) -> Dict[str, Any]:

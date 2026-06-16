@@ -26,7 +26,15 @@
 
 ## 版本说明
 
-### v0.1.22
+### v0.1.25
+
+- 修复 Vue 联邦 Page 组件括号不匹配导致的空白问题。
+
+### v0.1.24
+
+- 修复 Vue 联邦 Page 组件空白：补充 __api_status 返回 enabled/has_cookie/login_type_title/browser_mode_title/qrcode/check_cron 字段。
+
+### v0.1.23
 
 - 更换插件图标为仓库 `icons/weiyuncookie.png`。
 
@@ -43,3 +51,9 @@
 - 优化微信二维码截图等待逻辑，避免截图过早。
 - 优化 Telegram 二维码推送，增加二维码链接和本地文件推送路径。
 - 默认二维码图片地址从 `127.0.0.1` 调整为 `192.168.5.100`。
+
+
+## v0.1.23
+
+- 升级为 Vue 联邦 UI：重做配置页与扫码登录工作台。
+- 保留现有 QQ / 微信扫码、Cookie 提取、有效性检测和 OpenList 同步逻辑。
