@@ -6,8 +6,8 @@
 
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
-| `programpreview` | 四大平台节目预告 | `1.0.9` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，提供 Vue 联邦配置页与详情页，可查看运行状态、立即执行并展示最近一次预告。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.27` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；Vue 联邦 UI 支持快速弹出二维码并提供二维码占位图。 |
+| `programpreview` | 四大平台节目预告 | `1.0.4` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.22` | 支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList。 |
 
 ## 插件源地址
 
@@ -39,8 +39,7 @@ MoviePilot-Plugins/
     ├── programpreview/
     │   ├── __init__.py
     │   ├── preview_core.py
-    │   ├── requirements.txt
-    │   └── dist/assets/        # Vue 联邦 UI 产物
+    │   └── requirements.txt
     └── weiyuncookie/
         ├── __init__.py
         └── README.md
@@ -66,22 +65,12 @@ MoviePilot-Plugins/
 
 插件 ID：`programpreview`
 
-当前版本：`1.0.9`
-
-核心能力：
-
-- 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目。
-- 支持 Cron 周期执行、立即运行一次、通知与强制推送。
-- 提供 Vue 联邦 UI：卡片化配置页、运行状态概览、立即运行/刷新按钮、最近一次节目预告详情。
-- 预告结果保存到 `/config/plugins/programpreview/latest_preview.md`，避免插件运行目录更新后丢失。
-
 功能说明：
 
 - 抓取爱奇艺、腾讯视频、芒果TV、优酷的即将上线、即将上映或预约节目。
 - 爱奇艺接入 `newonline` 与片库 `videolib/list` 即将上线抓取，合并 `prelw`、频道页与搜索页兜底结果。
 - 爱奇艺预约数优先通过 `countAndState` 批量查询；搜索页兜底最多重试 3 次，仍失败则保留条目等待下次定时任务重试。
 - 爱奇艺节目预告会按真实日期排序，兼容“明天”“本周四”“06月13日”等不同日期格式。
-- 爱奇艺推送消息自动过滤无具体上线日期的“即将上线”条目，仅展示有明确日期的节目。
 - 支持 Cron 定时执行，默认每天 `08:00`。
 - 支持立即运行一次。
 - 支持开启通知，将节目预告推送到 MoviePilot 已配置的通知渠道。
@@ -121,8 +110,7 @@ Cron 示例：
 
 - 支持 QQ / 微信扫码登录腾讯微云。
 - 通过 MoviePilot 后端浏览器打开微云登录页，扫码后自动提取 `weiyun.com` / `qq.com` 相关 Cookie。
-- 插件配置页和详情页已升级为 Vue 联邦 UI，采用左侧导航、二级标签、状态卡片和 sticky toolbar。
-- 详情页支持快速弹出二维码、扫码成功自动隐藏；二维码链接未就绪时会显示友好占位图。
+- 插件配置页和详情页均可展示完整 Cookie，显示框支持手动拖动调整高度。
 - 支持 Cookie 有效性检测：可按 Cron 定时检测，也可手动立即检测。
 - Cookie 失效时可通过 MoviePilot 通知提醒重新登录，并避免重复提醒。
 - 支持将最新 Cookie 同步到 OpenList 腾讯微云存储。
@@ -145,8 +133,7 @@ Cron 示例：
 | 启用插件 | 关闭 | 开启插件功能。 |
 | 立即运行一次 | 关闭 | 保存配置后启动一次扫码登录。 |
 | 登录方式 | `QQ 扫码登录` | 支持 QQ / 微信扫码登录。 |
-| 浏览器内核 | `CloakBrowser` | 可选择 `Playwright Chromium` 或 `CloakBrowser`。 |
-| 浏览器预热 | 开启 | 插件启用后后台预热浏览器内核，减少首次扫码冷启动等待。 |
+| 浏览器模式 | `插件内置` | 可选择插件内置 Playwright 或兼容模式。 |
 | 无头浏览器 | 开启 | 后端无界面运行浏览器。 |
 | 包含 QQ 域 Cookie | 开启 | 同步提取 `qq.com` 相关 Cookie。 |
 | 扫码等待秒数 | `180` | 等待用户扫码登录的最长时间。 |
@@ -172,7 +159,7 @@ Cron 示例：
 
 `programpreview` 带有独立的 `requirements.txt`。安装插件后，如运行环境缺少依赖，请按 MoviePilot 插件依赖安装方式处理。
 
-`weiyuncookie` 依赖 MoviePilot 运行环境中的后端浏览器能力。可选择 `Playwright Chromium` 或 `CloakBrowser`；如首次扫码较慢，建议开启浏览器预热。
+`weiyuncookie` 依赖 MoviePilot 运行环境中的后端浏览器能力。优先使用插件内置 Playwright；如环境需要可切换兼容模式。
 
 ## 维护与校验
 
@@ -194,16 +181,6 @@ git status --short --branch
 
 ### `weiyuncookie`
 
-- `0.1.27`：修复二维码图片链接过早打开显示 `qrcode not ready`；扫码任务运行中会短暂等待二维码生成，未就绪时返回友好 SVG 占位图。
-
-- `0.1.26`：浏览器模式命名调整为真实内核名：`Playwright Chromium` / `CloakBrowser`。
-
-- `0.1.25`：新增浏览器预热开关，插件启用后后台预热 Chromium / CloakBrowser，减少首次扫码冷启动等待。
-
-- `0.1.24`：优化启动扫码后的二维码弹出速度，缩短页面等待、二维码就绪检测和截图超时，并提升前端状态轮询频率。
-
-- `0.1.23`：按 z2561221/MoviePilot-Plugins 设计语言重构为 Vue 联邦 UI，配置页采用左侧导航和二级标签，详情页采用 sticky toolbar、状态卡片、二维码与 Cookie 管理面板。
-
 - `0.1.22`：更换插件图标为仓库 `icons/weiyuncookie.png`。
 
 - `0.1.21`：修复插件清单 `release` 标记，改为文件列表安装，避免未创建 GitHub Release 时安装报 404。
@@ -211,16 +188,6 @@ git status --short --branch
 - `0.1.20`：新增 `/weiyun_status`、`/weiyun_check` 英文命令；检测通知合并为单条结果，状态通知隐藏有效字段；完整 Cookie 显示框支持拖动；优化微信二维码截图等待、Telegram 二维码文件推送和二维码图片地址。
 
 ### `programpreview`
-
-- `1.0.9`：补齐完整 Vue 联邦 UI，修复详情页未自动加载状态的问题；状态页可展示启用状态、通知、Cron、最近运行与最近预告，并将预告结果保存到持久数据目录。
-
-- `1.0.8`：修复 UI 设计后联邦构建产物缺失导致插件打不开的问题，临时回退稳定渲染并验证配置页/详情页。
-
-- `1.0.7`：新增插件状态与立即运行 API，为 Vue 联邦详情页读取运行状态和触发任务提供接口。
-
-- `1.0.6`：优化插件 UI 结构，为后续 Vue 联邦页面改造准备配置模型与详情数据。
-
-- `1.0.5`：爱奇艺推送消息过滤无具体上线日期的「即将上线」条目，仅展示有明确日期的节目。
 
 - `1.0.4`：接入爱奇艺 `newonline` 与片库 `videolib/list` 即将上线抓取；预约数优先走 `countAndState`，搜索页兜底最多重试 3 次，并按真实日期排序。
 
