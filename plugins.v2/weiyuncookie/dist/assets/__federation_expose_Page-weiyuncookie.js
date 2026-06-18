@@ -20,7 +20,6 @@ export default defineComponent({
     const VCol = C('VCol');
     const VProgressCircular = C('VProgressCircular');
     const VChip = C('VChip');
-    const VDivider = C('VDivider');
 
     const loading = ref(false);
     const busy = ref(false);
@@ -60,49 +59,56 @@ export default defineComponent({
       }
     }
 
-    function fallbackCopy(text) {
-      if (!document?.body) return false;
-      const el = document.createElement('textarea');
-      el.value = text;
-      el.setAttribute('readonly', 'readonly');
-      el.style.position = 'fixed';
-      el.style.left = '-9999px';
-      el.style.top = '0';
-      el.style.opacity = '0';
-      document.body.appendChild(el);
-      el.focus();
-      el.select();
-      el.setSelectionRange(0, text.length);
+    function eventCopy(text) {
+      if (typeof document === 'undefined' || !document.addEventListener) return false;
+      let wrote = false;
+      const listener = (event) => {
+        event.preventDefault();
+        if (event.clipboardData) {
+          event.clipboardData.setData('text/plain', text);
+          wrote = true;
+        }
+      };
+      document.addEventListener('copy', listener);
       let ok = false;
       try {
         ok = document.execCommand('copy');
       } catch (err) {
         ok = false;
+      } finally {
+        document.removeEventListener('copy', listener);
       }
-      document.body.removeChild(el);
-      return ok;
+      return ok && wrote;
     }
 
     async function copyCookie() {
-      const text = status.value.cookie || '';
+      let text = status.value.cookie || '';
       error.value = '';
       message.value = '';
       if (!text) {
-        error.value = '当前没有可复制的 Cookie';
+        try {
+          const latest = await getPluginApi(props.api, 'status') || {};
+          status.value = latest;
+          text = latest.cookie || '';
+        } catch (err) {}
+        if (!text) {
+          error.value = '当前没有可复制的 Cookie，请先扫码登录';
+          return;
+        }
+      }
+      const copiedByEvent = eventCopy(text);
+      if (copiedByEvent) {
+        message.value = `Cookie 已复制到剪贴板（${text.length} 字符）`;
         return;
       }
       try {
         if (navigator?.clipboard?.writeText && window.isSecureContext) {
           await navigator.clipboard.writeText(text);
-          message.value = 'Cookie 已复制到剪贴板';
+          message.value = `Cookie 已复制到剪贴板（${text.length} 字符）`;
           return;
         }
       } catch (err) {}
-      if (fallbackCopy(text)) {
-        message.value = 'Cookie 已复制到剪贴板';
-      } else {
-        error.value = '复制失败，请刷新页面后重试';
-      }
+      error.value = '复制失败，请刷新页面后重试';
     }
 
     function stat(label, value, icon, color = 'primary') {
@@ -207,12 +213,13 @@ export default defineComponent({
         h(VCard, { variant: 'outlined', class: 'wy-card-panel wy-timeline-panel mt-3' }, () => [
           h(VCardText, null, [
             h('div', { class: 'wy-section-line' }, [h('span', '近期结果')]),
-            h(VDivider, { class: 'my-3' }),
-            timeline('最近登录', status.value.last_run, 'mdi-history'),
-            timeline('检测结果', status.value.last_check_status, 'mdi-shield-check-outline', status.value.last_check_status ? 'success' : 'grey'),
-            timeline('最近检测', status.value.last_check, 'mdi-clock-check-outline'),
-            timeline('OpenList 同步', status.value.last_openlist_sync_status, 'mdi-cloud-sync-outline', status.value.last_openlist_sync_status ? 'info' : 'grey'),
-            timeline('同步时间', status.value.last_openlist_sync, 'mdi-calendar-clock'),
+            h('div', { class: 'wy-timeline-grid' }, [
+              timeline('最近登录', status.value.last_run, 'mdi-history'),
+              timeline('检测结果', status.value.last_check_status, 'mdi-shield-check-outline', status.value.last_check_status ? 'success' : 'grey'),
+              timeline('最近检测', status.value.last_check, 'mdi-clock-check-outline'),
+              timeline('OpenList 同步', status.value.last_openlist_sync_status, 'mdi-cloud-sync-outline', status.value.last_openlist_sync_status ? 'info' : 'grey'),
+              timeline('同步时间', status.value.last_openlist_sync, 'mdi-calendar-clock'),
+            ]),
           ]),
         ]),
       ]),
