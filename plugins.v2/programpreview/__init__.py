@@ -18,7 +18,6 @@ from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas.types import NotificationType
 
-from . import preview_core
 
 
 class programpreview(_PluginBase):
@@ -138,10 +137,20 @@ class programpreview(_PluginBase):
                 self._update_config()
         return []
 
+    @staticmethod
+    def _load_preview_core():
+        # 安装/重装时运行目录可能正在分批复制文件，热加载会抢在
+        # preview_core.py 完整落盘前导入插件。顶层导入会让 Python 把
+        # 这种瞬时状态报成 partially initialized/circular import。
+        # 改为执行任务/读取结果时懒加载，保证插件主体先稳定加载。
+        from . import preview_core
+        return preview_core
+
     def run_preview(self):
         start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         logger.info("开始执行四大平台节目预告")
         try:
+            preview_core = self._load_preview_core()
             if self._notify:
                 asyncio.run(preview_core.main(force_notify=bool(self._force_notify)))
             else:
@@ -183,11 +192,15 @@ class programpreview(_PluginBase):
         """Vue 模式下详情页由联邦 Page 组件渲染。"""
         return None
 
-    @staticmethod
-    def _read_latest_preview() -> str:
+    @classmethod
+    def _read_latest_preview(cls) -> str:
         """读取最近一次节目预告结果，用于插件详情页展示。"""
         try:
-            path = getattr(preview_core, "OUT_FILE", Path("/config/plugins/programpreview/latest_preview.md"))
+            try:
+                preview_core = cls._load_preview_core()
+                path = getattr(preview_core, "OUT_FILE", Path("/config/plugins/programpreview/latest_preview.md"))
+            except Exception:
+                path = Path("/config/plugins/programpreview/latest_preview.md")
             path = Path(path)
             if not path.exists():
                 return "暂无节目预告结果，请先点击“立即运行一次”或等待定时任务执行。"
