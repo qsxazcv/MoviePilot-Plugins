@@ -172,6 +172,18 @@ export default defineComponent({
           stat('Cookie 数量', String(status.value.cookie_count ?? 0), 'mdi-counter', status.value.has_cookie ? 'success' : 'grey'),
           stat('检测周期', status.value.check_cron, 'mdi-clock-outline'),
         ]),
+        h(VCard, { variant: 'outlined', class: 'wy-card-panel wy-timeline-panel mt-2' }, () => [
+          h(VCardText, null, [
+            h('div', { class: 'wy-section-line' }, [h('span', '近期结果')]),
+            h('div', { class: 'wy-timeline-grid' }, [
+              timeline('最近登录', status.value.last_run, 'mdi-history'),
+              timeline('检测结果', status.value.last_check_status, 'mdi-shield-check-outline', status.value.last_check_status ? 'success' : 'grey'),
+              timeline('最近检测', status.value.last_check, 'mdi-clock-check-outline'),
+              timeline('OpenList 同步', status.value.last_openlist_sync_status, 'mdi-cloud-sync-outline', status.value.last_openlist_sync_status ? 'info' : 'grey'),
+              timeline('同步时间', status.value.last_openlist_sync, 'mdi-calendar-clock'),
+            ]),
+          ]),
+        ]),
         h(VRow, { dense: true, class: 'mt-2' }, () => [
           h(VCol, { cols: 12, md: 4 }, () => h(VCard, { variant: 'outlined', class: 'wy-card-panel' }, () => [
             h(VCardText, null, [
@@ -209,18 +221,6 @@ export default defineComponent({
               ]),
             ]),
           ])),
-        ]),
-        h(VCard, { variant: 'outlined', class: 'wy-card-panel wy-timeline-panel mt-3' }, () => [
-          h(VCardText, null, [
-            h('div', { class: 'wy-section-line' }, [h('span', '近期结果')]),
-            h('div', { class: 'wy-timeline-grid' }, [
-              timeline('最近登录', status.value.last_run, 'mdi-history'),
-              timeline('检测结果', status.value.last_check_status, 'mdi-shield-check-outline', status.value.last_check_status ? 'success' : 'grey'),
-              timeline('最近检测', status.value.last_check, 'mdi-clock-check-outline'),
-              timeline('OpenList 同步', status.value.last_openlist_sync_status, 'mdi-cloud-sync-outline', status.value.last_openlist_sync_status ? 'info' : 'grey'),
-              timeline('同步时间', status.value.last_openlist_sync, 'mdi-calendar-clock'),
-            ]),
-          ]),
         ]),
       ]),
     ]);

@@ -64,14 +64,15 @@ const groups = [
     title: '运行档案',
     icon: 'mdi-book-open-page-variant-outline',
     desc: '最近登录、检测、同步状态与 Cookie 数量。',
+    compact: true,
     fields: [
-      ['readonly', 'last_status', '最近状态', ''],
-      ['readonly', 'last_run', '最近登录时间', ''],
-      ['readonly', 'last_cookie_count', 'Cookie 数量', ''],
-      ['readonly', 'last_check', '最近检测时间', ''],
-      ['readonly', 'last_check_status', '最近检测结果', ''],
-      ['readonly', 'last_openlist_sync', '最近同步时间', ''],
-      ['readonly', 'last_openlist_sync_status', '最近同步结果', ''],
+      ['last_status', '最近状态', 'mdi-list-status', 'primary'],
+      ['last_run', '最近登录', 'mdi-history', 'primary'],
+      ['last_cookie_count', 'Cookie 数量', 'mdi-cookie-outline', 'success'],
+      ['last_check_status', '检测结果', 'mdi-shield-check-outline', 'success'],
+      ['last_check', '最近检测', 'mdi-clock-check-outline', 'primary'],
+      ['last_openlist_sync_status', '同步结果', 'mdi-cloud-sync-outline', 'info'],
+      ['last_openlist_sync', '同步时间', 'mdi-calendar-clock', 'info'],
     ],
   },
 ];
@@ -118,6 +119,18 @@ export default defineComponent({
       return h('div', { class: 'wy-console-stat' }, [
         h('div', { class: 'wy-console-label' }, [h(VIcon, { icon, size: '15', color, class: 'mr-1' }), label]),
         h('div', { class: 'wy-console-value' }, value || '—'),
+      ]);
+    }
+
+    function archiveItem(def) {
+      const [model, label, icon, color = 'primary'] = def;
+      const value = model === 'last_cookie_count' ? `${form[model] ?? 0} 个` : form[model];
+      return h('div', { class: 'wy-archive-item' }, [
+        h(VIcon, { icon, color, size: '18' }),
+        h('div', { class: 'wy-archive-body' }, [
+          h('div', { class: 'wy-archive-label' }, label),
+          h('div', { class: 'wy-archive-value' }, value || '—'),
+        ]),
       ]);
     }
 
@@ -169,7 +182,7 @@ export default defineComponent({
           h('div', { class: 'wy-section-desc' }, group.desc),
         ]),
         group.alert && h(VAlert, { type: 'warning', variant: 'tonal', density: 'compact', class: 'mb-3' }, () => group.alert),
-        h(VRow, { dense: true }, () => group.fields.map((def) => h(VCol, {
+        group.compact ? h('div', { class: 'wy-archive-grid' }, group.fields.map(archiveItem)) : h(VRow, { dense: true }, () => group.fields.map((def) => h(VCol, {
           cols: 12,
           md: wideModels.has(def[1]) ? 12 : 6,
         }, () => field(def)))),
