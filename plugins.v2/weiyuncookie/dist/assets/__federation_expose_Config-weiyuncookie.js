@@ -63,7 +63,7 @@ const groups = [
     key: 'archive',
     title: '运行档案',
     icon: 'mdi-book-open-page-variant-outline',
-    desc: '最近登录、检测、同步状态与完整 Cookie。',
+    desc: '最近登录、检测、同步状态与 Cookie 数量。',
     fields: [
       ['readonly', 'last_status', '最近状态', ''],
       ['readonly', 'last_run', '最近登录时间', ''],
@@ -72,12 +72,11 @@ const groups = [
       ['readonly', 'last_check_status', '最近检测结果', ''],
       ['readonly', 'last_openlist_sync', '最近同步时间', ''],
       ['readonly', 'last_openlist_sync_status', '最近同步结果', ''],
-      ['textarea', 'cookie_full', '完整 Cookie', '只读展示，便于手动复制。'],
     ],
   },
 ];
 
-const wideModels = new Set(['login_url', 'qrcode_public_base_url', 'openlist_url', 'openlist_token', 'cookie_full', 'last_openlist_sync_status']);
+const wideModels = new Set(['login_url', 'qrcode_public_base_url', 'openlist_url', 'openlist_token', 'last_openlist_sync_status']);
 
 export default defineComponent({
   name: 'Config',
@@ -95,7 +94,6 @@ export default defineComponent({
     const VSwitch = C('VSwitch');
     const VTextField = C('VTextField');
     const VSelect = C('VSelect');
-    const VTextarea = C('VTextarea');
     const VBtn = C('VBtn');
     const VAlert = C('VAlert');
     const VChip = C('VChip');
@@ -148,20 +146,6 @@ export default defineComponent({
           'onUpdate:modelValue': (value) => form[model] = value,
         });
       }
-      if (type === 'textarea') {
-        return h(VTextarea, {
-          modelValue: form[model] || '',
-          label,
-          readonly: true,
-          rows: 8,
-          'auto-grow': false,
-          variant: 'outlined',
-          density: 'comfortable',
-          hint,
-          'persistent-hint': !!hint,
-          class: 'wy-cookie-textarea',
-        });
-      }
       return h(VTextField, {
         modelValue: form[model] ?? '',
         label,
@@ -187,7 +171,7 @@ export default defineComponent({
         group.alert && h(VAlert, { type: 'warning', variant: 'tonal', density: 'compact', class: 'mb-3' }, () => group.alert),
         h(VRow, { dense: true }, () => group.fields.map((def) => h(VCol, {
           cols: 12,
-          md: def[0] === 'textarea' || wideModels.has(def[1]) ? 12 : 6,
+          md: wideModels.has(def[1]) ? 12 : 6,
         }, () => field(def)))),
       ]);
     }

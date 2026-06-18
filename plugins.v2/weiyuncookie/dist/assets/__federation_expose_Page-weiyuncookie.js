@@ -18,7 +18,6 @@ export default defineComponent({
     const VCardText = C('VCardText');
     const VRow = C('VRow');
     const VCol = C('VCol');
-    const VTextarea = C('VTextarea');
     const VProgressCircular = C('VProgressCircular');
     const VChip = C('VChip');
     const VDivider = C('VDivider');
@@ -66,7 +65,7 @@ export default defineComponent({
         await navigator.clipboard.writeText(status.value.cookie || '');
         message.value = 'Cookie 已复制到剪贴板';
       } catch (err) {
-        error.value = '复制失败，请手动复制文本框内容';
+        error.value = '复制失败，请稍后重试';
       }
     }
 
@@ -84,6 +83,13 @@ export default defineComponent({
           h('div', { class: 'wy-timeline-label' }, label),
           h('div', { class: 'wy-timeline-value' }, value || '—'),
         ]),
+      ]);
+    }
+
+    function meta(label, value) {
+      return h('div', { class: 'wy-cookie-meta-row' }, [
+        h('span', { class: 'wy-cookie-meta-label' }, label),
+        h('span', { class: 'wy-cookie-meta-value' }, value || '—'),
       ]);
     }
 
@@ -146,12 +152,19 @@ export default defineComponent({
           h(VCol, { cols: 12, md: 8 }, () => h(VCard, { variant: 'outlined', class: 'wy-card-panel' }, () => [
             h(VCardText, null, [
               h('div', { class: 'wy-section-line' }, [
-                h('span', '完整 Cookie'),
+                h('span', 'Cookie 管理'),
                 h(VBtn, { size: 'small', variant: 'tonal', prependIcon: 'mdi-content-copy', disabled: !status.value.cookie, onClick: copyCookie }, () => '复制'),
               ]),
-              status.value.cookie
-                ? h(VTextarea, { modelValue: status.value.cookie, readonly: true, rows: 10, 'auto-grow': false, variant: 'outlined', class: 'mt-3 wy-cookie-textarea' })
-                : h('div', { class: 'wy-empty' }, [h(VIcon, { icon: 'mdi-cookie-alert-outline', size: '38' }), h('div', '暂无 Cookie，请先扫码登录。')]),
+              h('div', { class: 'wy-cookie-private' }, [
+                h(VIcon, { icon: status.value.has_cookie ? 'mdi-shield-lock-outline' : 'mdi-cookie-alert-outline', size: '42', color: status.value.has_cookie ? 'success' : 'grey' }),
+                h('div', { class: 'wy-cookie-private-title' }, status.value.has_cookie ? 'Cookie 已安全保存' : '暂无 Cookie'),
+                h('div', { class: 'wy-cookie-private-desc' }, status.value.has_cookie ? `已保存 ${status.value.cookie_count ?? 0} 个 Cookie，主页默认隐藏明文。` : '启动扫码登录后会自动保存 Cookie。'),
+              ]),
+              h('div', { class: 'wy-cookie-meta' }, [
+                meta('最近状态', status.value.last_status),
+                meta('最近检测', status.value.last_check_status || status.value.last_check),
+                meta('OpenList 同步', status.value.last_openlist_sync_status || status.value.last_openlist_sync),
+              ]),
             ]),
           ])),
         ]),

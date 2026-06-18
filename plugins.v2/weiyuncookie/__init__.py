@@ -42,9 +42,9 @@ except Exception:  # pragma: no cover
 
 class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
-    plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并展示完整 Cookie。"
+    plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.27"
+    plugin_version = "0.1.28"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -275,7 +275,6 @@ class weiyuncookie(_PluginBase):
             "openlist_storage_id": self._openlist_storage_id,
             "last_openlist_sync": self._last_openlist_sync,
             "last_openlist_sync_status": self._last_openlist_sync_status,
-            "cookie_full": self.get_data("cookie") or "",
         }
 
     def get_page(self) -> Optional[List[dict]]:
@@ -1049,7 +1048,6 @@ class weiyuncookie(_PluginBase):
             "openlist_storage_id": self._openlist_storage_id,
             "last_openlist_sync": self._last_openlist_sync,
             "last_openlist_sync_status": self._last_openlist_sync_status,
-            "cookie_full": self.get_data("cookie") or "",
         })
 
     @staticmethod
@@ -1059,22 +1057,6 @@ class weiyuncookie(_PluginBase):
         except Exception:
             number = default
         return max(min_value, min(max_value, number))
-
-    @staticmethod
-    def __clipboard_javascript_url() -> str:
-        """生成复制按钮链接：从页面隐藏 textarea 读取完整 Cookie，避免长 Cookie 塞进 href 被截断。"""
-        script = (
-            "javascript:(()=>{"
-            "const e=document.getElementById('weiyun-cookie-full');"
-            "if(!e){alert('未找到完整 Cookie，请刷新页面后重试');return;}"
-            "const t=e.value||e.textContent||'';"
-            "if(!t){alert('当前没有可复制的 Cookie');return;}"
-            "let ok=false;try{e.focus();e.select();e.setSelectionRange(0,t.length);ok=document.execCommand('copy');}catch(err){}"
-            "if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(t).then(()=>alert('完整 Cookie 已复制')).catch(()=>alert(ok?'完整 Cookie 已复制':'复制失败，请手动复制文本框内容'));}"
-            "else{alert(ok?'完整 Cookie 已复制':'复制失败，请手动复制文本框内容');}"
-            "})()"
-        )
-        return script
 
     @staticmethod
     def __normalize_login_type(value: Any) -> str:

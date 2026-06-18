@@ -16,12 +16,13 @@
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",
-    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；优化配置页排序与详情页信息层级，减少不必要卡片。",
+    "description": "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.27",
+    "version": "0.1.28",
     "author": "qsxazcv",
     "level": 1,
     "history": {
+      "v0.1.28": "隐藏主页与配置页完整 Cookie 明文展示，改为隐私状态面板并保留复制、检测、同步等操作。",
       "v0.1.23": "升级为 Vue 联邦 UI：重做配置页与扫码登录工作台，保留现有 QQ/微信扫码、Cookie 提取、有效性检测和 OpenList 同步逻辑。",
       "v0.1.0": "初始版本：支持后端浏览器打开微云登录页、扫码登录、提取并保存 Cookie。",
       "v0.1.1": "新增插件详情页“立即运行一次/刷新状态/清除 Cookie”按钮，配置页一次性运行开关，并补充完整运行日志。",
