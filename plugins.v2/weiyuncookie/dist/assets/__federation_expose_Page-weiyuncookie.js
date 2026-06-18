@@ -60,12 +60,48 @@ export default defineComponent({
       }
     }
 
-    async function copyCookie() {
+    function fallbackCopy(text) {
+      if (!document?.body) return false;
+      const el = document.createElement('textarea');
+      el.value = text;
+      el.setAttribute('readonly', 'readonly');
+      el.style.position = 'fixed';
+      el.style.left = '-9999px';
+      el.style.top = '0';
+      el.style.opacity = '0';
+      document.body.appendChild(el);
+      el.focus();
+      el.select();
+      el.setSelectionRange(0, text.length);
+      let ok = false;
       try {
-        await navigator.clipboard.writeText(status.value.cookie || '');
-        message.value = 'Cookie 已复制到剪贴板';
+        ok = document.execCommand('copy');
       } catch (err) {
-        error.value = '复制失败，请稍后重试';
+        ok = false;
+      }
+      document.body.removeChild(el);
+      return ok;
+    }
+
+    async function copyCookie() {
+      const text = status.value.cookie || '';
+      error.value = '';
+      message.value = '';
+      if (!text) {
+        error.value = '当前没有可复制的 Cookie';
+        return;
+      }
+      try {
+        if (navigator?.clipboard?.writeText && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          message.value = 'Cookie 已复制到剪贴板';
+          return;
+        }
+      } catch (err) {}
+      if (fallbackCopy(text)) {
+        message.value = 'Cookie 已复制到剪贴板';
+      } else {
+        error.value = '复制失败，请刷新页面后重试';
       }
     }
 

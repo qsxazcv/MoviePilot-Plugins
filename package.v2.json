@@ -18,10 +18,11 @@
     "name": "微云Cookie助手",
     "description": "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.28",
+    "version": "0.1.29",
     "author": "qsxazcv",
     "level": 1,
     "history": {
+      "v0.1.29": "修复部分浏览器或嵌入页面中 Cookie 复制失败的问题，增加隐藏 textarea 兜底复制。",
       "v0.1.28": "隐藏主页与配置页完整 Cookie 明文展示，改为隐私状态面板并保留复制、检测、同步等操作。",
       "v0.1.23": "升级为 Vue 联邦 UI：重做配置页与扫码登录工作台，保留现有 QQ/微信扫码、Cookie 提取、有效性检测和 OpenList 同步逻辑。",
       "v0.1.0": "初始版本：支持后端浏览器打开微云登录页、扫码登录、提取并保存 Cookie。",
