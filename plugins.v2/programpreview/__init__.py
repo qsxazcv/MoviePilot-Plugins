@@ -140,11 +140,26 @@ class programpreview(_PluginBase):
     @staticmethod
     def _load_preview_core():
         # 安装/重装时运行目录可能正在分批复制文件，热加载会抢在
-        # preview_core.py 完整落盘前导入插件。顶层导入会让 Python 把
-        # 这种瞬时状态报成 partially initialized/circular import。
-        # 改为执行任务/读取结果时懒加载，保证插件主体先稳定加载。
-        from . import preview_core
-        return preview_core
+        # preview_core.py 完整落盘前导入插件。使用 importlib 按完整模块名
+        # 懒加载，避免 `from . import preview_core` 在包半初始化状态下
+        # 被 Python 误判为 circular import。若遇到半初始化残留，清理后
+        # 再尝试一次，保证插件主体加载不受影响。
+        import importlib
+        import sys
+        module_name = f"{__package__}.preview_core"
+        try:
+            return importlib.import_module(module_name)
+        except ImportError as err:
+            if "partially initialized module" not in str(err) and "cannot import name 'preview_core'" not in str(err):
+                raise
+            sys.modules.pop(module_name, None)
+            package = sys.modules.get(__package__)
+            if package is not None and hasattr(package, "preview_core"):
+                try:
+                    delattr(package, "preview_core")
+                except Exception:
+                    pass
+            return importlib.import_module(module_name)
 
     def run_preview(self):
         start = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
