@@ -184,7 +184,7 @@ export default defineComponent({
             ]),
           ]),
         ]),
-        h(VRow, { dense: true, class: 'mt-2' }, () => [
+        h(VRow, { dense: true, class: 'wy-main-grid mt-2' }, () => [
           h(VCol, { cols: 12, md: 4 }, () => h(VCard, { variant: 'outlined', class: 'wy-card-panel' }, () => [
             h(VCardText, null, [
               h('div', { class: 'wy-section-line' }, [
