@@ -46,7 +46,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.39"
+    plugin_version = "0.1.40"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -995,7 +995,7 @@ class weiyuncookie(_PluginBase):
 
     @staticmethod
     def __crop_qrcode_png(data: bytes, padding: int = 12) -> bytes:
-        """裁掉二维码截图中多余的纯白边，保留扫码所需的白色静区。"""
+        """按二维码黑色模块裁掉截图空白和提示文字，保留扫码所需的白色静区。"""
         if not data or not data.startswith(b"\x89PNG\r\n\x1a\n"):
             return data
         try:
@@ -1066,7 +1066,7 @@ class weiyuncookie(_PluginBase):
                     else:
                         r, g, b, a = recon[idx], recon[idx + 1], recon[idx + 2], recon[idx + 3]
                     rgba[out:out + 4] = bytes((r, g, b, a))
-                    if a > 10 and not (r >= 245 and g >= 245 and b >= 245):
+                    if a > 10 and r <= 120 and g <= 120 and b <= 120:
                         min_x = min(min_x, x)
                         min_y = min(min_y, y)
                         max_x = max(max_x, x)
