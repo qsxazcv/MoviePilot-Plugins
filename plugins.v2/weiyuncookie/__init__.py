@@ -46,7 +46,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.41"
+    plugin_version = "0.1.42"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -934,13 +934,12 @@ class weiyuncookie(_PluginBase):
                     qr_selectors = ["img[src*='ptqrshow']", "img[src*='qrcode']", "img[src*='qr']"]
                 else:
                     qr_selectors = ["img[src*='qrcode']", "img[src*='qr']", "canvas"]
-                for context_name, context in self.__qrcode_contexts(page):
-                    for selector in qr_selectors:
-                        locator = context.locator(selector).first
-                        if locator.count() and locator.bounding_box():
-                            logger.info("微云 Cookie 助手二维码元素已就绪：context=%s, selector=%s", context_name, selector)
-                            time.sleep(0.5)
-                            return
+                for selector in qr_selectors:
+                    locator = page.locator(selector).first
+                    if locator.count() and locator.bounding_box():
+                        logger.info("微云 Cookie 助手二维码元素已就绪：selector=%s", selector)
+                        time.sleep(0.5)
+                        return
                 iframe_selectors = ["iframe[src*='ptlogin']", "iframe"]
                 for selector in iframe_selectors:
                     locator = page.locator(selector).first
@@ -959,17 +958,16 @@ class weiyuncookie(_PluginBase):
             "img[src*='qr']",
             "canvas",
         ]
-        for context_name, context in self.__qrcode_contexts(page):
-            for selector in selectors:
-                try:
-                    locator = context.locator(selector).first
-                    if locator.count():
-                        data = locator.screenshot(type="png", timeout=5000)
-                        data = self.__crop_qrcode_png(data)
-                        logger.info("微云 Cookie 助手二维码截图命中选择器：context=%s, selector=%s", context_name, selector)
-                        return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
-                except Exception as err:
-                    logger.debug("微云 Cookie 助手二维码选择器截图失败：context=%s, selector=%s, err=%s", context_name, selector, err)
+        for selector in selectors:
+            try:
+                locator = page.locator(selector).first
+                if locator.count():
+                    data = locator.screenshot(type="png", timeout=5000)
+                    data = self.__crop_qrcode_png(data)
+                    logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
+                    return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+            except Exception as err:
+                logger.debug("微云 Cookie 助手二维码选择器截图失败：%s, err=%s", selector, err)
         frame_selectors = ["iframe[src*='ptlogin']", "iframe"]
         for selector in frame_selectors:
             try:
@@ -994,20 +992,6 @@ class weiyuncookie(_PluginBase):
         data = self.__crop_qrcode_png(data)
         logger.info("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
-
-    @staticmethod
-    def __qrcode_contexts(page) -> List[Tuple[str, Any]]:
-        contexts: List[Tuple[str, Any]] = [("page", page)]
-        for index, frame in enumerate(getattr(page, "frames", []) or []):
-            try:
-                url = str(getattr(frame, "url", "") or "")
-            except Exception:
-                url = ""
-            name = f"frame#{index}"
-            if url:
-                name = f"{name}:{url[:80]}"
-            contexts.append((name, frame))
-        return contexts
 
     @staticmethod
     def __crop_qrcode_png(data: bytes, padding: int = 12) -> bytes:
