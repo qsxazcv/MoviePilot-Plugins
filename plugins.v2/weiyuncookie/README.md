@@ -27,6 +27,10 @@
 
 ## 版本说明
 
+### v0.1.44
+
+- 浏览器模式文案简化为 Playwright / CloakBrowser。
+
 ### v0.1.43
 
 - 浏览器模式文案改为具体浏览器名称：Playwright Chromium / MP CloakBrowser。

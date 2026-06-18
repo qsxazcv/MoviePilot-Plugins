@@ -21,7 +21,7 @@ const groups = [
     icon: 'mdi-web',
     desc: '默认设置通常可直接使用；遇到登录页兼容、QQ 域 Cookie 或外部通知二维码问题时再调整。',
     fields: [
-      ['select', 'browser_mode', '浏览器模式', 'Playwright Chromium 启动较快；MP CloakBrowser 适合复杂登录页。', [{ title: 'Playwright Chromium', value: 'playwright' }, { title: 'MP CloakBrowser', value: 'cloakbrowser' }]],
+      ['select', 'browser_mode', '浏览器模式', 'Playwright 启动较快；CloakBrowser 适合复杂登录页。', [{ title: 'Playwright', value: 'playwright' }, { title: 'CloakBrowser', value: 'cloakbrowser' }]],
       ['switch', 'headless', '无头浏览器', '开启后后台运行；关闭可用于排障。'],
       ['switch', 'include_qq_domain', '包含 QQ 域 Cookie', 'QQ 登录建议开启。'],
       ['text', 'login_url', '微云登录入口', '默认 https://www.weiyun.com/。'],
@@ -108,7 +108,7 @@ export default defineComponent({
     }, { immediate: true, deep: true });
 
     const loginTypeText = computed(() => form.login_type === 'wechat' ? '微信扫码' : 'QQ 扫码');
-    const browserModeText = computed(() => form.browser_mode === 'cloakbrowser' ? 'MP CloakBrowser' : 'Playwright Chromium');
+    const browserModeText = computed(() => form.browser_mode === 'cloakbrowser' ? 'CloakBrowser' : 'Playwright');
     const cookieCountText = computed(() => String(form.last_cookie_count ?? 0));
 
     function save() {
