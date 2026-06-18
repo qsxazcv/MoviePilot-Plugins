@@ -6,6 +6,7 @@
     "version": "1.0.22",
     "author": "qsxazcv",
     "level": 2,
+    "release": true,
     "history": {
       "v1.0.22": "优化平台预告展开布局：点击任一平台后，四个平台卡片保持横向同排展示。",
       "v1.0.21": "优化平台预告展开布局：点击任一平台后，四个平台卡片统一切换为单列展示。",
@@ -66,7 +67,7 @@
       "v0.1.27": "优化微云 Cookie 助手 UI 排序与信息层级：配置页改为常用设置、登录环境、自动检测与通知、OpenList、运行档案的分区表单，详情页移除冗余功能卡片并改为状态概览、操作区和近期结果。"
     },
     "v2": true,
-    "release": false,
+    "release": true,
     "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
   }
 }
