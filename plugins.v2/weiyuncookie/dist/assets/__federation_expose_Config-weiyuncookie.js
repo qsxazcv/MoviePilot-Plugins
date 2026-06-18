@@ -98,9 +98,9 @@ export default defineComponent({
     const VBtn = C('VBtn');
     const VAlert = C('VAlert');
     const VChip = C('VChip');
-    const VDivider = C('VDivider');
 
     const form = reactive({});
+    const openSections = reactive({ primary: true });
 
     watch(() => props.initialConfig, (value) => {
       Object.keys(form).forEach((key) => delete form[key]);
@@ -134,9 +134,25 @@ export default defineComponent({
       ]);
     }
 
-    function field(def) {
+    function field(def, compactSwitch = false) {
       const [type, model, label, hint, items] = def;
       if (type === 'switch') {
+        if (compactSwitch) {
+          return h('div', { class: 'wy-switch-tile' }, [
+            h('div', { class: 'wy-switch-copy' }, [
+              h('div', { class: 'wy-switch-title' }, label),
+              hint && h('div', { class: 'wy-switch-hint' }, hint),
+            ]),
+            h(VSwitch, {
+              modelValue: !!form[model],
+              color: 'primary',
+              density: 'compact',
+              hideDetails: true,
+              inset: true,
+              'onUpdate:modelValue': (value) => form[model] = value,
+            }),
+          ]);
+        }
         return h(VSwitch, {
           modelValue: !!form[model],
           label,
@@ -175,17 +191,27 @@ export default defineComponent({
     }
 
     function section(group, index) {
-      return h('section', { class: ['wy-section', `wy-section--${group.key}`] }, [
-        index > 0 && h(VDivider, { class: 'wy-section-divider' }),
-        h('div', { class: 'wy-section-head' }, [
+      const switchFields = group.compact ? [] : group.fields.filter((def) => def[0] === 'switch');
+      const inputFields = group.compact ? [] : group.fields.filter((def) => def[0] !== 'switch');
+      return h('details', {
+        class: ['wy-section', `wy-section--${group.key}`],
+        open: !!openSections[group.key],
+        onToggle: (event) => openSections[group.key] = event.target.open,
+      }, [
+        h('summary', { class: 'wy-section-head' }, [
           h('div', { class: 'wy-section-title' }, [h(VIcon, { icon: group.icon, size: '18' }), h('span', group.title)]),
           h('div', { class: 'wy-section-desc' }, group.desc),
+          h(VIcon, { class: 'wy-section-chevron', icon: 'mdi-chevron-down', size: '20' }),
         ]),
-        group.alert && h(VAlert, { type: 'warning', variant: 'tonal', density: 'compact', class: 'mb-3' }, () => group.alert),
-        group.compact ? h('div', { class: 'wy-archive-grid' }, group.fields.map(archiveItem)) : h(VRow, { dense: true }, () => group.fields.map((def) => h(VCol, {
-          cols: 12,
-          md: wideModels.has(def[1]) ? 12 : 6,
-        }, () => field(def)))),
+        h('div', { class: 'wy-section-body' }, [
+          group.alert && h(VAlert, { type: 'warning', variant: 'tonal', density: 'compact', class: 'mb-3' }, () => group.alert),
+          group.compact && h('div', { class: 'wy-archive-grid' }, group.fields.map(archiveItem)),
+          switchFields.length > 0 && h('div', { class: 'wy-switch-grid' }, switchFields.map((def) => field(def, true))),
+          inputFields.length > 0 && h(VRow, { dense: true, class: 'wy-field-grid' }, () => inputFields.map((def) => h(VCol, {
+            cols: 12,
+            md: wideModels.has(def[1]) ? 12 : 6,
+          }, () => field(def)))),
+        ]),
       ]);
     }
 
