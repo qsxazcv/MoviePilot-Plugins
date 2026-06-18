@@ -8,8 +8,8 @@
 
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
-| `programpreview` | 四大平台节目预告 | `1.0.22` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，完善 Vue 联邦 UI，增强腾讯视频漏项补齐、节目名归一化与卡片内展开交互，并按 Cron 周期推送通知。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.38` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；微信二维码截图会自动裁掉多余空白。 |
+| `programpreview` | 四大平台节目预告 | `1.0.23` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，完善 Vue 联邦 UI，并补充默认插件目录兼容安装。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.39` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；微信二维码截图会自动裁掉多余空白。 |
 
 ## 快速开始
 
@@ -36,10 +36,14 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 ```text
 MoviePilot-Plugins/
 ├── README.md                 # 本文件
-├── package.v2.json           # 插件清单文件
+├── package.json              # 默认插件清单，兼容 MoviePilot 文件列表安装
+├── package.v2.json           # V2 插件清单文件
 ├── icons/                    # 插件图标
 │   └── weiyuncookie.png
-└── plugins.v2/               # 插件源码目录
+├── plugins/                  # 默认插件目录，兼容 MoviePilot 文件列表安装
+│   ├── programpreview/
+│   └── weiyuncookie/
+└── plugins.v2/               # V2 插件源码目录
     ├── programpreview/       # 四大平台节目预告
     │   ├── __init__.py
     │   ├── preview_core.py
@@ -140,6 +144,7 @@ git status --short --branch
 
 ### `weiyuncookie`
 
+- `0.1.39`：补充默认插件目录兼容安装，适配 MoviePilot 文件列表安装逻辑。
 - `0.1.38`：优化微信扫码二维码截图，自动裁掉二维码图片多余空白，仅保留扫码所需白边。
 - `0.1.37`：修复设置页折叠标题排版错位，避免说明文字被挤到右侧竖排显示。
 - `0.1.36`：优化设置页排版，低频分区默认折叠，开关项改为紧凑网格，减少纵向长度。
@@ -182,6 +187,7 @@ git status --short --branch
 
 ### `programpreview`
 
+- `v1.0.23`：补充默认插件目录兼容安装，适配 MoviePilot 文件列表安装逻辑。
 - `v1.0.22`：优化平台预告展开布局，点击任一平台后，四个平台卡片保持横向同排展示。
 - `v1.0.21`：优化平台预告展开布局，点击任一平台后，四个平台卡片统一切换为单列展示。
 - `v1.0.20`：优化控制台信息排序，常用运行与通知设置前置，压缩重复状态卡片，并将平台预告提示移到结果区上方。
