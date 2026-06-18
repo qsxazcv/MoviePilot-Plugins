@@ -199,8 +199,10 @@ export default defineComponent({
         onToggle: (event) => openSections[group.key] = event.target.open,
       }, [
         h('summary', { class: 'wy-section-head' }, [
-          h('div', { class: 'wy-section-title' }, [h(VIcon, { icon: group.icon, size: '18' }), h('span', group.title)]),
-          h('div', { class: 'wy-section-desc' }, group.desc),
+          h('div', { class: 'wy-section-copy' }, [
+            h('div', { class: 'wy-section-title' }, [h(VIcon, { icon: group.icon, size: '18' }), h('span', group.title)]),
+            h('div', { class: 'wy-section-desc' }, group.desc),
+          ]),
           h(VIcon, { class: 'wy-section-chevron', icon: 'mdi-chevron-down', size: '20' }),
         ]),
         h('div', { class: 'wy-section-body' }, [
