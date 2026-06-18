@@ -266,11 +266,39 @@ def _sort_tencent_items(items):
     return sorted(items, key=_tencent_sort_key)
 
 
+def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
+    """腾讯动态页偶发漏卡时，用同日缓存做保底合并。
+
+    只回填当天缓存中仍属于今天/明天/后天或未来月日的条目，避免长期保留过期节目。
+    """
+    merged = list(items or [])
+    try:
+        cache = load_platform_cache()
+        old = cache.get(cache_name, {}) if isinstance(cache, dict) else {}
+        old_items = old.get('items') or []
+        now = datetime.now()
+        def _keep(item):
+            left = str(item).split('｜', 1)[0]
+            if left.startswith(('今天', '明天', '后天')):
+                return True
+            m = re.search(r'(\d{1,2})月(\d{1,2})日', left)
+            if not m:
+                return False
+            mo, day = int(m.group(1)), int(m.group(2))
+            return (mo, day) >= (now.month, now.day)
+        for item in old_items:
+            if _keep(item):
+                merged.append(item)
+    except Exception:
+        pass
+    return _sort_tencent_items(_dedupe_tencent_items(merged, 50))
+
+
 def _normalize_tencent_title(title):
     original = str(title or '').strip()
     title = re.sub(r'[·・\s]*\d{1,2}月\d{1,2}日(?:上线|开播|首播)?$', '', original).strip()
     # 去掉平台常见季/期后缀，便于把“半熟恋人”和“半熟恋人 第5季”归并为同一节目。
-    title = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期|第[一二三四五六七八九十百千万\d]+部|[1234567890]+)$', '', title).strip()
+    title = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期|第[一二三四五六七八九十百千万\d]+部)$', '', title).strip()
     # 腾讯动漫有时同一作品会出现短名/长名两种卡片，归并显示为短名，避免“斩神”和“斩神之凡尘神域”重复。
     if title.startswith('斩神'):
         title = '斩神'
@@ -1780,7 +1808,7 @@ async def fetch_site(name, url):
             for _ch, html, txt in pages:
                 # 主频道 + 电视剧/动漫/综艺/电影频道统一合并，最终不分类，只按上线时间排序。
                 items.extend(extract_tencent_html(html, txt))
-            items = _sort_tencent_items(_dedupe_tencent_items(items, 50))
+            items = _merge_tencent_items_with_cache(items)
             if not items and pages:
                 lines = clean_lines(pages[0][2])
                 items = _sort_tencent_items(_dedupe_tencent_items(extract_tencent(lines), 50))
