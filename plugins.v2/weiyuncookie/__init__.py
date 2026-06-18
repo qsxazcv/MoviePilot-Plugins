@@ -10,9 +10,11 @@ from __future__ import annotations
 import base64
 import json
 import os
+import struct
 import threading
 import time
 import traceback
+import zlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -44,7 +46,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.37"
+    plugin_version = "0.1.38"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -961,6 +963,7 @@ class weiyuncookie(_PluginBase):
                 locator = page.locator(selector).first
                 if locator.count():
                     data = locator.screenshot(type="png", timeout=5000)
+                    data = self.__crop_qrcode_png(data)
                     logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
                     return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
@@ -980,13 +983,119 @@ class weiyuncookie(_PluginBase):
                             "height": 240,
                         }
                         data = page.screenshot(type="png", clip=clip)
+                        data = self.__crop_qrcode_png(data)
                         logger.info("微云 Cookie 助手二维码截图从 iframe 中心裁剪：%s", selector)
                         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
                 logger.debug("微云 Cookie 助手 iframe 二维码裁剪失败：%s, err=%s", selector, err)
         data = page.screenshot(type="png", clip={"x": 440, "y": 180, "width": 360, "height": 360})
+        data = self.__crop_qrcode_png(data)
         logger.info("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+
+    @staticmethod
+    def __crop_qrcode_png(data: bytes, padding: int = 12) -> bytes:
+        """裁掉二维码截图中多余的纯白边，保留扫码所需的白色静区。"""
+        if not data or not data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return data
+        try:
+            pos = 8
+            width = height = bit_depth = color_type = None
+            idat = bytearray()
+            while pos + 8 <= len(data):
+                length = struct.unpack(">I", data[pos:pos + 4])[0]
+                chunk_type = data[pos + 4:pos + 8]
+                chunk_data = data[pos + 8:pos + 8 + length]
+                pos += 12 + length
+                if chunk_type == b"IHDR":
+                    width, height, bit_depth, color_type, compression, filter_method, interlace = struct.unpack(">IIBBBBB", chunk_data)
+                    if bit_depth != 8 or compression != 0 or filter_method != 0 or interlace != 0:
+                        return data
+                elif chunk_type == b"IDAT":
+                    idat.extend(chunk_data)
+                elif chunk_type == b"IEND":
+                    break
+            channels = {0: 1, 2: 3, 4: 2, 6: 4}.get(color_type)
+            if not width or not height or not channels or not idat:
+                return data
+            row_size = width * channels
+            raw = zlib.decompress(bytes(idat))
+            rows = []
+            prev = bytearray(row_size)
+            offset = 0
+            min_x, min_y = width, height
+            max_x = max_y = -1
+            for y in range(height):
+                filter_type = raw[offset]
+                offset += 1
+                scan = bytearray(raw[offset:offset + row_size])
+                offset += row_size
+                recon = bytearray(row_size)
+                for i, value in enumerate(scan):
+                    left = recon[i - channels] if i >= channels else 0
+                    up = prev[i]
+                    up_left = prev[i - channels] if i >= channels else 0
+                    if filter_type == 0:
+                        recon[i] = value
+                    elif filter_type == 1:
+                        recon[i] = (value + left) & 0xFF
+                    elif filter_type == 2:
+                        recon[i] = (value + up) & 0xFF
+                    elif filter_type == 3:
+                        recon[i] = (value + ((left + up) // 2)) & 0xFF
+                    elif filter_type == 4:
+                        p = left + up - up_left
+                        pa, pb, pc = abs(p - left), abs(p - up), abs(p - up_left)
+                        predictor = left if pa <= pb and pa <= pc else up if pb <= pc else up_left
+                        recon[i] = (value + predictor) & 0xFF
+                    else:
+                        return data
+                rgba = bytearray(width * 4)
+                for x in range(width):
+                    idx = x * channels
+                    out = x * 4
+                    if color_type == 0:
+                        r = g = b = recon[idx]
+                        a = 255
+                    elif color_type == 2:
+                        r, g, b = recon[idx], recon[idx + 1], recon[idx + 2]
+                        a = 255
+                    elif color_type == 4:
+                        r = g = b = recon[idx]
+                        a = recon[idx + 1]
+                    else:
+                        r, g, b, a = recon[idx], recon[idx + 1], recon[idx + 2], recon[idx + 3]
+                    rgba[out:out + 4] = bytes((r, g, b, a))
+                    if a > 10 and not (r >= 245 and g >= 245 and b >= 245):
+                        min_x = min(min_x, x)
+                        min_y = min(min_y, y)
+                        max_x = max(max_x, x)
+                        max_y = max(max_y, y)
+                rows.append(rgba)
+                prev = recon
+            if max_x < min_x or max_y < min_y:
+                return data
+            left = max(min_x - padding, 0)
+            top = max(min_y - padding, 0)
+            right = min(max_x + padding, width - 1)
+            bottom = min(max_y + padding, height - 1)
+            if left == 0 and top == 0 and right == width - 1 and bottom == height - 1:
+                return data
+            crop_width = right - left + 1
+            crop_height = bottom - top + 1
+            if crop_width < 64 or crop_height < 64:
+                return data
+            payload = bytearray()
+            for row in rows[top:bottom + 1]:
+                payload.append(0)
+                payload.extend(row[left * 4:(right + 1) * 4])
+            def chunk(kind: bytes, body: bytes) -> bytes:
+                return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body) & 0xFFFFFFFF)
+            ihdr = struct.pack(">IIBBBBB", crop_width, crop_height, 8, 6, 0, 0, 0)
+            return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(payload), 9)) + chunk(b"IEND", b"")
+        except Exception as err:
+            logger.debug("微云 Cookie 助手二维码空白裁剪失败：%s", err)
+            return data
 
     def __filter_cookies(self, cookies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         result: List[Dict[str, Any]] = []
