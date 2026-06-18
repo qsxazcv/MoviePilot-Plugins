@@ -16,9 +16,9 @@
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",
-    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；配置页与详情页改为四大平台节目预告同款控制台 UI。",
+    "description": "支持 QQ / 微信扫码登录微云，自动提取完整 Cookie，可检测有效性并同步到 OpenList；优化配置页排序与详情页信息层级，减少不必要卡片。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.26",
+    "version": "0.1.27",
     "author": "qsxazcv",
     "level": 1,
     "history": {
@@ -48,7 +48,8 @@
       "v0.1.22": "更换插件图标为仓库 icons/weiyuncookie.png。",
       "v0.1.24": "修复 Vue 联邦 Page 组件空白：补充 __api_status 返回 enabled/has_cookie/login_type_title/browser_mode_title/qrcode/check_cron 字段。",
       "v0.1.25": "修复 Vue 联邦 Page 组件括号不匹配导致的空白问题。",
-      "v0.1.26": "按四大平台节目预告风格重设计配置页与详情页：改为控制台头部、状态卡片、功能卡片和分组设置卡片，并修复前端中文显示。"
+      "v0.1.26": "按四大平台节目预告风格重设计配置页与详情页：改为控制台头部、状态卡片、功能卡片和分组设置卡片，并修复前端中文显示。",
+      "v0.1.27": "优化微云 Cookie 助手 UI 排序与信息层级：配置页改为常用设置、登录环境、自动检测与通知、OpenList、运行档案的分区表单，详情页移除冗余功能卡片并改为状态概览、操作区和近期结果。"
     },
     "v2": true,
     "release": false,
