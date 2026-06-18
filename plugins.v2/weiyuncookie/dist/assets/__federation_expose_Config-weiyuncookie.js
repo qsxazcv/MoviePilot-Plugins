@@ -7,7 +7,7 @@ const groups = [
     key: 'primary',
     title: '常用设置',
     icon: 'mdi-qrcode-scan',
-    desc: '日常最常调整的扫码登录与运行开关。',
+    desc: '先确认启用状态、登录方式和扫码等待时间；需要马上更新 Cookie 时打开一次运行。',
     fields: [
       ['switch', 'enabled', '启用插件', '关闭后命令和周期检测不再执行。'],
       ['switch', 'onlyonce', '保存后立即运行一次', '保存配置后启动一次扫码登录，执行后自动关闭。'],
@@ -19,7 +19,7 @@ const groups = [
     key: 'runtime',
     title: '登录环境',
     icon: 'mdi-web',
-    desc: '浏览器、Cookie 域与二维码展示地址。',
+    desc: '默认设置通常可直接使用；遇到登录页兼容、QQ 域 Cookie 或外部通知二维码问题时再调整。',
     fields: [
       ['select', 'browser_mode', '浏览器模式', '插件内置速度较快；兼容模式适合复杂登录页。', [{ title: '插件内置', value: 'playwright' }, { title: '兼容模式', value: 'cloakbrowser' }]],
       ['switch', 'headless', '无头浏览器', '开启后后台运行；关闭可用于排障。'],
@@ -32,7 +32,7 @@ const groups = [
     key: 'automation',
     title: '自动检测与通知',
     icon: 'mdi-shield-check-outline',
-    desc: 'Cookie 定时检测、失效提醒和 MoviePilot 通知。',
+    desc: '控制 Cookie 周期检测、失效提醒和 MoviePilot 通知范围，适合长期无人值守。',
     fields: [
       ['switch', 'check_enabled', '启用周期检测', '按 Cron 定时检查 Cookie。'],
       ['text', 'check_cron', '检测 Cron', '默认 0 */6 * * *，每 6 小时检测一次。'],
@@ -47,7 +47,7 @@ const groups = [
     key: 'openlist',
     title: 'OpenList 同步',
     icon: 'mdi-cloud-sync-outline',
-    desc: '把最新 Cookie 写入腾讯微云存储配置。',
+    desc: '填写 OpenList 地址、Token 和存储 ID 后，可把最新 Cookie 写入腾讯微云存储配置。',
     alert: 'Token 属于敏感配置，请勿在日志、截图或 issue 中公开。',
     fields: [
       ['switch', 'openlist_enabled', '启用 OpenList 同步', '开启后可手动或自动同步 Cookie。'],
@@ -63,7 +63,7 @@ const groups = [
     key: 'archive',
     title: '运行档案',
     icon: 'mdi-book-open-page-variant-outline',
-    desc: '最近登录、检测、同步状态与 Cookie 数量。',
+    desc: '只读状态摘要，用来确认最近登录、检测、同步结果和 Cookie 数量。',
     compact: true,
     fields: [
       ['last_status', '最近状态', 'mdi-list-status', 'primary'],
@@ -194,7 +194,7 @@ export default defineComponent({
         h('div', { class: 'wy-console-hero' }, [
           h('div', [
             h('div', { class: 'text-h6' }, '微云 Cookie 助手 · 设置'),
-            h('div', { class: 'wy-hint' }, `优先配置扫码登录；自动检测、通知和 OpenList 放在后续分区。最近状态：${form.last_status || '未运行'}`),
+            h('div', { class: 'wy-hint' }, `按使用频率分区：先配置扫码登录，再按需调整检测通知和 OpenList。最近状态：${form.last_status || '未运行'}`),
           ]),
           h('div', { class: 'wy-hero-actions' }, [
             h(VChip, { color: form.enabled ? 'success' : 'default', variant: 'tonal', size: 'small' }, () => form.enabled ? '已启用' : '未启用'),
