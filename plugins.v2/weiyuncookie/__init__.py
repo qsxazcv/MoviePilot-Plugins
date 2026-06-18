@@ -46,7 +46,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.40"
+    plugin_version = "0.1.41"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -934,12 +934,13 @@ class weiyuncookie(_PluginBase):
                     qr_selectors = ["img[src*='ptqrshow']", "img[src*='qrcode']", "img[src*='qr']"]
                 else:
                     qr_selectors = ["img[src*='qrcode']", "img[src*='qr']", "canvas"]
-                for selector in qr_selectors:
-                    locator = page.locator(selector).first
-                    if locator.count() and locator.bounding_box():
-                        logger.info("微云 Cookie 助手二维码元素已就绪：selector=%s", selector)
-                        time.sleep(0.5)
-                        return
+                for context_name, context in self.__qrcode_contexts(page):
+                    for selector in qr_selectors:
+                        locator = context.locator(selector).first
+                        if locator.count() and locator.bounding_box():
+                            logger.info("微云 Cookie 助手二维码元素已就绪：context=%s, selector=%s", context_name, selector)
+                            time.sleep(0.5)
+                            return
                 iframe_selectors = ["iframe[src*='ptlogin']", "iframe"]
                 for selector in iframe_selectors:
                     locator = page.locator(selector).first
@@ -958,16 +959,17 @@ class weiyuncookie(_PluginBase):
             "img[src*='qr']",
             "canvas",
         ]
-        for selector in selectors:
-            try:
-                locator = page.locator(selector).first
-                if locator.count():
-                    data = locator.screenshot(type="png", timeout=5000)
-                    data = self.__crop_qrcode_png(data)
-                    logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
-                    return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
-            except Exception as err:
-                logger.debug("微云 Cookie 助手二维码选择器截图失败：%s, err=%s", selector, err)
+        for context_name, context in self.__qrcode_contexts(page):
+            for selector in selectors:
+                try:
+                    locator = context.locator(selector).first
+                    if locator.count():
+                        data = locator.screenshot(type="png", timeout=5000)
+                        data = self.__crop_qrcode_png(data)
+                        logger.info("微云 Cookie 助手二维码截图命中选择器：context=%s, selector=%s", context_name, selector)
+                        return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+                except Exception as err:
+                    logger.debug("微云 Cookie 助手二维码选择器截图失败：context=%s, selector=%s, err=%s", context_name, selector, err)
         frame_selectors = ["iframe[src*='ptlogin']", "iframe"]
         for selector in frame_selectors:
             try:
@@ -992,6 +994,20 @@ class weiyuncookie(_PluginBase):
         data = self.__crop_qrcode_png(data)
         logger.info("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+
+    @staticmethod
+    def __qrcode_contexts(page) -> List[Tuple[str, Any]]:
+        contexts: List[Tuple[str, Any]] = [("page", page)]
+        for index, frame in enumerate(getattr(page, "frames", []) or []):
+            try:
+                url = str(getattr(frame, "url", "") or "")
+            except Exception:
+                url = ""
+            name = f"frame#{index}"
+            if url:
+                name = f"{name}:{url[:80]}"
+            contexts.append((name, frame))
+        return contexts
 
     @staticmethod
     def __crop_qrcode_png(data: bytes, padding: int = 12) -> bytes:
@@ -1021,10 +1037,9 @@ class weiyuncookie(_PluginBase):
             row_size = width * channels
             raw = zlib.decompress(bytes(idat))
             rows = []
+            dark_row_ranges = []
             prev = bytearray(row_size)
             offset = 0
-            min_x, min_y = width, height
-            max_x = max_y = -1
             for y in range(height):
                 filter_type = raw[offset]
                 offset += 1
@@ -1051,6 +1066,8 @@ class weiyuncookie(_PluginBase):
                     else:
                         return data
                 rgba = bytearray(width * 4)
+                row_min_x = width
+                row_max_x = -1
                 for x in range(width):
                     idx = x * channels
                     out = x * 4
@@ -1067,12 +1084,51 @@ class weiyuncookie(_PluginBase):
                         r, g, b, a = recon[idx], recon[idx + 1], recon[idx + 2], recon[idx + 3]
                     rgba[out:out + 4] = bytes((r, g, b, a))
                     if a > 10 and r <= 120 and g <= 120 and b <= 120:
-                        min_x = min(min_x, x)
-                        min_y = min(min_y, y)
-                        max_x = max(max_x, x)
-                        max_y = max(max_y, y)
+                        row_min_x = min(row_min_x, x)
+                        row_max_x = max(row_max_x, x)
                 rows.append(rgba)
+                dark_row_ranges.append((row_min_x, row_max_x))
                 prev = recon
+            min_row_dark = max(3, width // 80)
+            max_gap = 8
+            segments = []
+            start = None
+            last_dark = None
+            gap = 0
+            for y, (row_min_x, row_max_x) in enumerate(dark_row_ranges):
+                dark_count = row_max_x - row_min_x + 1 if row_max_x >= row_min_x else 0
+                if dark_count >= min_row_dark:
+                    if start is None:
+                        start = y
+                    last_dark = y
+                    gap = 0
+                elif start is not None:
+                    gap += 1
+                    if gap > max_gap:
+                        segments.append((start, last_dark))
+                        start = None
+                        last_dark = None
+                        gap = 0
+            if start is not None and last_dark is not None:
+                segments.append((start, last_dark))
+            segments = [seg for seg in segments if seg[1] - seg[0] + 1 >= 32]
+            if not segments:
+                return data
+            min_y, max_y = max(
+                segments,
+                key=lambda seg: (
+                    seg[1] - seg[0] + 1,
+                    sum(
+                        (mx - mn + 1) if mx >= mn else 0
+                        for mn, mx in dark_row_ranges[seg[0]:seg[1] + 1]
+                    ),
+                ),
+            )
+            min_x, max_x = width, -1
+            for row_min_x, row_max_x in dark_row_ranges[min_y:max_y + 1]:
+                if row_max_x >= row_min_x:
+                    min_x = min(min_x, row_min_x)
+                    max_x = max(max_x, row_max_x)
             if max_x < min_x or max_y < min_y:
                 return data
             left = max(min_x - padding, 0)
