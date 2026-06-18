@@ -27,10 +27,28 @@ export default defineComponent({
     const message = ref('');
     const status = ref({});
     let timer = null;
+    let messageTimer = null;
 
     const qrcodeSrc = computed(() => status.value?.has_qrcode && status.value?.qrcode ? status.value.qrcode : '');
     const stateColor = computed(() => status.value.running ? 'warning' : status.value.has_cookie ? 'success' : 'default');
     const stateText = computed(() => status.value.running ? '扫码进行中' : status.value.has_cookie ? 'Cookie 已保存' : '等待登录');
+
+    function clearMessage() {
+      if (messageTimer) {
+        clearTimeout(messageTimer);
+        messageTimer = null;
+      }
+      message.value = '';
+    }
+
+    function showMessage(text, delay = 4000) {
+      clearMessage();
+      message.value = text;
+      messageTimer = setTimeout(() => {
+        message.value = '';
+        messageTimer = null;
+      }, delay);
+    }
 
     async function load(silent = false) {
       if (!silent) loading.value = true;
@@ -47,10 +65,10 @@ export default defineComponent({
     async function action(path, ok) {
       busy.value = true;
       error.value = '';
-      message.value = '';
+      clearMessage();
       try {
         const result = await postPluginApi(props.api, path);
-        message.value = result?.message || ok || '操作已提交';
+        showMessage(result?.message || ok || '操作已提交');
         await load(true);
       } catch (err) {
         error.value = (ok || '操作') + '失败：' + (err?.message || err);
@@ -84,7 +102,7 @@ export default defineComponent({
     async function copyCookie() {
       let text = status.value.cookie || '';
       error.value = '';
-      message.value = '';
+      clearMessage();
       if (!text) {
         try {
           const latest = await getPluginApi(props.api, 'status') || {};
@@ -98,13 +116,13 @@ export default defineComponent({
       }
       const copiedByEvent = eventCopy(text);
       if (copiedByEvent) {
-        message.value = `Cookie 已复制到剪贴板（${text.length} 字符）`;
+        showMessage(`Cookie 已复制到剪贴板（${text.length} 字符）`);
         return;
       }
       try {
         if (navigator?.clipboard?.writeText && window.isSecureContext) {
           await navigator.clipboard.writeText(text);
-          message.value = `Cookie 已复制到剪贴板（${text.length} 字符）`;
+          showMessage(`Cookie 已复制到剪贴板（${text.length} 字符）`);
           return;
         }
       } catch (err) {}
@@ -140,7 +158,10 @@ export default defineComponent({
       timer = setInterval(() => load(true), 3000);
     });
 
-    onBeforeUnmount(() => timer && clearInterval(timer));
+    onBeforeUnmount(() => {
+      if (timer) clearInterval(timer);
+      clearMessage();
+    });
 
     return () => h('div', { class: 'wy-page' }, [
       h(VToolbar, { class: 'wy-toolbar', density: 'comfortable' }, () => [
@@ -154,7 +175,7 @@ export default defineComponent({
       ]),
       h('div', { class: 'wy-page-wrap' }, [
         error.value && h(VAlert, { type: 'error', variant: 'tonal', class: 'mb-3' }, () => error.value),
-        message.value && h(VAlert, { type: 'success', variant: 'tonal', class: 'mb-3', closable: true, 'onClick:close': () => message.value = '' }, () => message.value),
+        message.value && h(VAlert, { type: 'success', variant: 'tonal', class: 'mb-3', closable: true, 'onClick:close': clearMessage }, () => message.value),
         loading.value && h('div', { class: 'wy-loading' }, [h(VProgressCircular, { indeterminate: true, color: 'primary' }), h('span', '正在读取微云状态...')]),
         h('div', { class: 'wy-summary' }, [
           h('div', { class: 'wy-summary-main' }, [
