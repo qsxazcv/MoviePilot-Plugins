@@ -46,7 +46,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.42"
+    plugin_version = "0.1.43"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -382,7 +382,7 @@ class weiyuncookie(_PluginBase):
             "login_type": self._login_type,
             "login_type_title": self.__login_type_title(),
             "browser_mode": browser_mode,
-            "browser_mode_title": "兼容模式" if browser_mode == "cloakbrowser" else "插件内置",
+            "browser_mode_title": "MP CloakBrowser" if browser_mode == "cloakbrowser" else "Playwright Chromium",
             "last_status": self._last_status,
             "last_run": self._last_run,
             "cookie_count": self._last_cookie_count,
