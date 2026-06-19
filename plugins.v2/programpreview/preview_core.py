@@ -19,6 +19,7 @@ OUT_FILE = DATA_DIR / 'latest_preview.md'
 STATE_FILE = DATA_DIR / 'state.json'
 PLATFORM_CACHE_FILE = DATA_DIR / 'platform_cache.json'
 OUT_FILE.touch(exist_ok=True)
+PLATFORM_CACHE_TTL_HOURS = 72
 
 SITES = [
     ('爱奇艺', 'https://www.iqiyi.com/'),
@@ -28,6 +29,11 @@ SITES = [
 ]
 
 UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36'
+_IQIYI_SEARCH_RESERVE_CACHE = {}
+
+
+def _iqiyi_reset_run_caches():
+    _IQIYI_SEARCH_RESERVE_CACHE.clear()
 
 
 def clean_lines(text):
@@ -796,6 +802,11 @@ def _iqiyi_search_page_reserve_sync(title, retries=3):
     搜索页由前端渲染，偶发空结果；每次只接受真实预约数字。
     三次都没有结果时返回空字符串，保持条目原样，等待下次定时任务继续重试。
     """
+    title = re.sub(r'\s+', ' ', str(title or '')).strip()
+    if not title:
+        return ''
+    if title in _IQIYI_SEARCH_RESERVE_CACHE:
+        return _IQIYI_SEARCH_RESERVE_CACHE[title]
     try:
         retries = max(1, int(retries or 1))
     except Exception:
@@ -803,7 +814,9 @@ def _iqiyi_search_page_reserve_sync(title, retries=3):
     for _ in range(min(retries, 3)):
         reserve = _iqiyi_search_page_reserve_once_sync(title)
         if reserve:
+            _IQIYI_SEARCH_RESERVE_CACHE[title] = reserve
             return reserve
+    _IQIYI_SEARCH_RESERVE_CACHE[title] = ''
     return ''
 
 
@@ -1931,16 +1944,28 @@ def is_placeholder_items(items):
     return '暂未从公开页面提取到明确' in joined or '抓取失败' in joined
 
 
+def is_platform_cache_fresh(old, now_dt):
+    if not isinstance(old, dict):
+        return False
+    stamp = str(old.get('time') or '').strip()
+    try:
+        cached_at = datetime.strptime(stamp, '%Y-%m-%d %H:%M')
+    except Exception:
+        return False
+    return now_dt - cached_at <= timedelta(hours=PLATFORM_CACHE_TTL_HOURS)
+
+
 def apply_platform_cache(result):
     """平台临时抓空/失败时沿用上次有效结果，避免公开页波动导致通知质量下降。"""
     cache = load_platform_cache()
-    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+    now_dt = datetime.now()
+    now = now_dt.strftime('%Y-%m-%d %H:%M')
     changed = False
     for name, items in list(result.items()):
         if is_placeholder_items(items):
             old = cache.get(name, {})
             old_items = old.get('items') if isinstance(old, dict) else None
-            if old_items and not is_placeholder_items(old_items):
+            if old_items and not is_placeholder_items(old_items) and is_platform_cache_fresh(old, now_dt):
                 stamp = old.get('time') or '上次'
                 result[name] = [f'{x}（沿用{stamp}缓存）' for x in old_items]
         else:
@@ -1991,11 +2016,12 @@ async def fetch_site(name, url):
                 lines = clean_lines(pages[0][2])
                 items = _sort_tencent_items(_dedupe_tencent_items(extract_tencent(lines), 50))
         else:
-            txt = await page_text(url)
-            lines = clean_lines(txt)
             if name == '芒果TV':
+                txt = await page_text(url)
+                lines = clean_lines(txt)
                 items = extract_mgtv(lines)
             elif name == '爱奇艺':
+                _iqiyi_reset_run_caches()
                 items = []
                 # 优先解析 prelw 原始数据，并把其中的 album_id/tv_id 同步到爱奇艺订阅接口获取真实“已预约”人数。
                 payloads = await iqiyi_prelw_payloads()
