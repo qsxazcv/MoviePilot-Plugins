@@ -60,6 +60,27 @@ def dedupe(items, limit=12):
     return out[:limit]
 
 
+def _normalize_date_text(date):
+    date = re.sub(r'\s+', ' ', str(date or '')).strip()
+    date = re.sub(r'^(今日)', '今天', date)
+    date = re.sub(r'^(明日)', '明天', date)
+    date = re.sub(r'^(后日)', '后天', date)
+    date = re.sub(r'^(今天|明天|后天)\s+(\d{1,2}:\d{2})', r'\1\2', date)
+
+    suffixes = r'(上线|上映|开播|首播)?'
+    patterns = (
+        rf'(?:\d{{4}}[./-])?0?(\d{{1,2}})[./-]0?(\d{{1,2}})\s*(?:(\d{{1,2}}:\d{{2}}))?\s*{suffixes}',
+        rf'0?(\d{{1,2}})月0?(\d{{1,2}})日\s*(?:(\d{{1,2}}:\d{{2}}))?\s*{suffixes}',
+    )
+    for pattern in patterns:
+        m = re.fullmatch(pattern, date)
+        if m:
+            time_part = f' {m.group(3)}' if m.group(3) else ''
+            suffix = m.group(4) or ''
+            return f'{int(m.group(1))}月{int(m.group(2))}日{time_part}{suffix}'
+    return date
+
+
 async def page_text(url, wait=5000):
     try:
         from playwright.async_api import async_playwright
@@ -340,6 +361,7 @@ def _normalize_tencent_item(item):
     left, sep, right = str(item).partition('｜')
     if not sep:
         return str(item)
+    left = _normalize_date_text(left)
     title = right
     suffix = ''
     m = re.search(r'(（[^）]*预约）)$', title)
@@ -494,14 +516,7 @@ IQIYI_RANK_CHANNELS = [
 
 
 def _iqiyi_normalize_date(date):
-    date = re.sub(r'\s+', ' ', str(date or '')).strip()
-    date = re.sub(r'^(今日)', '今天', date)
-    date = re.sub(r'^(明日)', '明天', date)
-    date = re.sub(r'^(后日)', '后天', date)
-    m = re.fullmatch(r'(\d{1,2})月(\d{1,2})日\s*(\d{1,2}:\d{2})上线', date)
-    if m:
-        return f'{int(m.group(1))}月{int(m.group(2))}日 {m.group(3)}上线'
-    return date
+    return _normalize_date_text(date)
 
 
 def _iqiyi_sort_key(item):
@@ -1671,7 +1686,8 @@ def extract_tencent(lines):
         if marker.search(line) and not re.search(r'^即将上线$', line):
             win = lines[max(0, i-2):min(len(lines), i+6)]
             title = next((x for x in win if x != line and not noise.search(x) and 2 <= len(x) <= 50 and not marker.search(x)), '')
-            items.append(f'{line}｜{title}' if title else line)
+            date = _normalize_date_text(line)
+            items.append(f'{date}｜{title}' if title else date)
     return dedupe(items, 12)
 
 
@@ -1698,7 +1714,7 @@ def extract_mgtv(lines):
                 continue
             title = cand; break
         if title:
-            items.append(f'{line}｜{title}')
+            items.append(f'{_normalize_date_text(line)}｜{title}')
     return dedupe(items, 12)
 
 
@@ -1781,8 +1797,8 @@ def _youku_reserve_desc(item):
 
 def _youku_normalize_date(date):
     date = re.sub(r'\s+', ' ', str(date or '')).strip()
-    date = re.sub(r'^(剧・|影・|综・|漫・)', '', date)
-    return date
+    date = re.sub(r'^(剧・|影・|综・|漫・|少儿・|纪・)', '', date)
+    return _normalize_date_text(date)
 
 
 def _youku_has_fixed_date(date):
@@ -1915,8 +1931,9 @@ def extract_youku(lines):
     meta = re.compile(r'^(TOP|VIP|剧・|综・|影|漫・|少儿・|纪・|预告|预约榜|热度榜|独播|首播|限免中)$')
     for line in lines:
         if re.search(r'(\d{2}-\d{2}\s*)?上线|即将上线|预约', line):
-            if not meta.search(line) and _youku_has_fixed_date(line):
-                items.append(line)
+            date = _youku_normalize_date(line)
+            if not meta.search(date) and _youku_has_fixed_date(date):
+                items.append(date)
     return dedupe(items, 12)
 
 
