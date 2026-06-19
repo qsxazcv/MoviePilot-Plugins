@@ -100,19 +100,24 @@ export default defineComponent({
     }
 
     async function copyCookie() {
-      let text = status.value.cookie || '';
+      let text = '';
       error.value = '';
       clearMessage();
+      try {
+        const latest = await getPluginApi(props.api, 'cookie') || {};
+        status.value = {
+          ...status.value,
+          has_cookie: !!latest.has_cookie,
+          cookie_length: latest.cookie_length ?? status.value.cookie_length,
+        };
+        text = latest.cookie || '';
+      } catch (err) {
+        error.value = '读取 Cookie 失败：' + (err?.message || err);
+        return;
+      }
       if (!text) {
-        try {
-          const latest = await getPluginApi(props.api, 'status') || {};
-          status.value = latest;
-          text = latest.cookie || '';
-        } catch (err) {}
-        if (!text) {
-          error.value = '当前没有可复制的 Cookie，请先扫码登录';
-          return;
-        }
+        error.value = '当前没有可复制的 Cookie，请先扫码登录';
+        return;
       }
       const copiedByEvent = eventCopy(text);
       if (copiedByEvent) {
@@ -228,7 +233,7 @@ export default defineComponent({
             h(VCardText, null, [
               h('div', { class: 'wy-section-line' }, [
                 h('span', 'Cookie 管理'),
-                h(VBtn, { size: 'small', variant: 'tonal', prependIcon: 'mdi-content-copy', disabled: !status.value.cookie, onClick: copyCookie }, () => '复制'),
+                h(VBtn, { size: 'small', variant: 'tonal', prependIcon: 'mdi-content-copy', disabled: !status.value.has_cookie, onClick: copyCookie }, () => '复制'),
               ]),
               h('div', { class: 'wy-cookie-private' }, [
                 h(VIcon, { icon: status.value.has_cookie ? 'mdi-shield-lock-outline' : 'mdi-cookie-alert-outline', size: '42', color: status.value.has_cookie ? 'success' : 'grey' }),

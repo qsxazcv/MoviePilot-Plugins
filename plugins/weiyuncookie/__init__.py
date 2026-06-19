@@ -19,7 +19,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from apscheduler.triggers.cron import CronTrigger
@@ -46,7 +45,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.44"
+    plugin_version = "0.1.45"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -85,9 +84,12 @@ class weiyuncookie(_PluginBase):
     _last_openlist_sync_status: str = "未同步"
     _login_running: bool = False
     _login_thread: Optional[threading.Thread] = None
+    _login_lock: Optional[threading.Lock] = None
 
     def init_plugin(self, config: dict = None):
         config = config or {}
+        if self._login_lock is None:
+            self._login_lock = threading.Lock()
         self._enabled = bool(config.get("enabled", False))
         self._onlyonce = bool(config.get("onlyonce", False))
         self._headless = bool(config.get("headless", True))
@@ -205,6 +207,13 @@ class weiyuncookie(_PluginBase):
                 "methods": ["GET"],
                 "auth": "bear",
                 "summary": "查询微云 Cookie 助手状态",
+            },
+            {
+                "path": "/cookie",
+                "endpoint": self.__api_cookie,
+                "methods": ["GET"],
+                "auth": "bear",
+                "summary": "读取已保存的微云 Cookie",
             },
             {
                 "path": "/clear_cookie",
@@ -387,6 +396,7 @@ class weiyuncookie(_PluginBase):
             "last_run": self._last_run,
             "cookie_count": self._last_cookie_count,
             "has_cookie": bool(cookie),
+            "cookie_length": len(cookie),
             "has_qrcode": bool(qrcode),
             "qrcode": qrcode,
             "last_check": self._last_check,
@@ -394,7 +404,15 @@ class weiyuncookie(_PluginBase):
             "check_cron": self._check_cron,
             "last_openlist_sync": self._last_openlist_sync,
             "last_openlist_sync_status": self._last_openlist_sync_status,
+        }
+
+    def __api_cookie(self) -> Dict[str, Any]:
+        cookie = self.get_data("cookie") or ""
+        return {
+            "success": True,
+            "has_cookie": bool(cookie),
             "cookie": cookie,
+            "cookie_length": len(cookie),
         }
 
     def __api_clear_cookie(self) -> Dict[str, Any]:
@@ -689,26 +707,6 @@ class weiyuncookie(_PluginBase):
             logger.error("微云 Cookie 助手保存二维码临时文件失败：%s", err)
         return None
 
-    def __save_qrcode_tempfile(self, qrcode: str) -> Optional[str]:
-        """将 base64 二维码保存为临时 PNG 文件，返回文件路径。"""
-        if not qrcode:
-            return None
-        try:
-            data, _ = self.__decode_data_image(qrcode)
-            if not data:
-                return None
-            data_path = self.get_data_path()
-            if data_path:
-                temp_dir = Path(data_path) / "qrcache"
-                temp_dir.mkdir(parents=True, exist_ok=True)
-                temp_file = temp_dir / "qrcode.png"
-                temp_file.write_bytes(data)
-                logger.info("微云 Cookie 助手已保存二维码临时文件：%s", temp_file)
-                return str(temp_file)
-        except Exception as err:
-            logger.error("微云 Cookie 助手保存二维码临时文件失败：%s", err)
-        return None
-
     def __qrcode_image_url(self, public: bool = False) -> str:
         try:
             path = f"/api/v1/plugin/{self.__class__.__name__}/qrcode_image?apikey={settings.API_TOKEN}&ts={int(time.time())}"
@@ -748,17 +746,26 @@ class weiyuncookie(_PluginBase):
         self.save_data("cookie_invalid_notified", True)
 
     def __start_login_thread(self, source: str = "manual") -> bool:
-        if self._login_running:
-            logger.warning("微云 Cookie 助手扫码登录任务已在运行，忽略本次请求：source=%s", source)
-            return False
-        logger.info("微云 Cookie 助手准备启动扫码登录线程：source=%s, login_type=%s", source, self._login_type)
-        self._login_thread = threading.Thread(
-            target=self.__run_login_flow,
-            kwargs={"source": source, "login_type": self._login_type},
-            name="WeiyunCookieLogin",
-            daemon=True,
-        )
-        self._login_thread.start()
+        if self._login_lock is None:
+            self._login_lock = threading.Lock()
+        with self._login_lock:
+            if self._login_running or (self._login_thread and self._login_thread.is_alive()):
+                logger.warning("微云 Cookie 助手扫码登录任务已在运行，忽略本次请求：source=%s", source)
+                return False
+            logger.info("微云 Cookie 助手准备启动扫码登录线程：source=%s, login_type=%s", source, self._login_type)
+            self._login_running = True
+            self._login_thread = threading.Thread(
+                target=self.__run_login_flow,
+                kwargs={"source": source, "login_type": self._login_type},
+                name="WeiyunCookieLogin",
+                daemon=True,
+            )
+            try:
+                self._login_thread.start()
+            except Exception:
+                self._login_running = False
+                self._login_thread = None
+                raise
         return True
 
     def __run_login_flow(self, source: str = "manual", login_type: str = "qq") -> None:

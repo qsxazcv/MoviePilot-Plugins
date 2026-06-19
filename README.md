@@ -9,7 +9,7 @@
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
 | `programpreview` | 四大平台节目预告 | `1.0.30` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，统一预告日期显示格式。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.44` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；QQ/微信二维码截图会自动裁掉多余空白和提示文字。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.45` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。 |
 
 ## 快速开始
 
@@ -144,6 +144,7 @@ git status --short --branch
 
 ### `weiyuncookie`
 
+- `0.1.45`：优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。
 - `0.1.44`：浏览器模式文案简化为 Playwright / CloakBrowser。
 - `0.1.43`：浏览器模式文案改为具体浏览器名称：Playwright Chromium / MP CloakBrowser。
 - `0.1.42`：修复 QQ 扫码二维码不显示，恢复稳定的 iframe 中心截图路径，保留连续二维码主体裁剪以去掉顶部提示文字。
