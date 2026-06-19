@@ -91,6 +91,31 @@ async def page_html_text(url, wait=5000):
         return html, re.sub(r'<[^>]+>', '\n', html)
 
 
+async def iqiyi_filtered_page_html_text(url, wait=5000):
+    """Load an iQIYI list page and activate the visible upcoming filter."""
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            await page.wait_for_timeout(min(wait, 2500))
+            for label in ('即将上线', '最热'):
+                try:
+                    loc = page.get_by_text(label, exact=True).first
+                    if await loc.count():
+                        await loc.click(timeout=2500)
+                        await page.wait_for_timeout(1500)
+                except Exception:
+                    continue
+            text = await page.locator('body').inner_text(timeout=15000)
+            html = await page.content()
+            await browser.close()
+            return html, text
+    except Exception:
+        return await page_html_text(url, wait=wait)
+
+
 
 async def tencent_page_html_text(url):
     # 按用户偏好：腾讯只抓各频道页里的“即将上线”模块，不合并首页或其它推荐流。
@@ -433,21 +458,29 @@ def extract_tencent_html(html, text):
 
 
 IQIYI_CHANNELS = [
-    ('main', 'https://www.iqiyi.com/'),
-    ('newonline', 'https://www.iqiyi.com/newonline/'),
-    ('tv', 'https://www.iqiyi.com/dianshiju/'),
-    ('cartoon', 'https://www.iqiyi.com/dongman/'),
-    ('movie', 'https://www.iqiyi.com/dianying/'),
-    ('variety', 'https://www.iqiyi.com/zongyi/'),
+    ('tv', 'https://www.iqiyi.com/list/tv/%E5%85%A8%E9%83%A8%E5%89%A7%E9%9B%86.html'),
+    ('movie', 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
+    ('variety', 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
+    ('comic', 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
 ]
 
 
 IQIYI_LIST_CHANNELS = [
-    ('newonline', 0, 'https://www.iqiyi.com/newonline/'),
     ('tv', 2, 'https://www.iqiyi.com/list/tv/%E5%85%A8%E9%83%A8%E5%89%A7%E9%9B%86.html'),
     ('movie', 1, 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
     ('variety', 6, 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
     ('comic', 4, 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+]
+
+
+IQIYI_HOME_PREVIEW_CHANNELS = [
+    ('home_new_preview', 'https://www.iqiyi.com/'),
+]
+
+
+IQIYI_RANK_CHANNELS = [
+    ('rank_tv_reserve', 'https://www.iqiyi.com/ranks1/2/-8'),
+    ('rank_all_reserve', 'https://www.iqiyi.com/ranks1PCA/-1/-8'),
 ]
 
 
@@ -463,7 +496,7 @@ def _iqiyi_normalize_date(date):
 
 
 def _iqiyi_sort_key(item):
-    item = re.sub(r'（[^）]*(?:人预约|人已预约)）$', '', str(item))
+    item = re.sub(r'（[^）]*(?:人预约|人已预约|预约破[\d.]+(?:万|千|百)?)）$', '', str(item))
     date = item.split('｜', 1)[0]
     now = datetime.now()
 
@@ -508,7 +541,7 @@ def _iqiyi_sort_key(item):
 
 def _iqiyi_split_title_reserve(right):
     right = re.sub(r'\s+', ' ', str(right or '')).strip()
-    m = re.search(r'^(.*?)(（[^）]*(?:人预约|人已预约)）)$', right)
+    m = re.search(r'^(.*?)(（[^）]*(?:人预约|人已预约|预约破[\d.]+(?:万|千|百)?)）)$', right)
     if m:
         return m.group(1).strip(), m.group(2)
     return right, ''
@@ -517,6 +550,8 @@ def _iqiyi_split_title_reserve(right):
 def _iqiyi_find_reserve_near(text):
     text = _html_unescape(text or '')
     for pat in (
+        r'(预约破[\d.]+(?:万|千|百)?)',
+        r'([\d.]+(?:万)?人已预约)',
         r'([\d.]+(?:万)?人预约)',
         r'(?:预约人数|预约数|appoint(?:Count|Num|Cnt)?|reserve(?:Count|Num|Cnt)?|subscribe(?:Count|Num|Cnt)?|book(?:Count|Num|Cnt)?)[^\d]{0,20}(\d{2,9})',
         r'(?:预约人数|预约数|appoint(?:Count|Num|Cnt)?|reserve(?:Count|Num|Cnt)?|subscribe(?:Count|Num|Cnt)?|book(?:Count|Num|Cnt)?)[^\d]{0,20}([\d.]+万)',
@@ -525,6 +560,8 @@ def _iqiyi_find_reserve_near(text):
         if not m:
             continue
         val = m.group(1)
+        if val.startswith('预约破') or val.endswith('人已预约'):
+            return val
         if re.fullmatch(r'\d{1,9}', val):
             num = int(val)
             return f'{num/10000:.1f}万人预约' if num >= 10000 else f'{num}人预约'
@@ -1150,7 +1187,6 @@ def extract_iqiyi_videolib_items(payloads, reserve_map=None):
 
 async def iqiyi_prelw_payloads():
     urls = [
-        'https://www.iqiyi.com/prelw/portal/lw/v7/channel/recommend?lwaFastKey=Page_recommend_1&v=17.054.25384&adExt=%7B%22r%22%3A%222.17.0-ares6-pure%22%7D',
         'https://www.iqiyi.com/prelw/portal/lw/v7/channel/tv?lwaFastKey=Page_tv_1&v=17.054.25384&adExt=%7B%22r%22%3A%222.17.0-ares6-pure%22%7D',
         'https://www.iqiyi.com/prelw/portal/lw/v5/channel/cartoon?lwaFastKey=Page_cartoon_1&v=17.054.25384&adExt=%7B%22r%22%3A%222.17.0-ares6-pure%22%7D',
         'https://www.iqiyi.com/prelw/portal/lw/v7/channel/movie?lwaFastKey=Page_movie_1&v=17.054.25384&adExt=%7B%22r%22%3A%222.17.0-ares6-pure%22%7D',
@@ -1289,7 +1325,7 @@ def _iqiyi_title_alias_key(title):
     return key
 
 def _iqiyi_item_has_reserve(item):
-    return bool(re.search(r'（[^）]*(?:人预约|人已预约)）$', str(item or '')))
+    return bool(re.search(r'（[^）]*(?:人预约|人已预约|预约破[\d.]+(?:万|千|百)?)）$', str(item or '')))
 
 
 def _iqiyi_attach_search_reserve(item):
@@ -1405,57 +1441,73 @@ def extract_iqiyi_html(html_text):
 def extract_iqiyi(lines):
     """爱奇艺主频道/电视剧/动漫/电影/综艺的“即将上线/即将上映”卡片，合并去重后按时间排序。"""
     items = []
-    noise = re.compile(r'^(爱奇艺|首页|电视剧|电影|综艺|动漫|纪录片|VIP|全部|更多|换一换|播放|分享|下载|APP|登录|立即播放|热点|片花|查看全部新片|查看全部|动作|真人秀|冒险|剧情|喜剧|爱情|悬疑|犯罪|战争|古装|玄幻|日常|校园|生活|家庭|励志|农村|当代|内地|央视八套|罪案|警匪|刑侦破案|排行榜)$')
+    noise = re.compile(r'^(爱奇艺|首页|电视剧|电影|综艺|动漫|纪录片|VIP|全部|更多|换一换|播放|分享|下载|APP|登录|立即播放|热点|片花|新片预告|新片速递|即将上线|查看全部新片|查看全部|动作|真人秀|冒险|剧情|喜剧|爱情|悬疑|犯罪|战争|古装|玄幻|日常|校园|生活|家庭|励志|农村|当代|内地|央视八套|罪案|警匪|刑侦破案|排行榜)$')
     skip = re.compile(r'部(?:新片|电视剧|动漫|综艺)?即将(?:上映|上线)|^\d+(?:\.\d+)?$|^\d+集全$|^\d{2}-\d{2}期$|^\d{4}-\d{2}-\d{2}期$|豆瓣高分|榜No\.|^\d{4}年$| / |主演|导演|为你推荐|正在热映|定档预告|广告')
     date_pat = re.compile(r'^(?:今日|明日|后日|今天|明天|后天|本周.|下周.|\d{1,2}月\d{1,2}日)\s*\d{0,2}:?\d{0,2}(?:上线|上映)?$')
     stat_pat = re.compile(r'部(?:新片|电视剧|动漫|综艺)?即将(?:上映|上线)')
+    reserve_pat = re.compile(r'(?:预约破[\d.]+(?:万|千|百)?|[\d.]+(?:万)?人(?:已)?预约)')
+    bad_title_pat = re.compile(r'上线|上映|预约|即将|人预约| / ')
     for i, line in enumerate(lines):
         if not date_pat.fullmatch(line):
             continue
         date = line if re.search(r'上线|上映$', line) else f'{line}上线'
         title = ''
+        title_idx = -1
         # 不同频道文本顺序不一：有的是标题/简介/日期，有的是日期/标题/简介。
         # 爱奇艺卡片常见结构为：标题 / 简介 / 日期。
         # 若日期前 1-2 行已经有标题，优先采用向前回溯，避免把上一张卡片的日期串给下一张标题
         # （例如“熊出没·年年有熊 / 演员 / 明日10:00上线 / 绣刃 / 简介 / 06月01日00:00上线”）。
-        force_forward = False
-        if re.search(r'^(?:今日|明日|后日|今天|明天|后天)', date):
-            nxt = lines[i+1] if i + 1 < len(lines) else ''
-            # 相对日期后紧跟另一个标题时，说明当前日期很可能属于后续卡片，不向前回溯，避免错配。
-            if nxt and not (stat_pat.search(nxt) or date_pat.fullmatch(nxt) or noise.search(nxt) or skip.search(nxt) or re.search(r'上线|上映|预约|即将|人预约', nxt) or len(nxt) < 2 or len(nxt) > 45):
-                force_forward = True
-        back = [] if force_forward else lines[max(0, i-3):i]
+        back = lines[max(0, i-3):i]
         back_candidates = []
-        for cand in reversed(back):
-            if stat_pat.search(cand):
+        for offset, cand in reversed(list(enumerate(back, start=max(0, i-3)))):
+            if stat_pat.search(cand) or date_pat.fullmatch(cand):
                 break
-            if noise.search(cand) or skip.search(cand) or re.search(r'上线|上映|预约|即将|人预约| / ', cand) or len(cand) < 2 or len(cand) > 45:
+            if noise.search(cand) or skip.search(cand) or bad_title_pat.search(cand) or len(cand) < 2 or len(cand) > 45:
                 continue
-            back_candidates.append(cand)
+            back_candidates.append((offset, cand))
         if back_candidates:
             # 爱奇艺卡片常见结构是：标题 / 简介 / 日期。最近的一行常是简介，优先取前一行作为片名。
-            title = back_candidates[1] if len(back_candidates) >= 2 else back_candidates[0]
+            nearest_idx, nearest = back_candidates[0]
+            has_date_between = any(date_pat.fullmatch(x) for x in lines[nearest_idx + 1:i])
+            if has_date_between or len(back_candidates) == 1:
+                title_idx, title = nearest_idx, nearest
+            else:
+                title_idx, title = back_candidates[1]
         if not title:
             # 日期在标题前的卡片，只允许向后找标题；一旦后面几行出现另一个明确日期，说明已经跨到下一张卡片，停止。
             for cand in lines[i+1:i+5]:
                 if stat_pat.search(cand) or date_pat.fullmatch(cand):
                     break
-                if noise.search(cand) or skip.search(cand) or re.search(r'上线|上映|预约|即将|人预约', cand) or len(cand) < 2 or len(cand) > 45:
+                if noise.search(cand) or skip.search(cand) or bad_title_pat.search(cand) or len(cand) < 2 or len(cand) > 45:
                     continue
-                title = cand; break
+                title = cand
+                title_idx = lines.index(cand, i + 1, min(len(lines), i + 5))
+                break
         if not title:
             # 更远的向前兜底仍保留，但不跨统计入口/其它日期，减少推荐流串联。
             back = lines[max(0, i-8):i]
             for cand in reversed(back):
                 if stat_pat.search(cand) or date_pat.fullmatch(cand):
                     break
-                if noise.search(cand) or skip.search(cand) or re.search(r'上线|上映|预约|即将|人预约| / ', cand) or len(cand) < 2 or len(cand) > 45:
+                if noise.search(cand) or skip.search(cand) or bad_title_pat.search(cand) or len(cand) < 2 or len(cand) > 45:
                     continue
-                title = cand; break
+                title = cand
+                title_idx = lines.index(cand, max(0, i - 8), i)
+                break
         if title:
             reserve = ''
-            win = lines[max(0, i-5):min(len(lines), i+6)]
-            rm = next((re.search(r'[\d.]+(?:万)?人预约', x) for x in win if re.search(r'[\d.]+(?:万)?人预约', x)), None)
+            card_start = title_idx if title_idx >= 0 else max(0, i - 5)
+            for j in range(i - 1, max(-1, i - 6), -1):
+                if date_pat.fullmatch(lines[j]) or stat_pat.search(lines[j]):
+                    card_start = j + 1
+                    break
+            card_end = min(len(lines), i + 6)
+            for j in range(i + 1, min(len(lines), i + 6)):
+                if date_pat.fullmatch(lines[j]) or stat_pat.search(lines[j]):
+                    card_end = j
+                    break
+            win = lines[card_start:card_end]
+            rm = next((reserve_pat.search(x) for x in win if reserve_pat.search(x)), None)
             if rm:
                 reserve = rm.group(0)
             items.append(f'{_iqiyi_normalize_date(date)}｜{title}' + (f'（{reserve}）' if reserve else ''))
@@ -1465,11 +1517,94 @@ def extract_iqiyi(lines):
 async def iqiyi_all_lines():
     async def one(ch, url):
         try:
-            html, txt = await page_html_text(url, wait=2500)
+            html, txt = await iqiyi_filtered_page_html_text(url, wait=2500)
             return (ch, html, txt, clean_lines(txt))
         except Exception:
             return (ch, '', '', [])
     return await asyncio.gather(*(one(ch, url) for ch, url in IQIYI_CHANNELS))
+
+
+async def iqiyi_list_all_lines():
+    """Collect visible text from iQIYI library pages after switching to upcoming."""
+    async def one(ch, _channel_id, url):
+        try:
+            html, txt = await iqiyi_filtered_page_html_text(url, wait=2500)
+            return (ch, html, txt, clean_lines(txt))
+        except Exception:
+            return (ch, '', '', [])
+    return await asyncio.gather(*(one(ch, channel_id, url) for ch, channel_id, url in IQIYI_LIST_CHANNELS))
+
+
+def _iqiyi_home_preview_lines(lines):
+    """Keep only the homepage new/upcoming preview module text."""
+    if not lines:
+        return []
+    starts = [
+        i for i, line in enumerate(lines)
+        if re.search(r'新片预告|新片速递|即将上线', line)
+    ]
+    if not starts:
+        return []
+    stop_pat = re.compile(r'^(今日推荐|正在热播|热播榜|电影榜|电视剧榜|综艺榜|动漫榜|猜你喜欢|为你推荐|VIP精选|热门|排行榜|更多)$')
+    chunks = []
+    for start in starts[:4]:
+        end = min(len(lines), start + 80)
+        for j in range(start + 1, end):
+            if stop_pat.search(lines[j]) and not re.search(r'即将上线|新片预告|新片速递', lines[j]):
+                end = j
+                break
+        chunk = lines[start:end]
+        if any(re.search(r'上线|上映|预约|预告', x) for x in chunk):
+            chunks.extend(chunk)
+    return chunks
+
+
+async def iqiyi_home_preview_lines():
+    async def one(ch, url):
+        try:
+            html, txt = await iqiyi_home_preview_html_text(url, wait=3500)
+            lines = _iqiyi_home_preview_lines(clean_lines(txt))
+            return (ch, html, txt, lines)
+        except Exception:
+            return (ch, '', '', [])
+    return await asyncio.gather(*(one(ch, url) for ch, url in IQIYI_HOME_PREVIEW_CHANNELS))
+
+
+async def iqiyi_rank_lines():
+    """Collect iQIYI reserve-rank pages as a stable fallback for upcoming cards."""
+    async def one(ch, url):
+        try:
+            html, txt = await page_html_text(url, wait=2500)
+            return (ch, html, txt, clean_lines(txt))
+        except Exception:
+            return (ch, '', '', [])
+    return await asyncio.gather(*(one(ch, url) for ch, url in IQIYI_RANK_CHANNELS))
+
+
+async def iqiyi_home_preview_html_text(url, wait=5000):
+    """Load iQIYI homepage and activate the new preview/upcoming module."""
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
+            await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+            await page.wait_for_timeout(min(wait, 2500))
+            for label in ('新片预告', '新片速递', '即将上线'):
+                try:
+                    loc = page.get_by_text(label, exact=True).first
+                    if await loc.count():
+                        await loc.scroll_into_view_if_needed(timeout=2500)
+                        await loc.click(timeout=2500)
+                        await page.wait_for_timeout(1500)
+                except Exception:
+                    continue
+            text = await page.locator('body').inner_text(timeout=15000)
+            html = await page.content()
+            await browser.close()
+            return html, text
+    except Exception:
+        return await page_html_text(url, wait=wait)
 
 def extract_tencent(lines):
     # 保留旧函数名兼容，实际优先 extract_tencent_html。
@@ -1834,8 +1969,7 @@ async def fetch_site(name, url):
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
-                # 再用爱奇艺 newonline SSR 与片库 videolib/list 兜底，防止 prelw 接口波动。
-                items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
+                # 再用爱奇艺四个片库频道兜底，防止 prelw 接口波动；不合并首页/newonline 泛入口。
                 videolib_payloads = await _iqiyi_videolib_payloads()
                 videolib_rows = []
                 videolib_qids = []
@@ -1854,11 +1988,24 @@ async def fetch_site(name, url):
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
                 # 已知公开页/接口偶发漏出的爱奇艺预约片名，用爱奇艺搜索页补候选与预约数。
                 # 这里只从爱奇艺搜索页取数，不跨平台混用；若频道恢复返回，去重逻辑会自动优先带预约数版本。
-                search_fallback_titles = ['恶念', '天才游戏', '豪门大嫂要掀桌，门风不正直接怼', '狄仁杰之血谜棺']
+                search_fallback_titles = ['恶念', '天才游戏', '豪门大嫂要掀桌，门风不正直接怼', '狄仁杰之血谜棺', '昨夜将至']
                 items.extend(await asyncio.to_thread(_iqiyi_search_page_items_sync, search_fallback_titles))
                 for _ch, _html, _txt, _lines in await iqiyi_all_lines():
                     html_items = extract_iqiyi_html(_html)
-                    items.extend(html_items or extract_iqiyi(_lines))
+                    text_items = extract_iqiyi(_lines)
+                    # HTML parser targets older feedZaizhui card markup and may return only
+                    # part of the visible list. Keep the text parser as a second pass so
+                    # newer list cards such as "下周三上线｜昨夜将至" are not skipped.
+                    items.extend(html_items)
+                    items.extend(text_items)
+                for _ch, _html, _txt, _lines in await iqiyi_list_all_lines():
+                    items.extend(extract_iqiyi_html(_html))
+                    items.extend(extract_iqiyi(_lines))
+                for _ch, _html, _txt, _lines in await iqiyi_home_preview_lines():
+                    items.extend(extract_iqiyi_html(_html))
+                    items.extend(extract_iqiyi(_lines))
+                for _ch, _html, _txt, _lines in await iqiyi_rank_lines():
+                    items.extend(extract_iqiyi(_lines))
                 # 对已识别到的爱奇艺条目做通用搜索页兜底补数：
                 # prelw/频道接口没给预约数时，只去爱奇艺搜索页按片名补齐，不跨平台混用。
                 items = _dedupe_iqiyi_items(items, 50)
