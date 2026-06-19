@@ -13,6 +13,8 @@
 
 ## 快速开始
 
+发布前先按 [`RELEASE_CHECKLIST.md`](./RELEASE_CHECKLIST.md) 检查，尤其是 GitHub Release ZIP 的路径分隔符。
+
 ### 添加插件源
 
 在 MoviePilot 后台 `插件` 页面中添加第三方插件源：
