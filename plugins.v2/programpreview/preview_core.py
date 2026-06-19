@@ -462,6 +462,7 @@ IQIYI_CHANNELS = [
     ('movie', 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
     ('variety', 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
     ('comic', 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+    ('documentary', 'https://www.iqiyi.com/list/documentary/%E5%85%A8%E9%83%A8.html'),
 ]
 
 
@@ -470,6 +471,7 @@ IQIYI_LIST_CHANNELS = [
     ('movie', 1, 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
     ('variety', 6, 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
     ('comic', 4, 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+    ('documentary', 3, 'https://www.iqiyi.com/list/documentary/%E5%85%A8%E9%83%A8.html'),
 ]
 
 
@@ -480,6 +482,7 @@ IQIYI_HOME_PREVIEW_CHANNELS = [
 
 IQIYI_RANK_CHANNELS = [
     ('rank_tv_reserve', 'https://www.iqiyi.com/ranks1/2/-8'),
+    ('rank_documentary_reserve', 'https://www.iqiyi.com/ranks1/3/-8'),
     ('rank_all_reserve', 'https://www.iqiyi.com/ranks1PCA/-1/-8'),
 ]
 
@@ -1288,18 +1291,20 @@ def _iqiyi_extract_newonline_items_sync():
                 var_dates[name] = raw
                 default_var_dates.setdefault(name, raw)
     items = []
-    obj_pat = re.compile(
-        r'\{name:"(?P<title>[^"{}]{2,80})".*?publishText:(?P<date>"[^"]+"|[A-Za-z_$][\w$]*)'
-        r'.*?sub:\{[^{}]*?count:(?P<count>\d+)',
-        re.S,
-    )
-    for m in obj_pat.finditer(text):
+    # 按节目卡片切片，而不是要求卡片里一定有 sub.count；首页预告里有些已定档卡片
+    # 只给 publishText 日期，不给预约数，仍应进入最终列表并交给后续搜索页补数。
+    card_starts = list(re.finditer(r'\{name:"(?P<title>[^"{}]{2,80})",desc:', text))
+    for idx, m in enumerate(card_starts):
+        card = text[m.start():card_starts[idx + 1].start() if idx + 1 < len(card_starts) else min(len(text), m.start() + 6000)]
+        date_match = re.search(r'publishText:(?P<date>"[^"]+"|[A-Za-z_$][\w$]*)', card)
+        if not date_match:
+            continue
         title = re.sub(r'\s+', ' ', m.group('title')).strip()
         if _iqiyi_is_noise_title(title) or _iqiyi_is_short_drama_title(title):
             continue
-        date_token = m.group('date')
+        date_token = date_match.group('date')
         if date_token.startswith('"'):
-            date = date_token.strip('"')
+            date = decode_js_string(date_token)
         else:
             date = var_dates.get(date_token, '')
         date = _iqiyi_normalize_date(date)
@@ -1312,7 +1317,8 @@ def _iqiyi_extract_newonline_items_sync():
                 continue
         if not re.search(r'上线|上映', date):
             date += '上线'
-        reserve = _iqiyi_format_reserve_count(m.group('count'))
+        count_match = re.search(r'sub:\{[^{}]*?count:(?P<count>\d+)', card, re.S)
+        reserve = _iqiyi_format_reserve_count(count_match.group('count')) if count_match else ''
         items.append(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''))
     return _dedupe_iqiyi_items(items, 80)
 
@@ -2008,7 +2014,7 @@ async def fetch_site(name, url):
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
                 # 首页“新片预告/新片速递”的真实数据在 newOnlinePCW SSR，合并进最终结果后统一去重。
                 items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
-                # 再用爱奇艺四个片库频道兜底，补齐电视剧/电影/综艺/动漫片库的“即将上线”。
+                # 再用爱奇艺五个片库频道兜底，补齐电视剧/电影/综艺/动漫/纪录片片库的“即将上线”。
                 videolib_payloads = await _iqiyi_videolib_payloads()
                 videolib_rows = []
                 videolib_qids = []
