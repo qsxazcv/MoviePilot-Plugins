@@ -1223,16 +1223,38 @@ def _iqiyi_extract_newonline_items_sync():
     text = _html_unescape(text or '')
     if not text:
         return []
-    # NUXT 尾部参数中 q/ak 等短变量会映射到 "06月03日上线" 这类日期。
+    # NUXT 尾部参数中 r/ah 等短变量会映射到 "06月24日上线" 这类日期。
     var_dates = {}
-    m = re.search(r'window\.__NUXT__=\(function\((.*?)\)\{', text, re.S)
-    tail = re.search(r'\}\((.*?)\)\);?\s*$', text[text.find('window.__NUXT__='):], re.S)
+    nuxt_pos = text.find('window.__NUXT__=')
+    nuxt_text = text[nuxt_pos:] if nuxt_pos >= 0 else ''
+    script_end = nuxt_text.find('</script>')
+    if script_end >= 0:
+        nuxt_text = nuxt_text[:script_end]
+    m = re.search(r'window\.__NUXT__=\(function\((.*?)\)\{', nuxt_text, re.S)
+    tail = re.search(r'\}\((.*?)\)\);?\s*$', nuxt_text, re.S)
+
+    def decode_js_string(value):
+        value = str(value or '').strip()
+        if not (value.startswith('"') and value.endswith('"')):
+            return ''
+        try:
+            return json.loads(value)
+        except Exception:
+            raw = value[1:-1].replace('\\u002F', '/')
+            if '\\u' in raw or '\\x' in raw:
+                try:
+                    return raw.encode('utf-8').decode('unicode_escape', 'ignore')
+                except Exception:
+                    pass
+            return raw
+
     if m and tail:
         names = [x.strip() for x in m.group(1).split(',')]
         args = []
         cur = ''
         in_str = False
         esc = False
+        depth = 0
         for ch in tail.group(1):
             if in_str:
                 cur += ch
@@ -1246,17 +1268,22 @@ def _iqiyi_extract_newonline_items_sync():
             if ch == '"':
                 in_str = True
                 cur += ch
-            elif ch == ',':
+            elif ch in '[{(':
+                depth += 1
+                cur += ch
+            elif ch in ']})':
+                depth = max(0, depth - 1)
+                cur += ch
+            elif ch == ',' and depth == 0:
                 args.append(cur.strip()); cur = ''
             else:
                 cur += ch
         if cur.strip():
             args.append(cur.strip())
         for name, val in zip(names, args):
-            if len(name) > 3 or not val.startswith('"') or not val.endswith('"'):
+            if len(name) > 3:
                 continue
-            raw = val[1:-1].replace('\\u002F', '/')
-            raw = raw.encode('utf-8').decode('unicode_escape', 'ignore')
+            raw = decode_js_string(val)
             if re.search(r'(?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周|下周)', raw) and re.search(r'上线|上映', raw):
                 var_dates[name] = raw
                 default_var_dates.setdefault(name, raw)
@@ -1328,6 +1355,11 @@ def _iqiyi_item_has_reserve(item):
     return bool(re.search(r'（[^）]*(?:人预约|人已预约|预约破[\d.]+(?:万|千|百)?)）$', str(item or '')))
 
 
+def _iqiyi_item_has_time(item):
+    date = str(item or '').split('｜', 1)[0]
+    return bool(re.search(r'\d{1,2}:\d{2}', date))
+
+
 def _iqiyi_attach_search_reserve(item):
     """对单条爱奇艺预告强制执行搜索页补数；失败时原样返回，保留后续重试空间。"""
     left, sep, right = str(item or '').partition('｜')
@@ -1383,13 +1415,18 @@ def _dedupe_iqiyi_items(items, limit=50):
             order.append(key); best[key] = item
         else:
             # 同名/近似同名条目优先保留带预约数的版本；
-            # 若两条都带预约数，保留日期更具体/更早的版本。
+            # 若两条预约数状态一致，优先保留带具体时间的版本，再按真实日期取更早版本。
             old_has_reserve = _iqiyi_item_has_reserve(best[key])
             new_has_reserve = _iqiyi_item_has_reserve(item)
             if new_has_reserve and not old_has_reserve:
                 best[key] = item
-            elif new_has_reserve == old_has_reserve and _iqiyi_sort_key(item) < _iqiyi_sort_key(best[key]):
-                best[key] = item
+            elif new_has_reserve == old_has_reserve:
+                old_has_time = _iqiyi_item_has_time(best[key])
+                new_has_time = _iqiyi_item_has_time(item)
+                if new_has_time and not old_has_time:
+                    best[key] = item
+                elif new_has_time == old_has_time and _iqiyi_sort_key(item) < _iqiyi_sort_key(best[key]):
+                    best[key] = item
     deduped = sorted([best[k] for k in order], key=_iqiyi_sort_key)
     # 去重后先对全部候选强制补数，再重新排序；搜索页失败的条目保持无预约数，下一次定时任务会继续重试。
     enriched = _iqiyi_force_search_reserve_items(deduped)
@@ -1969,7 +2006,9 @@ async def fetch_site(name, url):
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
                     items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
-                # 再用爱奇艺四个片库频道兜底，防止 prelw 接口波动；不合并首页/newonline 泛入口。
+                # 首页“新片预告/新片速递”的真实数据在 newOnlinePCW SSR，合并进最终结果后统一去重。
+                items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
+                # 再用爱奇艺四个片库频道兜底，补齐电视剧/电影/综艺/动漫片库的“即将上线”。
                 videolib_payloads = await _iqiyi_videolib_payloads()
                 videolib_rows = []
                 videolib_qids = []
