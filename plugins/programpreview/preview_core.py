@@ -1925,15 +1925,63 @@ def extract_youku_from_data(data):
     return sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
 
 
+def _youku_text_title_candidate(line, meta):
+    title = re.sub(r'\s+', ' ', str(line or '')).strip(' -｜|')
+    if not title or len(title) > 60:
+        return ''
+    if meta.search(title) or _youku_has_fixed_date(title):
+        return ''
+    if re.fullmatch(r'\d+(?:\.\d+)?万?', title):
+        return ''
+    if re.search(r'预约|上线|热度榜|预约榜|更新至\d+', title):
+        return ''
+    return title
+
+
+def _youku_inline_text_parts(line, meta):
+    text = re.sub(r'\s+', ' ', str(line or '')).strip()
+    patterns = (
+        r'(?:^|\s)(?:剧・|综・|影・|漫・|少儿・|纪・)?'
+        r'((?:\d{1,2}[./-]\d{1,2}|\d{1,2}月\d{1,2}日|今天|明天|后天)'
+        r'(?:\s*\d{1,2}:\d{2})?\s*(?:上线|开播|首播))\s+(.+)$',
+    )
+    for pattern in patterns:
+        m = re.search(pattern, text)
+        if m:
+            date = _youku_normalize_date(m.group(1))
+            title = _youku_text_title_candidate(m.group(2), meta)
+            if _youku_has_fixed_date(date) and title:
+                return date, title
+    return '', ''
+
+
+def _youku_nearby_text_title(lines, index, meta):
+    for step in range(1, 5):
+        pos = index + step
+        if pos < len(lines):
+            title = _youku_text_title_candidate(lines[pos], meta)
+            if title:
+                return title
+    for step in range(1, 4):
+        pos = index - step
+        if pos >= 0:
+            title = _youku_text_title_candidate(lines[pos], meta)
+            if title:
+                return title
+    return ''
+
+
 def extract_youku(lines):
-    """文本兜底：优先避免把相邻卡片的标签误当片名。"""
+    """文本兜底：尽量把日期与相邻片名配对，避免只输出日期。"""
     items = []
-    meta = re.compile(r'^(TOP|VIP|剧・|综・|影|漫・|少儿・|纪・|预告|预约榜|热度榜|独播|首播|限免中)$')
-    for line in lines:
+    meta = re.compile(r'^(TOP|VIP|剧・|综・|影|漫・|少儿・|纪・|预告|预约榜|热度榜|独播|首播|限免中|预约破)$')
+    for index, line in enumerate(lines):
         if re.search(r'(\d{2}-\d{2}\s*)?上线|即将上线|预约', line):
-            date = _youku_normalize_date(line)
+            inline_date, inline_title = _youku_inline_text_parts(line, meta)
+            date = inline_date or _youku_normalize_date(line)
             if not meta.search(date) and _youku_has_fixed_date(date):
-                items.append(date)
+                title = inline_title or _youku_nearby_text_title(lines, index, meta)
+                items.append(f'{date}｜{title}' if title else date)
     return dedupe(items, 12)
 
 
