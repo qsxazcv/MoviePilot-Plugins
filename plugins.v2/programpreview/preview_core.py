@@ -1740,6 +1740,7 @@ def _youku_tag_titles(item):
 
 YOUKU_CHANNELS = [
     ('main', 'https://www.youku.com/ku/webhome'),
+    ('new', 'https://www.youku.com/ku/new'),
     ('tv', 'https://tv.youku.com/'),
     ('comic', 'https://comic.youku.com/'),
     ('movie', 'https://movie.youku.com/'),
@@ -1747,7 +1748,31 @@ YOUKU_CHANNELS = [
 ]
 
 
+def _youku_initial_data_from_html(html):
+    """从优酷 SSR HTML 中解析 window.__INITIAL_DATA__。"""
+    text = str(html or '')
+    marker = 'window.__INITIAL_DATA__'
+    pos = text.find(marker)
+    if pos < 0:
+        return None
+    eq = text.find('=', pos)
+    if eq < 0:
+        return None
+    start = eq + 1
+    end = text.find('</script>', start)
+    raw = text[start:end if end >= 0 else len(text)].strip().rstrip(';')
+    if not raw:
+        return None
+    # 优酷 SSR 数据偶尔把缺省图片字段写成 JS undefined，转成 JSON null 后再解析。
+    raw = re.sub(r'(?<=[:\[,])\s*undefined\b', 'null', raw)
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
 async def youku_initial_data(url):
+    data = None
     try:
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
@@ -1757,7 +1782,15 @@ async def youku_initial_data(url):
             await page.wait_for_timeout(1800)
             data = await page.evaluate('window.__INITIAL_DATA__ || null')
             await browser.close()
-            return data
+            if data:
+                return data
+    except Exception:
+        pass
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': UA})
+        with urllib.request.urlopen(req, timeout=25) as r:
+            html = r.read().decode('utf-8', 'ignore')
+        return _youku_initial_data_from_html(html)
     except Exception:
         return None
 
