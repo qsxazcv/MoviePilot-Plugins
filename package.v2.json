@@ -29,6 +29,18 @@
       "1.0.2": "爱奇艺新增搜索页兜底补齐漏项与预约数，修复频道接口偶发遗漏《恶念》等预约节目。"
     }
   },
+  "iqiyidiscover": {
+    "name": "爱奇艺探索",
+    "description": "让 MoviePilot 探索页接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。",
+    "labels": "探索,爱奇艺,片库",
+    "version": "1.0.36",
+    "author": "qsxazcv",
+    "level": 1,
+    "release": true,
+    "history": {
+      "v1.0.36": "修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型，导致 MoviePilot 探索页类型标签不显示、点击详情无内容的问题。"
+    }
+  },
   "weiyuncookie": {
     "name": "微云Cookie助手",
     "description": "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。",

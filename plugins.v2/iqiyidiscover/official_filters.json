@@ -1,0 +1,2875 @@
+{
+  "generated_at": "2026-06-21 12:18:32",
+  "source_file": "E:\\MP\\iqiyi-official-all-tags-20260621-121530.json",
+  "tag_endpoint": "https://mesh.if.iqiyi.com/portal/videolib/tag",
+  "version": "17.063.25600",
+  "channels": {
+    "tv": {
+      "id": "2",
+      "name": "电视剧",
+      "type": "电视剧"
+    },
+    "short_drama": {
+      "id": "35",
+      "name": "短剧",
+      "type": "短剧"
+    },
+    "movie": {
+      "id": "1",
+      "name": "电影",
+      "type": "电影"
+    },
+    "variety": {
+      "id": "6",
+      "name": "综艺",
+      "type": "综艺"
+    },
+    "anime": {
+      "id": "4",
+      "name": "动漫",
+      "type": "动漫"
+    },
+    "children": {
+      "id": "15",
+      "name": "少儿",
+      "type": "少儿"
+    },
+    "comic": {
+      "id": "37",
+      "name": "漫剧",
+      "type": "漫剧"
+    },
+    "documentary": {
+      "id": "3",
+      "name": "纪录片",
+      "type": "纪录片"
+    },
+    "knowledge": {
+      "id": "12",
+      "name": "知识",
+      "type": "知识"
+    }
+  },
+  "skipped": {
+    "tv": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "short_drama": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "movie": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "variety": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "anime": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "children": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "comic": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "documentary": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ],
+    "knowledge": [
+      {
+        "group": "排序",
+        "reason": "sort group handled by SORT_GROUPS"
+      }
+    ]
+  },
+  "filters": {
+    "tv": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=2289882683101933": "古装",
+          "three_category_id_v2=4705204050526533": "战争",
+          "three_category_id_v2=3986463450987233": "谍战",
+          "three_category_id_v2=8732878771828133": "爱情",
+          "three_category_id_v2=2902737390744633": "罪案",
+          "three_category_id_v2=5836257895783433": "悬疑",
+          "three_category_id_v2=2375714428805633": "家庭",
+          "three_category_id_v2=3596610849005133": "军旅",
+          "three_category_id_v2=3842875764248933": "喜剧",
+          "three_category_id_v2=8014138172289033": "都市",
+          "three_category_id_v2=7045121828267433": "武侠",
+          "three_category_id_v2=2378923092196533": "言情",
+          "three_category_id_v2=4069086533300333": "偶像",
+          "three_category_id_v2=8902937931540733": "青春",
+          "three_category_id_v2=7146194725077733": "农村",
+          "three_category_id_v2=1466860523361833": "穿越",
+          "three_category_id_v2=8035796650176933": "奇幻",
+          "three_category_id_v2=7174270529747133": "历史",
+          "three_category_id_v2=4087536347797533": "年代",
+          "three_category_id_v2=2771984357569433": "科幻",
+          "three_category_id_v2=3196330091002833": "生活",
+          "three_category_id_v2=3797954476777933": "剧情",
+          "three_category_id_v2=2971723653646733": "励志",
+          "three_category_id_v2=7399679132950733": "婚姻",
+          "three_category_id_v2=7245663290192433": "警匪",
+          "three_category_id_v2=7655570038367133": "犯罪",
+          "three_category_id_v2=7174270529747233": "推理",
+          "three_category_id_v2=3228416724910933": "商战",
+          "three_category_id_v2=6147498244691133": "宫廷",
+          "three_category_id_v2=2702998094667233": "仙侠",
+          "three_category_id_v2=2835355459537833": "神话",
+          "three_category_id_v2=7086834452347833": "动作",
+          "three_category_id_v2=2681339616779433": "复仇",
+          "three_category_id_v2=8391958286555633": "惊悚",
+          "three_category_id_v2=2535330033": "其他"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=1009625990172533": "古偶甜宠",
+          "three_category_id_v2=1016043316954133": "古装探案",
+          "three_category_id_v2=1138774691652233": "奇幻冒险",
+          "three_category_id_v2=1383435275200733": "婚姻生活",
+          "three_category_id_v2=1384237441048433": "熟龄浪漫",
+          "three_category_id_v2=1515792640071333": "江湖恩怨",
+          "three_category_id_v2=1674621477915933": "家族斗争",
+          "three_category_id_v2=1693873458260733": "青春校园",
+          "three_category_id_v2=1699488619194533": "医疗题材",
+          "three_category_id_v2=1894414920185633": "古装神话",
+          "three_category_id_v2=1993081319452733": "知青往事",
+          "three_category_id_v2=2009926802254433": "怀旧情感",
+          "three_category_id_v2=2072495738375033": "时代报告",
+          "three_category_id_v2=2121427855085033": "苦情催泪",
+          "three_category_id_v2=2138273337886433": "护宝传奇",
+          "three_category_id_v2=2147899328059033": "警匪罪案",
+          "three_category_id_v2=2186403288748633": "东方玄幻",
+          "three_category_id_v2=2394966409150533": "家庭喜剧",
+          "three_category_id_v2=2504863130285333": "乡村题材",
+          "three_category_id_v2=2540960593431933": "民国传奇",
+          "three_category_id_v2=2688559109409033": "古装喜剧",
+          "three_category_id_v2=2710217587296533": "都市奇幻",
+          "three_category_id_v2=2760754035701733": "英雄正义",
+          "three_category_id_v2=2792840669609833": "爱情喜剧",
+          "three_category_id_v2=2800862328086833": "成长烦恼",
+          "three_category_id_v2=2859420434968733": "反腐倡廉",
+          "three_category_id_v2=3000601624163933": "个人传奇",
+          "three_category_id_v2=3002205955859333": "情感悬疑",
+          "three_category_id_v2=3192319261764233": "个人成长",
+          "three_category_id_v2=3567732878488133": "传统武侠",
+          "three_category_id_v2=3684849092252233": "民国探案",
+          "three_category_id_v2=3690464253185933": "战争传奇",
+          "three_category_id_v2=3729770379723233": "都市喜剧",
+          "three_category_id_v2=3755439686850133": "探寻真相",
+          "three_category_id_v2=3839667100858533": "刑侦破案",
+          "three_category_id_v2=3990474280225833": "女性传奇",
+          "three_category_id_v2=4208663390800233": "科幻冒险",
+          "three_category_id_v2=4560012032092733": "古装爱情",
+          "three_category_id_v2=4604131153716233": "虐心绝症",
+          "three_category_id_v2=4615361475584233": "百姓趣闻",
+          "three_category_id_v2=4735686352739133": "军旅题材",
+          "three_category_id_v2=4934623482968933": "警察故事",
+          "three_category_id_v2=5016444399434033": "人性反思",
+          "three_category_id_v2=5380627694289933": "扫黑缉毒",
+          "three_category_id_v2=5671011731157433": "偶像爱情",
+          "three_category_id_v2=5768875964576733": "甜虐爱情",
+          "three_category_id_v2=5800160432637133": "男性传奇",
+          "three_category_id_v2=5800962598484933": "奇幻爱情",
+          "three_category_id_v2=5933319963355133": "破镜重圆",
+          "three_category_id_v2=5962197933872333": "青春励志",
+          "three_category_id_v2=7621076906916433": "仙侠玄幻",
+          "three_category_id_v2=5984658577608033": "历史演义",
+          "three_category_id_v2=6747518298770733": "女扮男装",
+          "three_category_id_v2=6360072194331733": "前世今生",
+          "three_category_id_v2=8229920785320233": "童年神剧",
+          "three_category_id_v2=8122430561728733": "革命抗战",
+          "three_category_id_v2=8689561816052333": "抗日战争",
+          "three_category_id_v2=7864133158769133": "反特谍战",
+          "three_category_id_v2=7308232226313133": "传奇变革",
+          "three_category_id_v2=7374009825824433": "乱世情缘",
+          "three_category_id_v2=7187907349157933": "剿匪",
+          "three_category_id_v2=6767572444963133": "女性励志",
+          "three_category_id_v2=7860122329530533": "年代爱情",
+          "three_category_id_v2=7661987365148633": "青春爱恋",
+          "three_category_id_v2=8987967511396833": "先婚后爱",
+          "three_category_id_v2=6401784818411933": "推理解谜",
+          "three_category_id_v2=8867642634241733": "搭档破案",
+          "three_category_id_v2=6798054747175933": "都市生活",
+          "three_category_id_v2=8898927102302033": "罪案纪实",
+          "three_category_id_v2=7855309334444333": "都市家庭",
+          "three_category_id_v2=8566830441354433": "家长里短",
+          "three_category_id_v2=7913065275478833": "家庭教育",
+          "three_category_id_v2=7845683344271933": "原生家庭",
+          "three_category_id_v2=8506668002776933": "都市爱情",
+          "three_category_id_v2=4004913265484633": "亲情",
+          "three_category_id_v2=7284167250881933": "温暖人间",
+          "three_category_id_v2=2789632006219233": "特种兵",
+          "three_category_id_v2=8103980747231333": "青春喜剧",
+          "three_category_id_v2=8045422640349333": "情景喜剧",
+          "three_category_id_v2=1089040409095033": "轻喜剧",
+          "three_category_id_v2=8720044118264933": "情感悬疑",
+          "three_category_id_v2=8567632607202033": "追求梦想",
+          "three_category_id_v2=7487917376197733": "怀旧情感",
+          "three_category_id_v2=8704000801310933": "功夫武打",
+          "three_category_id_v2=8696781308681733": "女性成长",
+          "three_category_id_v2=3641532136476233": "浪漫",
+          "three_category_id_v2=4738092850282133": "历史剧",
+          "three_category_id_v2=7408502957275533": "家族兴衰",
+          "three_category_id_v2=6242955980567433": "宅门风云",
+          "three_category_id_v2=3540459239666133": "上海滩",
+          "three_category_id_v2=8019753333222833": "超能力",
+          "three_category_id_v2=7073197632936933": "个人奋斗",
+          "three_category_id_v2=7872956983093833": "乡村振兴",
+          "three_category_id_v2=6077709815941633": "时代变迁",
+          "three_category_id_v2=5488117917881733": "职场剧",
+          "three_category_id_v2=1726762258016433": "姐妹情",
+          "three_category_id_v2=6238945151329033": "青年奋斗",
+          "three_category_id_v2=6608743607118633": "仙情侠缘",
+          "three_category_id_v2=7629098565392933": "文学改编"
+        }
+      },
+      {
+        "label": "地区",
+        "model": "region",
+        "items": {
+          "three_category_id_v2=8052642132978633": "内地",
+          "three_category_id_v2=6679334201716133": "中国香港",
+          "three_category_id_v2=5724756842953133": "中国台湾",
+          "three_category_id_v2=8097563420449933": "美国",
+          "three_category_id_v2=4017747919047533": "韩国",
+          "three_category_id_v2=7671613355321033": "泰国",
+          "three_category_id_v2=6234934322090433": "日本",
+          "three_category_id_v2=6993783214014833": "英国",
+          "three_category_id_v2=2283850033": "其他"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代",
+          "market_release_date_level=1990-1999": "90年代",
+          "market_release_date_level=1980-1989": "80年代"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "is_limit_free=1": "限免",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "殿堂",
+        "model": "hall",
+        "items": {
+          "smart_tag_v2=荣誉殿堂": "荣誉殿堂",
+          "smart_tag_v2=国民殿堂": "国民殿堂",
+          "smart_tag_v2=人气殿堂": "人气殿堂",
+          "smart_tag_v2=佳片殿堂": "佳片殿堂"
+        }
+      },
+      {
+        "label": "规格",
+        "model": "spec",
+        "items": {
+          "is_qiyi_produced=1": "自制",
+          "is_exclusive=1": "独播"
+        }
+      },
+      {
+        "label": "奖项",
+        "model": "award",
+        "items": {
+          "structure_id=95be70850d6d967f_2_9": "白玉兰奖",
+          "structure_id=25e3cb1182fe4d8e_2_9": "飞天奖",
+          "structure_id=73c6eb6653d2771c_2_9": "金鹰奖"
+        }
+      },
+      {
+        "label": "剧场",
+        "model": "theater",
+        "items": {
+          "smart_tag_v2=迷雾剧场": "迷雾剧场",
+          "smart_tag_v2=恋恋剧场": "恋恋剧场",
+          "smart_tag_v2=小逗剧场": "小逗剧场",
+          "smart_tag_v2=大家剧场": "大家剧场",
+          "smart_tag_v2=微尘剧场": "微尘剧场"
+        }
+      },
+      {
+        "label": "演员",
+        "model": "actor",
+        "items": {
+          "smart_tag_v2=张凌赫": "张凌赫",
+          "smart_tag_v2=黄景瑜": "黄景瑜",
+          "smart_tag_v2=田曦薇": "田曦薇",
+          "smart_tag_v2=白鹿": "白鹿",
+          "smart_tag_v2=杨志刚": "杨志刚",
+          "smart_tag_v2=欧豪": "欧豪",
+          "smart_tag_v2=于和伟": "于和伟",
+          "smart_tag_v2=张嘉益": "张嘉益",
+          "smart_tag_v2=张译": "张译",
+          "smart_tag_v2=杨旭文": "杨旭文",
+          "smart_tag_v2=郭京飞": "郭京飞",
+          "smart_tag_v2=任嘉伦": "任嘉伦",
+          "smart_tag_v2=赵丽颖": "赵丽颖",
+          "smart_tag_v2=孙俪": "孙俪",
+          "smart_tag_v2=靳东": "靳东",
+          "smart_tag_v2=李沁": "李沁",
+          "smart_tag_v2=虞书欣": "虞书欣",
+          "smart_tag_v2=曾舜晞": "曾舜晞",
+          "smart_tag_v2=宋轶": "宋轶",
+          "smart_tag_v2=白宇": "白宇"
+        }
+      },
+      {
+        "label": "推荐",
+        "model": "recommend",
+        "items": {
+          "structure_id=812b38302498d408_2_7": "豆瓣高分",
+          "smart_tag_v2=热度破10000": "热度破10000",
+          "smart_tag_v2=评论破1000万": "评论破1000万",
+          "smart_tag_v2=弹幕破1000万": "弹幕破1000万"
+        }
+      }
+    ],
+    "short_drama": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "smart_tag_v2=穿越": "穿越",
+          "smart_tag_v2=逆袭": "逆袭",
+          "smart_tag_v2=重生": "重生",
+          "smart_tag_v2=爱情": "爱情",
+          "smart_tag_v2=玄幻": "玄幻",
+          "smart_tag_v2=现代言情": "现代言情",
+          "smart_tag_v2=总裁": "总裁",
+          "smart_tag_v2=虐恋": "虐恋",
+          "smart_tag_v2=甜宠": "甜宠",
+          "smart_tag_v2=神豪": "神豪",
+          "smart_tag_v2=女性成长": "女性成长",
+          "smart_tag_v2=古风权谋": "古风权谋",
+          "smart_tag_v2=家庭伦理": "家庭伦理",
+          "smart_tag_v2=复仇": "复仇",
+          "smart_tag_v2=悬疑推理": "悬疑推理",
+          "smart_tag_v2=古风言情": "古风言情",
+          "smart_tag_v2=生活": "生活",
+          "smart_tag_v2=刑侦": "刑侦",
+          "smart_tag_v2=恐怖": "恐怖"
+        }
+      },
+      {
+        "label": "受众",
+        "model": "audience",
+        "items": {
+          "smart_tag_v2=男频": "男频",
+          "smart_tag_v2=女频": "女频"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2000-2021": "更早"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP",
+          "is_exclusive=1": "独播"
+        }
+      },
+      {
+        "label": "设定",
+        "model": "setting",
+        "items": {
+          "smart_tag_v2=大女主": "大女主",
+          "smart_tag_v2=马甲": "马甲",
+          "smart_tag_v2=小人物": "小人物",
+          "smart_tag_v2=无敌神医": "无敌神医",
+          "smart_tag_v2=草根": "草根",
+          "smart_tag_v2=扮猪吃虎": "扮猪吃虎",
+          "smart_tag_v2=青梅竹马": "青梅竹马",
+          "smart_tag_v2=打脸虐渣": "打脸虐渣",
+          "smart_tag_v2=先婚后爱": "先婚后爱",
+          "smart_tag_v2=都市修仙": "都市修仙",
+          "smart_tag_v2=闪婚": "闪婚",
+          "smart_tag_v2=萌宝": "萌宝",
+          "smart_tag_v2=豪门恩怨": "豪门恩怨",
+          "smart_tag_v2=强者回归": "强者回归",
+          "smart_tag_v2=破镜重圆": "破镜重圆",
+          "smart_tag_v2=欢喜冤家": "欢喜冤家",
+          "smart_tag_v2=赘婿逆袭": "赘婿逆袭",
+          "smart_tag_v2=暗恋成真": "暗恋成真",
+          "smart_tag_v2=亲情": "亲情",
+          "smart_tag_v2=传承觉醒": "传承觉醒"
+        }
+      },
+      {
+        "label": "背景",
+        "model": "background",
+        "items": {
+          "smart_tag_v2=古风": "古风",
+          "smart_tag_v2=架空": "架空",
+          "smart_tag_v2=民国": "民国",
+          "smart_tag_v2=乡村": "乡村",
+          "smart_tag_v2=现代": "现代",
+          "smart_tag_v2=星际": "星际",
+          "smart_tag_v2=都市": "都市"
+        }
+      },
+      {
+        "label": "演员",
+        "model": "actor",
+        "items": {
+          "smart_tag_v2=赵振栋": "赵振栋",
+          "smart_tag_v2=翟一莹": "翟一莹",
+          "smart_tag_v2=张集骏": "张集骏",
+          "smart_tag_v2=王奕然": "王奕然",
+          "smart_tag_v2=李柯以": "李柯以",
+          "smart_tag_v2=林昕宜": "林昕宜",
+          "smart_tag_v2=曾辉": "曾辉",
+          "smart_tag_v2=黄文博": "黄文博",
+          "smart_tag_v2=刘夕语": "刘夕语",
+          "smart_tag_v2=孙樾": "孙樾",
+          "smart_tag_v2=王道铁": "王道铁",
+          "smart_tag_v2=杨志刚": "杨志刚",
+          "smart_tag_v2=郜思雯": "郜思雯",
+          "smart_tag_v2=刘润铭": "刘润铭",
+          "smart_tag_v2=何聪睿": "何聪睿",
+          "smart_tag_v2=赵佳": "赵佳",
+          "smart_tag_v2=韩雨彤": "韩雨彤",
+          "smart_tag_v2=王培延": "王培延",
+          "smart_tag_v2=钟熙": "钟熙",
+          "smart_tag_v2=郭迦南": "郭迦南"
+        }
+      }
+    ],
+    "movie": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=3842875764248933": "喜剧",
+          "three_category_id_v2=7821618368840933": "动画",
+          "three_category_id_v2=7086834452347833": "动作",
+          "three_category_id_v2=8732878771828133": "爱情",
+          "three_category_id_v2=7128547076428333": "恐怖",
+          "three_category_id_v2=4705204050526533": "战争",
+          "three_category_id_v2=8391958286555633": "惊悚",
+          "three_category_id_v2=8201844980650933": "枪战",
+          "three_category_id_v2=2771984357569433": "科幻",
+          "three_category_id_v2=7655570038367133": "犯罪",
+          "three_category_id_v2=5836257895783433": "悬疑",
+          "three_category_id_v2=8035796650176933": "奇幻",
+          "three_category_id_v2=3797954476777933": "剧情",
+          "three_category_id_v2=8902937931540733": "青春",
+          "three_category_id_v2=2094956382110833": "冒险",
+          "three_category_id_v2=2375714428805633": "家庭",
+          "three_category_id_v2=2679735285084233": "少儿",
+          "three_category_id_v2=7245663290192433": "警匪",
+          "three_category_id_v2=7174270529747133": "历史",
+          "three_category_id_v2=7045121828267433": "武侠",
+          "three_category_id_v2=6015140879820833": "伦理",
+          "three_category_id_v2=3281359670859033": "灾难",
+          "three_category_id_v2=5002807580023233": "传记",
+          "three_category_id_v2=3341522109436533": "运动",
+          "three_category_id_v2=1247067081091833": "音乐",
+          "three_category_id_v2=4150907449765833": "魔幻",
+          "three_category_id_v2=3567732878487833": "歌舞",
+          "three_category_id_v2=8795447707948733": "戏曲",
+          "three_category_id_v2=2951669507454533": "玄幻",
+          "three_category_id_v2=5156021256933833": "悲剧",
+          "three_category_id_v2=7455830742289933": "史诗",
+          "three_category_id_v2=3727363882180333": "西部",
+          "three_category_id_v2=1535330033": "其他"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=1008823824324833": "奇幻喜剧",
+          "three_category_id_v2=1016043316954133": "古装探案",
+          "three_category_id_v2=1271934222370633": "科幻灾难",
+          "three_category_id_v2=1577559410344233": "校园喜剧",
+          "three_category_id_v2=1615261205186033": "悬疑犯罪",
+          "three_category_id_v2=1676225809611433": "动作战争",
+          "three_category_id_v2=1735586082341233": "仙侠爱情",
+          "three_category_id_v2=1746014238361333": "动作枪战",
+          "three_category_id_v2=1812594003720533": "一见钟情",
+          "three_category_id_v2=2178381630271633": "环球动画",
+          "three_category_id_v2=2394966409150533": "家庭喜剧",
+          "three_category_id_v2=2662087636434633": "历史纪实",
+          "three_category_id_v2=2688559109409033": "古装喜剧",
+          "three_category_id_v2=2792840669609833": "爱情喜剧",
+          "three_category_id_v2=3260503358818833": "动作警匪",
+          "three_category_id_v2=3289381329336133": "夺宝盗墓",
+          "three_category_id_v2=3325478792482533": "科幻惊悚",
+          "three_category_id_v2=3384036899364633": "悬疑烧脑",
+          "three_category_id_v2=3511581269149033": "科幻喜剧",
+          "three_category_id_v2=3597413014852733": "犯罪历险",
+          "three_category_id_v2=3705705404292433": "索尼动画",
+          "three_category_id_v2=3879775393243133": "迪士尼动画",
+          "three_category_id_v2=3916675022237533": "青春成长",
+          "three_category_id_v2=3923894514866633": "时空穿越",
+          "three_category_id_v2=3939135665973133": "社会问题",
+          "three_category_id_v2=4251178180728233": "东方玄幻",
+          "three_category_id_v2=4261606336748533": "悬疑喜剧",
+          "three_category_id_v2=4447708813414833": "警匪犯罪",
+          "three_category_id_v2=4523112403098733": "奇幻传奇",
+          "three_category_id_v2=4629800460842833": "西方魔幻",
+          "three_category_id_v2=4912162839233233": "黑色幽默",
+          "three_category_id_v2=5143186603370733": "校园爱情",
+          "three_category_id_v2=5457635615669133": "动作喜剧",
+          "three_category_id_v2=5529028376114433": "剧情喜剧",
+          "three_category_id_v2=5539456532134633": "暧昧情愫",
+          "three_category_id_v2=5553093351545433": "科幻动作",
+          "three_category_id_v2=5616464453513733": "皮克斯动画",
+          "three_category_id_v2=5794545271703133": "恐怖惊悚",
+          "three_category_id_v2=5800962598484933": "奇幻爱情",
+          "three_category_id_v2=5948561114461633": "儿童动画",
+          "three_category_id_v2=6035997191861033": "家庭情感",
+          "three_category_id_v2=6113807279087833": "动作惊悚",
+          "three_category_id_v2=6268625287693933": "惊悚悬疑",
+          "three_category_id_v2=6301514087449533": "虐心爱情",
+          "three_category_id_v2=6339215882291533": "犯罪惊悚",
+          "three_category_id_v2=6518901032176133": "东北喜剧",
+          "three_category_id_v2=6594304621860133": "中年危机",
+          "three_category_id_v2=6668103879848433": "动作冒险",
+          "three_category_id_v2=6700190513756433": "动作犯罪",
+          "three_category_id_v2=6972124736126733": "爱情惊悚",
+          "three_category_id_v2=3396069387080133": "国漫",
+          "three_category_id_v2=1519001303462533": "日漫",
+          "three_category_id_v2=8433670910636033": "怪兽",
+          "three_category_id_v2=7446204752117333": "动作武侠",
+          "three_category_id_v2=8297302716527133": "超级英雄",
+          "three_category_id_v2=7232026470781433": "青春恋歌",
+          "three_category_id_v2=8506668002776933": "都市爱情",
+          "three_category_id_v2=8476987866411933": "浪漫爱情",
+          "three_category_id_v2=7106086432692633": "三角恋",
+          "three_category_id_v2=4513486412926333": "暗恋",
+          "three_category_id_v2=6615963099748033": "初恋",
+          "three_category_id_v2=1641732678160433": "纯爱",
+          "three_category_id_v2=7654767872519533": "军事战争",
+          "three_category_id_v2=8280457233725433": "民俗怪谈",
+          "three_category_id_v2=7698084828295333": "科幻冒险",
+          "three_category_id_v2=8314950365176633": "星际战争",
+          "three_category_id_v2=6796450415480433": "外星人",
+          "three_category_id_v2=8453725056828833": "机甲",
+          "three_category_id_v2=8720044118264933": "情感悬疑",
+          "three_category_id_v2=7864133158769133": "反特谍战",
+          "three_category_id_v2=7099669105910933": "奇幻冒险",
+          "three_category_id_v2=8333400179673633": "青年奋斗"
+        }
+      },
+      {
+        "label": "地区",
+        "model": "region",
+        "items": {
+          "three_category_id_v2=8052642132978633": "内地",
+          "three_category_id_v2=6679334201716133": "中国香港",
+          "three_category_id_v2=5724756842953133": "中国台湾",
+          "three_category_id_v2=8097563420449933": "美国",
+          "three_category_id_v2=4017747919047533": "韩国",
+          "three_category_id_v2=6234934322090433": "日本",
+          "three_category_id_v2=3299007319508333;should,three_category_id_v2=8486613856584233;should,three_category_id_v2=2013135465645433;should,three_category_id_v2=6053644840510333;should,three_category_id_v2=1226210769051633;should,three_category_id_v2=6993783214014833;should,three_category_id_v2=8762558908193133;should,three_category_id_v2=8497844178452033;should,three_category_id_v2=1843076305933133;should,three_category_id_v2=1097864233419633;should,three_category_id_v2=4957084126704233;should": "欧洲",
+          "three_category_id_v2=8084728766886733": "印度",
+          "three_category_id_v2=7671613355321033": "泰国",
+          "three_category_id_v2=4957084126704233": "丹麦",
+          "three_category_id_v2=6993783214014833": "英国",
+          "three_category_id_v2=1283850033": "其他"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代",
+          "market_release_date_level=1990-1999": "90年代",
+          "market_release_date_level=1980-1989": "80年代",
+          "market_release_date_level=1970-1979": "70年代",
+          "market_release_date_level=1960-1969": "60年代",
+          "market_release_date_level=1950-1959": "50年代",
+          "market_release_date_level=1919-1949": "更早"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "is_cloud_cinema=1,is_purchase=1": "云影院",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "规格",
+        "model": "spec",
+        "items": {
+          "three_category_id_v2=4263210668443833": "院线",
+          "three_category_id_v2=1912864734682833": "网络电影",
+          "is_exclusive=1": "独播"
+        }
+      },
+      {
+        "label": "奖项",
+        "model": "award",
+        "items": {
+          "structure_id=305de086434c2bad_1_9": "奥斯卡",
+          "structure_id=735b7afed14d661b_1_9": "金像奖",
+          "structure_id=4cde02f6e0e4f858_1_9": "金鸡奖",
+          "structure_id=3ae4223c486a2405_1_9": "戛纳电影节",
+          "structure_id=c968e29b385965fd_1_9": "威尼斯电影节",
+          "structure_id=2d07c80582f8e7f5_1_9": "柏林电影节",
+          "structure_id=2bf90ebd8e8bbacc_1_9": "金球奖",
+          "structure_id=6087da99716573fd_1_9": "华表奖"
+        }
+      },
+      {
+        "label": "出品",
+        "model": "producer",
+        "items": {
+          "is_qiyi_produced=1": "爱奇艺出品",
+          "three_category_id_v2=7608242253352733": "迪士尼",
+          "three_category_id_v2=8410408101052833": "开心麻花",
+          "three_category_id_v2=4270430161073533": "环球",
+          "three_category_id_v2=2553795246995033": "华纳",
+          "three_category_id_v2=5952571943700033": "漫威",
+          "three_category_id_v2=3674420936232533": "派拉蒙",
+          "three_category_id_v2=5994284567780433": "梦工厂",
+          "three_category_id_v2=4243156522251333": "皮克斯",
+          "three_category_id_v2=2621177178201833": "邵氏",
+          "three_category_id_v2=5839466559174233": "银河映像",
+          "three_category_id_v2=7877769978180133": "索尼",
+          "three_category_id_v2=1924897222398233": "宝莱坞"
+        }
+      },
+      {
+        "label": "影人",
+        "model": "person",
+        "items": {
+          "smart_tag_v2=刘德华": "刘德华",
+          "smart_tag_v2=成龙": "成龙",
+          "smart_tag_v2=古天乐": "古天乐",
+          "smart_tag_v2=周星驰": "周星驰",
+          "smart_tag_v2=杰森·斯坦森": "杰森·斯坦森",
+          "smart_tag_v2=沈腾": "沈腾",
+          "smart_tag_v2=马丽": "马丽",
+          "smart_tag_v2=甄子丹": "甄子丹",
+          "smart_tag_v2=吴京": "吴京",
+          "smart_tag_v2=肖央": "肖央",
+          "smart_tag_v2=周润发": "周润发",
+          "smart_tag_v2=小罗伯特·唐尼": "小罗伯特·唐尼",
+          "smart_tag_v2=刘青云": "刘青云",
+          "smart_tag_v2=黄渤": "黄渤",
+          "smart_tag_v2=张译": "张译",
+          "smart_tag_v2=包贝尔": "包贝尔",
+          "smart_tag_v2=郭富城": "郭富城",
+          "smart_tag_v2=王传君": "王传君",
+          "smart_tag_v2=谢苗": "谢苗",
+          "smart_tag_v2=梁朝伟": "梁朝伟"
+        }
+      },
+      {
+        "label": "推荐",
+        "model": "recommend",
+        "items": {
+          "smart_tag_v2=高票房": "高票房",
+          "smart_tag_v2=高分悬疑片": "高分悬疑片",
+          "smart_tag_v2=高分战争片": "高分战争片",
+          "smart_tag_v2=高分喜剧片": "高分喜剧片",
+          "smart_tag_v2=冷门佳作": "冷门佳作",
+          "structure_id=812b38302498d408_1_7": "豆瓣高分"
+        }
+      }
+    ],
+    "variety": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=3842875764248933": "喜剧",
+          "three_category_id_v2=7220796148913633": "真人秀",
+          "three_category_id_v2=1733179584798033": "音乐",
+          "three_category_id_v2=2279454527081633": "脱口秀",
+          "three_category_id_v2=3840469266705833": "观察",
+          "three_category_id_v2=7119723252103433": "访谈",
+          "three_category_id_v2=2709415421448933": "游戏",
+          "three_category_id_v2=6413015140279833": "晚会",
+          "three_category_id_v2=6011130050582133": "曲艺",
+          "three_category_id_v2=6149904742234233": "竞技",
+          "three_category_id_v2=1977840168346533": "竞演",
+          "three_category_id_v2=3205956081175133": "文化",
+          "three_category_id_v2=6535330033": "其他"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=1026471472974333": "文化",
+          "three_category_id_v2=1089842574942533": "亲情关系",
+          "three_category_id_v2=1139576857500033": "生活",
+          "three_category_id_v2=1295197031954033": "美食",
+          "three_category_id_v2=1326481500014133": "元宵",
+          "three_category_id_v2=1733179584798033": "音乐",
+          "three_category_id_v2=2260202546736833": "棚内游戏",
+          "three_category_id_v2=2564223403015233": "励志",
+          "three_category_id_v2=2573047227340033": "解谜",
+          "three_category_id_v2=2688559109408733": "表演",
+          "three_category_id_v2=3038303419005833": "体育",
+          "three_category_id_v2=4108392659837733": "纪实",
+          "three_category_id_v2=4180587586130633": "文艺",
+          "three_category_id_v2=4300110297437933": "娱乐热点",
+          "three_category_id_v2=4380326882208033": "代际关系",
+          "three_category_id_v2=4529529729880233": "旅行",
+          "three_category_id_v2=4575253183199033": "朋友关系",
+          "three_category_id_v2=4849593903112533": "健康",
+          "three_category_id_v2=5249874661114733": "时尚",
+          "three_category_id_v2=5309234933844733": "户外游戏",
+          "three_category_id_v2=5354156221315733": "婚恋交友",
+          "three_category_id_v2=5923693973182933": "跨年",
+          "three_category_id_v2=5946956782766133": "家庭关系",
+          "three_category_id_v2=6162739395797333": "小品",
+          "three_category_id_v2=6237340819633433": "乐队",
+          "three_category_id_v2=6253384136587433": "春节",
+          "three_category_id_v2=6419432467061433": "流行音乐",
+          "three_category_id_v2=7256091446212433": "冒险",
+          "three_category_id_v2=7512784517476633": "相声",
+          "three_category_id_v2=7825629198079633": "财经",
+          "three_category_id_v2=8240348941340433": "原创音乐",
+          "three_category_id_v2=8365486813581633": "体验",
+          "three_category_id_v2=8540358968380133": "益智",
+          "three_category_id_v2=8647047026124233": "说唱",
+          "three_category_id_v2=8718439786569533": "舞蹈",
+          "three_category_id_v2=1172465657255733": "喜剧竞演",
+          "three_category_id_v2=6947257594848333": "传统节日",
+          "three_category_id_v2=7297804070292833": "单口喜剧",
+          "three_category_id_v2=5371803869965233": "春节联欢",
+          "three_category_id_v2=6130652761889433": "游戏节目",
+          "three_category_id_v2=7295397572749933": "旅行观光",
+          "three_category_id_v2=4524716734794033": "青春成长",
+          "three_category_id_v2=4894515190583633": "音乐",
+          "three_category_id_v2=7033891506399833": "达人秀场",
+          "three_category_id_v2=8205855809889533": "音乐竞演",
+          "three_category_id_v2=1663391156048233": "文化类",
+          "three_category_id_v2=4576055349046833": "亲子互动",
+          "three_category_id_v2=4466158627911933": "情感观察",
+          "three_category_id_v2=7690865335665933": "生活体验",
+          "three_category_id_v2=3950365987840833": "旅行",
+          "three_category_id_v2=5436779303629033": "职业体验",
+          "three_category_id_v2=6872656171012133": "户外探险",
+          "three_category_id_v2=6091346635352133": "女性力量",
+          "three_category_id_v2=2009124636406733": "美食探索",
+          "three_category_id_v2=2792840669609733": "科技类",
+          "three_category_id_v2=5129549783959833": "美食类",
+          "three_category_id_v2=8205855809889533;should,three_category_id_v2=1745212072513533;should": "音乐竞演",
+          "three_category_id_v2=8647047026124233;should,three_category_id_v2=4807079113184733;should": "说唱",
+          "three_category_id_v2=4939436478055033": "音乐盛典",
+          "three_category_id_v2=1234232427528533": "音乐游学",
+          "three_category_id_v2=1683445302240533": "翻唱",
+          "three_category_id_v2=1187706808362033": "民谣",
+          "three_category_id_v2=2688559109408633": "民族音乐",
+          "three_category_id_v2=1940138373504733": "美声",
+          "three_category_id_v2=5506567732378933": "古典音乐",
+          "three_category_id_v2=7380427152605933": "深度访谈",
+          "three_category_id_v2=5827434071458733": "辩论",
+          "three_category_id_v2=6064072996530333": "娱乐访谈",
+          "three_category_id_v2=6386543667305833": "人文观察",
+          "three_category_id_v2=5889200841731933": "恋爱观察",
+          "three_category_id_v2=2520104281391733": "生活观察",
+          "three_category_id_v2=7420535444991133": "健康养生",
+          "three_category_id_v2=4613757143888733": "创业精神",
+          "three_category_id_v2=2860222600816433": "跨年盛典",
+          "three_category_id_v2=2835355459537933": "年度盛典",
+          "three_category_id_v2=6010327884734433": "颁奖盛典",
+          "three_category_id_v2=6797252581328233": "公益晚会",
+          "three_category_id_v2=2695778602038033": "奋斗精神",
+          "three_category_id_v2=6435475784015433": "影视盛典",
+          "three_category_id_v2=4877669707782033": "发布会",
+          "three_category_id_v2=5332497743427833": "京剧盛典",
+          "three_category_id_v2=8067883284084933": "曲苑杂坛",
+          "three_category_id_v2=4010528426418333": "体育竞技",
+          "three_category_id_v2=2922791536937133": "体育项目竞技",
+          "three_category_id_v2=3286172665945233": "创意竞技",
+          "three_category_id_v2=7843276846729033": "脑力竞技",
+          "three_category_id_v2=8777800059299433": "演技竞演",
+          "three_category_id_v2=1025669307126733": "偶像",
+          "three_category_id_v2=3969617968185633": "演技",
+          "three_category_id_v2=4654667602121333": "舞蹈"
+        }
+      },
+      {
+        "label": "地区",
+        "model": "region",
+        "items": {
+          "three_category_id_v2=8052642132978633": "内地",
+          "three_category_id_v2=1681038804697433": "港台",
+          "three_category_id_v2=4017747919047533;should,three_category_id_v2=8936628897143933;should": "海外"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "风格",
+        "model": "style",
+        "items": {
+          "three_category_id_v2=4749323172149933": "搞笑",
+          "three_category_id_v2=1828637320674233": "烧脑",
+          "three_category_id_v2=2840168454623933": "合家欢",
+          "three_category_id_v2=7164644539574633": "治愈",
+          "three_category_id_v2=5898826831904033": "慢生活"
+        }
+      },
+      {
+        "label": "明星",
+        "model": "star",
+        "items": {
+          "smart_tag_v2=黄子韬": "黄子韬",
+          "smart_tag_v2=郑恺": "郑恺",
+          "smart_tag_v2=沈腾": "沈腾",
+          "smart_tag_v2=白鹿": "白鹿",
+          "smart_tag_v2=范丞丞": "范丞丞",
+          "smart_tag_v2=李晨": "李晨",
+          "smart_tag_v2=沙溢": "沙溢",
+          "smart_tag_v2=黄晓明": "黄晓明",
+          "smart_tag_v2=陈赫": "陈赫",
+          "smart_tag_v2=邓超": "邓超",
+          "smart_tag_v2=黄渤": "黄渤",
+          "smart_tag_v2=郭麒麟": "郭麒麟",
+          "smart_tag_v2=李荣浩": "李荣浩",
+          "smart_tag_v2=李诞": "李诞",
+          "smart_tag_v2=李宇春": "李宇春",
+          "smart_tag_v2=十个勤天": "十个勤天",
+          "smart_tag_v2=薛之谦": "薛之谦",
+          "smart_tag_v2=宁静": "宁静",
+          "smart_tag_v2=万妮达": "万妮达",
+          "smart_tag_v2=大张伟": "大张伟"
+        }
+      }
+    ],
+    "anime": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=2951669507454533": "玄幻",
+          "three_category_id_v2=8035796650176933": "奇幻",
+          "three_category_id_v2=7045121828267433": "武侠",
+          "three_category_id_v2=1843878471780633": "恋爱",
+          "three_category_id_v2=1708312443519433": "搞笑",
+          "three_category_id_v2=5354958387163433": "冒险",
+          "three_category_id_v2=1521407801005233": "热血",
+          "three_category_id_v2=6219693170984133": "治愈",
+          "three_category_id_v2=2771984357569433": "科幻",
+          "three_category_id_v2=7174270529747233": "推理",
+          "three_category_id_v2=6149904742234233": "竞技",
+          "three_category_id_v2=2971723653646733": "励志",
+          "three_category_id_v2=4684347738486233": "机战",
+          "three_category_id_v2=4069086533300333": "偶像",
+          "three_category_id_v2=4535330033": "其他"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=1305625187973833": "少年向",
+          "three_category_id_v2=1940138373504533": "休闲搞笑",
+          "three_category_id_v2=2616364183115633": "热血奇幻",
+          "three_category_id_v2=2808081820716033": "冒险悬疑",
+          "three_category_id_v2=3315050636462333": "原创",
+          "three_category_id_v2=3634312643846933": "科幻机甲",
+          "three_category_id_v2=3831645442381133": "少女向",
+          "three_category_id_v2=4592098666000733": "漫画改编",
+          "three_category_id_v2=5553093351545333": "武侠玄幻",
+          "three_category_id_v2=5965406597263233": "轻小说改编",
+          "three_category_id_v2=6072094655007233": "职业竞技",
+          "three_category_id_v2=6713827333167433": "言情纯爱",
+          "three_category_id_v2=6873458336859633": "治愈成长",
+          "three_category_id_v2=7629098565392933": "文学改编",
+          "three_category_id_v2=8641431865190333": "游戏改编",
+          "three_category_id_v2=3816404291274933": "仙侠派",
+          "three_category_id_v2=7001002706643933": "热血冒险",
+          "three_category_id_v2=2025970119208533": "东方玄幻",
+          "three_category_id_v2=8532337309903533": "异世界",
+          "three_category_id_v2=7300210567836133": "生活",
+          "three_category_id_v2=2419031384581533": "太空歌剧"
+        }
+      },
+      {
+        "label": "地区",
+        "model": "region",
+        "items": {
+          "three_category_id_v2=8052642132978633": "内地",
+          "three_category_id_v2=6234934322090433": "日本",
+          "three_category_id_v2=8936628897143933": "欧美",
+          "three_category_id_v2=4283850033": "其他"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代",
+          "market_release_date_level=1970-1999": "更早"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "连载",
+        "model": "serial",
+        "items": {
+          "is_album_finished=0": "连载中",
+          "is_album_finished=1": "已完结"
+        }
+      },
+      {
+        "label": "版本",
+        "model": "version",
+        "items": {
+          "three_category_id_v2=3419332196663433": "动画",
+          "three_category_id_v2=2276245863690833": "动画电影",
+          "three_category_id_v2=6566228817190733": "动态漫画"
+        }
+      },
+      {
+        "label": "画面",
+        "model": "screen",
+        "items": {
+          "three_category_id_v2=8294896218983933": "3D",
+          "three_category_id_v2=8506668002776833": "2D",
+          "three_category_id_v2=8079113605952733": "特摄"
+        }
+      }
+    ],
+    "children": [
+      {
+        "label": "年龄",
+        "model": "age",
+        "items": {
+          "three_category_id_v2=8422440588768333": "0-1岁",
+          "three_category_id_v2=5988669406846533": "2-3岁",
+          "three_category_id_v2=2853805274034833": "4-6岁",
+          "three_category_id_v2=2913165546764733": "7-10岁",
+          "three_category_id_v2=6134663591127833": "11-14岁"
+        }
+      },
+      {
+        "label": "年龄细选",
+        "model": "age_detail",
+        "items": {
+          "three_category_id_v2=2475985159768133": "儿歌哄睡",
+          "three_category_id_v2=3822019452208733;should,three_category_id_v2=3980046124205733;should,three_category_id_v2=4826331093529133;should,three_category_id_v2=3087235535715533;should,three_category_id_v2=2314749824380533;should,three_category_id_v2=7284969416729633;should,three_category_id_v2=8865236136698633;should,three_category_id_v2=2326782312095933;should,three_category_id_v2=5100671813442633;should,three_category_id_v2=7341121026068733;should": "认知启蒙",
+          "three_category_id_v2=4943447307293433": "好习惯养成",
+          "three_category_id_v2=1683445302240633;should,three_category_id_v2=6879875663641233;should": "动物伙伴",
+          "three_category_id_v2=5947758948613833;should,three_category_id_v2=8139276044530333;should,three_category_id_v2=5379825528442233;should,three_category_id_v2=3757846184393033;should": "快乐日常",
+          "three_category_id_v2=7418128947447833": "宝宝动画",
+          "three_category_id_v2=2312343326837533;should,three_category_id_v2=5155219091086233;should": "车车乐园",
+          "three_category_id_v2=4826331093529133;must": "磨耳朵",
+          "three_category_id_v2=7961997392188433;should,three_category_id_v2=5710317857694733;should,three_category_id_v2=2524917276477833;should,three_category_id_v2=2178381630271533;should": "益智启蒙",
+          "three_category_id_v2=7308232226313233;should,three_category_id_v2=2988569136448533;should,three_category_id_v2=6292690263124733;should": "生活启蒙",
+          "three_category_id_v2=4610548480497933;should,three_category_id_v2=5447207459649033;should": "动手",
+          "three_category_id_v2=7846485510119733": "绘本",
+          "three_category_id_v2=7685250174732033;should,three_category_id_v2=6458738593598733;should": "国学",
+          "three_category_id_v2=6418630301213633;should,three_category_id_v2=1527022961939233;should,three_category_id_v2=3494735786347133;should,three_category_id_v2=5864333700453033;should,three_category_id_v2=6342424545682233;should,three_category_id_v2=7224004812304533;should": "探索冒险",
+          "three_category_id_v2=4915371502623833": "玩具实验室",
+          "three_category_id_v2=2312343326837533;should,three_category_id_v2=5155219091086233;should,three_category_id_v2=7080417125566333;should,three_category_id_v2=8947057053164233;should": "交通工具",
+          "three_category_id_v2=5575553995280933;should,three_category_id_v2=4143687957136533;should,three_category_id_v2=6644841070265033;should,three_category_id_v2=2496841471808433;should,three_category_id_v2=6443497442492433;should": "动物",
+          "three_category_id_v2=3617467161045333;should,three_category_id_v2=3752231023458933;should,three_category_id_v2=6248571141501433;should,three_category_id_v2=7743808281614033;should,three_category_id_v2=8136067381139533;should": "情绪社交",
+          "three_category_id_v2=5354958387163433;should,three_category_id_v2=1521407801005233;should,three_category_id_v2=7362779503956633;should,three_category_id_v2=7378822820910633;should": "冒险英雄",
+          "three_category_id_v2=3067181389523233;should,three_category_id_v2=7439787425335733;should,three_category_id_v2=4150907449765833;should": "公主",
+          "three_category_id_v2=8139276044530333;should,three_category_id_v2=5947758948613833;should,three_category_id_v2=3757846184393033;should,three_category_id_v2=5379825528442233;should": "快乐日常",
+          "three_category_id_v2=3830843276533733": "综艺",
+          "three_category_id_v2=5383836357680633;should,three_category_id_v2=2771984357569433;should,three_category_id_v2=6149904742234233;should,three_category_id_v2=7052341320896633;should": "科幻",
+          "three_category_id_v2=3067181389523233;should,three_category_id_v2=4150907449765833;should,three_category_id_v2=7439787425335733;should": "梦幻公主",
+          "three_category_id_v2=2128647347714133": "特摄",
+          "three_category_id_v2=1247067081091833;should,three_category_id_v2=1311240348907733;should": "音乐",
+          "three_category_id_v2=4943447307293433;should,three_category_id_v2=7434974430249933;should": "安全",
+          "three_category_id_v2=5354958387163433;should,three_category_id_v2=1521407801005233;should,three_category_id_v2=7378822820910633;should": "热血冒险",
+          "three_category_id_v2=7052341320896633;should,three_category_id_v2=2771984357569433;should,three_category_id_v2=5383836357680633;should,three_category_id_v2=6149904742234233;should": "科幻机甲",
+          "three_category_id_v2=1708312443519433": "爆笑时刻",
+          "three_category_id_v2=3341522109436533": "运动",
+          "three_category_id_v2=4633009124233433": "电影"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=7418128947447833": "看动画",
+          "three_category_id_v2=4915371502623833": "玩玩具",
+          "three_category_id_v2=2475985159768133": "听儿歌",
+          "three_category_id_v2=7846485510119733": "看绘本",
+          "three_category_id_v2=3822019452208733;should,three_category_id_v2=3087235535715533;should": "涨知识",
+          "three_category_id_v2=4826331093529133": "学英语",
+          "three_category_id_v2=2326782312095933;should,three_category_id_v2=8262007419228233;should,three_category_id_v2=5100671813442633;should": "识字拼音",
+          "three_category_id_v2=2988569136448533;should,three_category_id_v2=4943447307293433;should": "好习惯",
+          "three_category_id_v2=8865236136698633;should,three_category_id_v2=7685250174732033;should,three_category_id_v2=6458738593598733;should": "国学",
+          "three_category_id_v2=4610548480497933;should,three_category_id_v2=5447207459649033;should": "做手工",
+          "three_category_id_v2=5354958387163433;should,three_category_id_v2=7362779503956633;should,three_category_id_v2=1521407801005233;should,three_category_id_v2=7378822820910633;should": "冒险救援",
+          "three_category_id_v2=7308232226313233;should,three_category_id_v2=6292690263124733;should": "生活日常",
+          "three_category_id_v2=1708312443519433": "搞笑",
+          "three_category_id_v2=1683445302240633;should,three_category_id_v2=6879875663641233;should": "动物",
+          "three_category_id_v2=3067181389523233;should,three_category_id_v2=7439787425335733;should,three_category_id_v2=4150907449765833;should": "公主"
+        }
+      },
+      {
+        "label": "系列",
+        "model": "series",
+        "items": {
+          "smart_tag_v2=小猪佩奇": "小猪佩奇",
+          "smart_tag_v2=汪汪队立大功": "汪汪队",
+          "smart_tag_v2=猪猪侠": "猪猪侠",
+          "smart_tag_v2=喜羊羊与灰太狼": "喜羊羊与灰太狼",
+          "smart_tag_v2=超级飞侠": "超级飞侠",
+          "smart_tag_v2=猫和老鼠": "猫和老鼠",
+          "smart_tag_v2=海绵宝宝": "海绵宝宝",
+          "smart_tag_v2=小马宝莉": "小马宝莉",
+          "smart_tag_v2=迷你特工队": "迷你特工队",
+          "smart_tag_v2=托马斯和他的朋友们": "托马斯",
+          "smart_tag_v2=芭比": "芭比"
+        }
+      },
+      {
+        "label": "语种",
+        "model": "language",
+        "items": {
+          "three_category_id_v2=3221999398129133": "普通话",
+          "three_category_id_v2=8631805875018033": "英语"
+        }
+      }
+    ],
+    "comic": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=7310638723856333": "逆袭",
+          "three_category_id_v2=3196330091003133": "穿越",
+          "three_category_id_v2=3494735786347233": "大女主",
+          "three_category_id_v2=1991476987757433": "系统",
+          "three_category_id_v2=5405494835568933": "玄幻",
+          "three_category_id_v2=6554196329475133": "搞笑",
+          "three_category_id_v2=3253283866189533": "废柴",
+          "three_category_id_v2=1913666900530433": "悬疑",
+          "three_category_id_v2=4976336107049233": "恋爱",
+          "three_category_id_v2=3157023964465533": "末日",
+          "three_category_id_v2=5680637721329733": "战神",
+          "three_category_id_v2=4636217787624233": "扮猪吃老虎",
+          "three_category_id_v2=8777800059299533": "修仙",
+          "three_category_id_v2=2662889802282233": "觉醒",
+          "three_category_id_v2=8702396469615833": "无敌",
+          "three_category_id_v2=6910357965854033": "科幻",
+          "three_category_id_v2=5910057153772033": "开局",
+          "three_category_id_v2=6384137169762633": "异能"
+        }
+      },
+      {
+        "label": "受众",
+        "model": "audience",
+        "items": {
+          "three_category_id_v2=5493733078815633": "男频",
+          "three_category_id_v2=7596209765637333": "女频",
+          "three_category_id_v2=2455931013575633": "平衡"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2000-2023": "更早"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "charge_control_paymark=1_1_1,is_purchase=1": "VIP"
+        }
+      }
+    ],
+    "documentary": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=7300210567835933": "自然",
+          "three_category_id_v2=6475584076400333": "历史",
+          "three_category_id_v2=2792840669609633": "人文",
+          "three_category_id_v2=7186303017462533": "美食",
+          "three_category_id_v2=8175373507676633": "医疗",
+          "three_category_id_v2=1001604331695633": "萌宠",
+          "three_category_id_v2=7533640829516933": "财经",
+          "three_category_id_v2=4041812894478533": "罪案",
+          "three_category_id_v2=7705304320924433": "竞技",
+          "three_category_id_v2=7213576656284533": "灾难",
+          "three_category_id_v2=8326180687044233": "军事",
+          "three_category_id_v2=3891005715111133": "探险",
+          "three_category_id_v2=5675022560395733": "社会",
+          "three_category_id_v2=3208362578718433": "科技",
+          "three_category_id_v2=5893211670970233": "旅游",
+          "three_category_id_v2=3412120033": "其他"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=1019251980344933": "品牌",
+          "three_category_id_v2=1109094555287533": "荒野",
+          "three_category_id_v2=1172465657255633": "自然风光",
+          "three_category_id_v2=1174069988951033": "人物传记",
+          "three_category_id_v2=1181289481580533": "探店",
+          "three_category_id_v2=1238243256767133": "著名战役",
+          "three_category_id_v2=1261506066350433": "米其林",
+          "three_category_id_v2=1448410708864533": "近代史",
+          "three_category_id_v2=1478893011077133": "创业",
+          "three_category_id_v2=1482101674467933": "自然灾难",
+          "three_category_id_v2=1551890103217733": "生育",
+          "three_category_id_v2=1563922590933333": "节庆食物",
+          "three_category_id_v2=1869547778906933": "手艺传承",
+          "three_category_id_v2=1940138373504633": "野外",
+          "three_category_id_v2=2123834352627833": "医生",
+          "three_category_id_v2=2198435776463933": "经济",
+          "three_category_id_v2=2270630702757033": "军事领袖",
+          "three_category_id_v2=2308332497598833": "地震",
+          "three_category_id_v2=2336408302268533": "海洋",
+          "three_category_id_v2=2440689862469433": "小众宠物",
+          "three_category_id_v2=2470369998834333": "体育运动",
+          "three_category_id_v2=2494434974265433": "现场还原",
+          "three_category_id_v2=2686152611865733": "养成系",
+          "three_category_id_v2=2845783615558033": "宗教",
+          "three_category_id_v2=2885891907942833": "著名景点",
+          "three_category_id_v2=2922791536937233": "时事",
+          "three_category_id_v2=3254086032037333": "野生动物",
+          "three_category_id_v2=3355158928847333": "医院",
+          "three_category_id_v2=3430562518531233": "小吃",
+          "three_category_id_v2=3578963200355833": "真人秀",
+          "three_category_id_v2=3630301814608533": "太空",
+          "three_category_id_v2=3659981950973333": "国粹",
+          "three_category_id_v2=3705705404292233": "调查",
+          "three_category_id_v2=3821217286361033": "疫情",
+          "three_category_id_v2=3937531334277533": "战争场面",
+          "three_category_id_v2=4118018650010133": "科技创新",
+          "three_category_id_v2=4164544269176633": "生物",
+          "three_category_id_v2=4217487215124933": "犯罪",
+          "three_category_id_v2=4255991175814533": "军政",
+          "three_category_id_v2=4270430161073433": "地理",
+          "three_category_id_v2=4274440990311533": "宠物真人秀",
+          "three_category_id_v2=4296901634047133": "古代史",
+          "three_category_id_v2=4305725458371933": "意外事故",
+          "three_category_id_v2=4316955780239733": "金融",
+          "three_category_id_v2=4357064072624733": "商业",
+          "three_category_id_v2=4493432266733733": "城镇",
+          "three_category_id_v2=4510277749535333": "唐宋",
+          "three_category_id_v2=4660282763055333": "宇航员",
+          "three_category_id_v2=4685149904334233": "植物",
+          "three_category_id_v2=4701193221288033": "养生",
+          "three_category_id_v2=8533139475750933": "风景",
+          "three_category_id_v2=4725258196719233": "动物生存",
+          "three_category_id_v2=1905645242053533": "人与自然",
+          "three_category_id_v2=6015140879820733": "自然现象",
+          "three_category_id_v2=6629599919158933": "自然奇观",
+          "three_category_id_v2=6381730672219433": "海洋生态",
+          "three_category_id_v2=5943748119375333": "动人风景",
+          "three_category_id_v2=4698786723744833": "致命动物",
+          "three_category_id_v2=3897423041892633": "地理风貌",
+          "three_category_id_v2=5479294093557133": "气候",
+          "three_category_id_v2=5792138774160033": "航拍",
+          "three_category_id_v2=6865436678382833": "气候变迁",
+          "three_category_id_v2=6293492428972533": "恐龙星球",
+          "three_category_id_v2=5863531534605233": "恐龙",
+          "three_category_id_v2=5641331594792433": "文物古迹",
+          "three_category_id_v2=5690263711502033": "历史人物",
+          "three_category_id_v2=8452120725133133": "考古",
+          "three_category_id_v2=8995187004026033": "秘闻",
+          "three_category_id_v2=8596510577719333": "年代史",
+          "three_category_id_v2=5171262408040333": "春秋战国",
+          "three_category_id_v2=8195427653869133": "民国",
+          "three_category_id_v2=7928306426585033": "三国",
+          "three_category_id_v2=6991376716471533": "文化遗产",
+          "three_category_id_v2=7692469667361233": "艺术",
+          "three_category_id_v2=8983154516310733": "历史演义",
+          "three_category_id_v2=6448310437578633": "风俗民俗",
+          "three_category_id_v2=1571142083562533": "非遗文化",
+          "three_category_id_v2=4934623482968733": "古典文化",
+          "three_category_id_v2=4750125337997633": "建筑",
+          "three_category_id_v2=8365486813581733": "娱乐",
+          "three_category_id_v2=8488218188279933": "文学",
+          "three_category_id_v2=3388047728603233": "逐梦人生",
+          "three_category_id_v2=5357364884706633": "工业技术",
+          "three_category_id_v2=6869447507621033": "时尚",
+          "three_category_id_v2=4443697984176333": "传统节日",
+          "three_category_id_v2=5597212473168933": "哲学",
+          "three_category_id_v2=5083826330640833": "地域特色美食",
+          "three_category_id_v2=5979845582521833": "地方特色",
+          "three_category_id_v2=5812192920352633": "中餐",
+          "three_category_id_v2=3170660783876533": "中餐文化",
+          "three_category_id_v2=8298907048222433": "正餐",
+          "three_category_id_v2=8026170660004533": "主食",
+          "three_category_id_v2=5095858818356333": "八大菜系",
+          "three_category_id_v2=7546475483079933": "网红打卡",
+          "three_category_id_v2=5219392358902133": "夜宵",
+          "three_category_id_v2=5270730973154933": "早餐",
+          "three_category_id_v2=4141281459593533": "辣味美食",
+          "three_category_id_v2=8886092448739133": "西餐",
+          "three_category_id_v2=5122330291330633": "路边摊",
+          "three_category_id_v2=4609746314650333": "美味夜宵",
+          "three_category_id_v2=2766369196635533": "街头小吃",
+          "three_category_id_v2=2861826932512033": "西方美食",
+          "three_category_id_v2=7968414718970233": "医学科学",
+          "three_category_id_v2=7621076906916133": "救助",
+          "three_category_id_v2=6769978942506433": "动物揭秘",
+          "three_category_id_v2=5618870951056833": "狗狗",
+          "three_category_id_v2=8964704701813433": "猫咪",
+          "three_category_id_v2=6881479995336533": "动物园",
+          "three_category_id_v2=2526521608173433": "创业经历",
+          "three_category_id_v2=8213075302518733": "财富故事",
+          "three_category_id_v2=8406397271814233": "案件",
+          "three_category_id_v2=3341522109436633": "案件调查",
+          "three_category_id_v2=6427454125538533": "刑侦",
+          "three_category_id_v2=3586984858832833": "法律普及",
+          "three_category_id_v2=5043718038255833": "普法",
+          "three_category_id_v2=1924095056550633": "大案要案",
+          "three_category_id_v2=5097463150051733": "驾驶",
+          "three_category_id_v2=2238544068849033": "汽车竞技",
+          "three_category_id_v2=8407199437662133": "体育赛事",
+          "three_category_id_v2=6914368795092333": "极限运动",
+          "three_category_id_v2=5054948360123833": "自然灾害",
+          "three_category_id_v2=8868444800089633": "武器",
+          "three_category_id_v2=5234633510008433": "军史",
+          "three_category_id_v2=7300210567836033": "二战",
+          "three_category_id_v2=8153715029788933": "战争纪实",
+          "three_category_id_v2=1786122530746233": "二战纪实",
+          "three_category_id_v2=8870049131784833": "军队",
+          "three_category_id_v2=8271633409400733": "环球",
+          "three_category_id_v2=2149503659754333": "军事武器",
+          "three_category_id_v2=1631304522140133": "军事行动",
+          "three_category_id_v2=5384638523528433": "探秘",
+          "three_category_id_v2=7023463350379433": "求生",
+          "three_category_id_v2=8493031183365933": "极限挑战",
+          "three_category_id_v2=3258899027123633": "宇宙探索",
+          "three_category_id_v2=7910658777935933": "宇宙",
+          "three_category_id_v2=8210668804975433": "外星",
+          "three_category_id_v2=8117617566642233": "NASA",
+          "three_category_id_v2=4868043717609733": "民生",
+          "three_category_id_v2=6789230922851033": "热点",
+          "three_category_id_v2=5360573548097333": "城市发展",
+          "three_category_id_v2=5057354857666833": "教育",
+          "three_category_id_v2=7054747818439733": "家庭",
+          "three_category_id_v2=6387345833153533": "乡村振兴",
+          "three_category_id_v2=5055750525971333": "环保",
+          "three_category_id_v2=6543768173455033": "科普",
+          "three_category_id_v2=8213877468366333": "研发",
+          "three_category_id_v2=8180186502763033": "信息化",
+          "three_category_id_v2=5309234933844833": "人工智能",
+          "three_category_id_v2=6377719842981033": "互联网",
+          "three_category_id_v2=3869347237223133": "人文特色",
+          "three_category_id_v2=6283064272952333": "国外风光",
+          "three_category_id_v2=8829940839400133": "自然风景",
+          "three_category_id_v2=6822119722606733": "国内风光"
+        }
+      },
+      {
+        "label": "出品",
+        "model": "producer",
+        "items": {
+          "three_category_id_v2=4748521006302433": "爱奇艺",
+          "three_category_id_v2=6612754436357133": "央视",
+          "three_category_id_v2=1827835154826533": "BBC",
+          "three_category_id_v2=1169256993864833": "国家地理",
+          "three_category_id_v2=2180788127814633": "探索频道",
+          "three_category_id_v2=5823423242220333": "美国历史频道",
+          "three_category_id_v2=8363882481886233": "朗思文化",
+          "three_category_id_v2=3773970033": "其他"
+        }
+      },
+      {
+        "label": "地区",
+        "model": "region",
+        "items": {
+          "three_category_id_v2=4055449713889733": "国内",
+          "three_category_id_v2=4198235234780133": "国外"
+        }
+      },
+      {
+        "label": "时间",
+        "model": "year",
+        "items": {
+          "market_release_date_level=即将上线": "即将上线",
+          "market_release_date_level=2026": "2026",
+          "market_release_date_level=2025": "2025",
+          "market_release_date_level=2024": "2024",
+          "market_release_date_level=2023": "2023",
+          "market_release_date_level=2022": "2022",
+          "market_release_date_level=2021": "2021",
+          "market_release_date_level=2020": "2020",
+          "market_release_date_level=2010-2019": "10年代",
+          "market_release_date_level=2000-2009": "00年代"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "smart_tag_v2=近期转免": "近期转免",
+          "is_purchase=0": "免费",
+          "is_purchase=1": "VIP"
+        }
+      },
+      {
+        "label": "时长",
+        "model": "duration",
+        "items": {
+          "three_category_id_v2=4407600521029733": "网络纪录片",
+          "three_category_id_v2=4775794645124133": "系列纪录片",
+          "three_category_id_v2=5942143787679833": "纪实栏目",
+          "three_category_id_v2=2863431264207333": "微纪录片",
+          "three_category_id_v2=5459239947364433": "短纪录片",
+          "three_category_id_v2=2966108492712933": "纪录电影",
+          "three_category_id_v2=3145793642597733": "长纪录片",
+          "three_category_id_v2=3841520033": "其他"
+        }
+      }
+    ],
+    "knowledge": [
+      {
+        "label": "类型",
+        "model": "genre",
+        "items": {
+          "three_category_id_v2=3082422540629633": "亲子",
+          "three_category_id_v2=4431665496460733": "文史",
+          "three_category_id_v2=2183194625357733": "中小学",
+          "three_category_id_v2=2442294194164733": "外语",
+          "three_category_id_v2=2433470369840033": "运动健身",
+          "three_category_id_v2=3706507570139933": "艺术",
+          "three_category_id_v2=6382532838067233": "职场",
+          "three_category_id_v2=5755239145165733": "财经",
+          "three_category_id_v2=5942143787679933": "生活",
+          "three_category_id_v2=3930311841648333": "心理",
+          "three_category_id_v2=3284568334250033": "互联网",
+          "three_category_id_v2=4968314448572033": "职业考证",
+          "three_category_id_v2=2229720244524333": "健康",
+          "three_category_id_v2=7060362979373733": "大学",
+          "three_category_id_v2=6984959389689933": "党政"
+        }
+      },
+      {
+        "label": "细选",
+        "model": "subgenre",
+        "items": {
+          "three_category_id_v2=7637922389717633": "儿童文学 ",
+          "three_category_id_v2=5666198736071133": "亲子教育",
+          "three_category_id_v2=1323272836623333": "科普百科",
+          "three_category_id_v2=4812694274118333": "儿童健康",
+          "three_category_id_v2=3911862027151133": "中国史",
+          "three_category_id_v2=6356863530940733": "世界史",
+          "three_category_id_v2=6897523312290533": "文学",
+          "three_category_id_v2=5537050034591433": "哲学与宗教",
+          "three_category_id_v2=6083324976875233": "学前",
+          "three_category_id_v2=1160433169540133": "小学",
+          "three_category_id_v2=8317356862719633": "初中",
+          "three_category_id_v2=8942244058077833": "高中",
+          "three_category_id_v2=2132658176952633": "少儿英语",
+          "three_category_id_v2=4349042414147733": "新概念英语",
+          "three_category_id_v2=8288478892202533": "健身塑形",
+          "three_category_id_v2=8873257795175733": "体育运动",
+          "three_category_id_v2=4044219392021633": "武术格斗"
+        }
+      },
+      {
+        "label": "年级",
+        "model": "grade",
+        "items": {
+          "three_category_id_v2=5853103378585233": "一年级",
+          "three_category_id_v2=3886192720024833": "二年级",
+          "three_category_id_v2=1940138373505033": "三年级",
+          "three_category_id_v2=6521307529719633": "四年级",
+          "three_category_id_v2=5301213275367933": "五年级",
+          "three_category_id_v2=4675523914161533": "六年级",
+          "three_category_id_v2=6567030983038233": "初一",
+          "three_category_id_v2=2838564122928733": "初二",
+          "three_category_id_v2=7171864032204133": "初三",
+          "three_category_id_v2=8479394363954933": "高一",
+          "three_category_id_v2=4648250275339933": "高二",
+          "three_category_id_v2=7410107288970933": "高三"
+        }
+      },
+      {
+        "label": "科目",
+        "model": "subject",
+        "items": {
+          "three_category_id_v2=7111701593626433": "语文",
+          "three_category_id_v2=8033390152633733": "数学",
+          "three_category_id_v2=2402185901779733": "英语"
+        }
+      },
+      {
+        "label": "资费",
+        "model": "is_purchase",
+        "items": {
+          "is_purchase=0": "免费",
+          "charge_control_support_tvod=1_1_1,is_purchase=1": "付费",
+          "charge_control_support_monthly=1_1_1,is_purchase=1": "VIP"
+        }
+      }
+    ]
+  },
+  "linked_subgenres": {
+    "tv": {
+      "": {
+        "": "全部",
+        "three_category_id_v2=1009625990172533": "古偶甜宠",
+        "three_category_id_v2=1016043316954133": "古装探案",
+        "three_category_id_v2=1138774691652233": "奇幻冒险",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=1515792640071333": "江湖恩怨",
+        "three_category_id_v2=1674621477915933": "家族斗争",
+        "three_category_id_v2=1693873458260733": "青春校园",
+        "three_category_id_v2=1699488619194533": "医疗题材",
+        "three_category_id_v2=1894414920185633": "古装神话",
+        "three_category_id_v2=1993081319452733": "知青往事",
+        "three_category_id_v2=2009926802254433": "怀旧情感",
+        "three_category_id_v2=2072495738375033": "时代报告",
+        "three_category_id_v2=2121427855085033": "苦情催泪",
+        "three_category_id_v2=2138273337886433": "护宝传奇",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=2186403288748633": "东方玄幻",
+        "three_category_id_v2=2394966409150533": "家庭喜剧",
+        "three_category_id_v2=2504863130285333": "乡村题材",
+        "three_category_id_v2=2540960593431933": "民国传奇",
+        "three_category_id_v2=2688559109409033": "古装喜剧",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=2800862328086833": "成长烦恼",
+        "three_category_id_v2=2859420434968733": "反腐倡廉",
+        "three_category_id_v2=3000601624163933": "个人传奇",
+        "three_category_id_v2=3002205955859333": "情感悬疑",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=3567732878488133": "传统武侠",
+        "three_category_id_v2=3684849092252233": "民国探案",
+        "three_category_id_v2=3690464253185933": "战争传奇",
+        "three_category_id_v2=3729770379723233": "都市喜剧",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=3990474280225833": "女性传奇",
+        "three_category_id_v2=4208663390800233": "科幻冒险",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=4604131153716233": "虐心绝症",
+        "three_category_id_v2=4615361475584233": "百姓趣闻",
+        "three_category_id_v2=4735686352739133": "军旅题材",
+        "three_category_id_v2=4934623482968933": "警察故事",
+        "three_category_id_v2=5016444399434033": "人性反思",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=5800160432637133": "男性传奇",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=5933319963355133": "破镜重圆",
+        "three_category_id_v2=5962197933872333": "青春励志"
+      },
+      "three_category_id_v2=2289882683101933": {
+        "": "全部",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=2688559109409033": "古装喜剧",
+        "three_category_id_v2=1009625990172533": "古偶甜宠",
+        "three_category_id_v2=1016043316954133": "古装探案",
+        "three_category_id_v2=1894414920185633": "古装神话",
+        "three_category_id_v2=1515792640071333": "江湖恩怨",
+        "three_category_id_v2=2186403288748633": "东方玄幻",
+        "three_category_id_v2=7621076906916433": "仙侠玄幻",
+        "three_category_id_v2=3567732878488133": "传统武侠",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=5984658577608033": "历史演义",
+        "three_category_id_v2=6747518298770733": "女扮男装",
+        "three_category_id_v2=6360072194331733": "前世今生",
+        "three_category_id_v2=8229920785320233": "童年神剧"
+      },
+      "three_category_id_v2=4705204050526533": {
+        "": "全部",
+        "three_category_id_v2=8122430561728733": "革命抗战",
+        "three_category_id_v2=3690464253185933": "战争传奇",
+        "three_category_id_v2=8689561816052333": "抗日战争",
+        "three_category_id_v2=7864133158769133": "反特谍战",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=7308232226313133": "传奇变革",
+        "three_category_id_v2=2540960593431933": "民国传奇",
+        "three_category_id_v2=7374009825824433": "乱世情缘",
+        "three_category_id_v2=7187907349157933": "剿匪"
+      },
+      "three_category_id_v2=3986463450987233": {
+        "": "全部",
+        "three_category_id_v2=7864133158769133": "反特谍战",
+        "three_category_id_v2=3690464253185933": "战争传奇",
+        "three_category_id_v2=8689561816052333": "抗日战争",
+        "three_category_id_v2=8122430561728733": "革命抗战",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=6767572444963133": "女性励志"
+      },
+      "three_category_id_v2=8732878771828133": {
+        "": "全部",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=7860122329530533": "年代爱情",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=7661987365148633": "青春爱恋",
+        "three_category_id_v2=7374009825824433": "乱世情缘",
+        "three_category_id_v2=5933319963355133": "破镜重圆",
+        "three_category_id_v2=8987967511396833": "先婚后爱"
+      },
+      "three_category_id_v2=2902737390744633": {
+        "": "全部",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=4934623482968933": "警察故事",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=6401784818411933": "推理解谜",
+        "three_category_id_v2=8867642634241733": "搭档破案",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=2859420434968733": "反腐倡廉",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=8898927102302033": "罪案纪实",
+        "three_category_id_v2=5016444399434033": "人性反思"
+      },
+      "three_category_id_v2=5836257895783433": {
+        "": "全部",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=1016043316954133": "古装探案",
+        "three_category_id_v2=6401784818411933": "推理解谜",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=7864133158769133": "反特谍战",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=3684849092252233": "民国探案",
+        "three_category_id_v2=2138273337886433": "护宝传奇"
+      },
+      "three_category_id_v2=2375714428805633": {
+        "": "全部",
+        "three_category_id_v2=7855309334444333": "都市家庭",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=7913065275478833": "家庭教育",
+        "three_category_id_v2=7845683344271933": "原生家庭",
+        "three_category_id_v2=2009926802254433": "怀旧情感",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=4004913265484633": "亲情",
+        "three_category_id_v2=7284167250881933": "温暖人间",
+        "three_category_id_v2=2504863130285333": "乡村题材"
+      },
+      "three_category_id_v2=3596610849005133": {
+        "": "全部",
+        "three_category_id_v2=4735686352739133": "军旅题材",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=2789632006219233": "特种兵"
+      },
+      "three_category_id_v2=3842875764248933": {
+        "": "全部",
+        "three_category_id_v2=2688559109409033": "古装喜剧",
+        "three_category_id_v2=8103980747231333": "青春喜剧",
+        "three_category_id_v2=8045422640349333": "情景喜剧",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=2394966409150533": "家庭喜剧",
+        "three_category_id_v2=1089040409095033": "轻喜剧",
+        "three_category_id_v2=4615361475584233": "百姓趣闻",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=5671011731157433": "偶像爱情"
+      },
+      "three_category_id_v2=8014138172289033": {
+        "": "全部",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=7855309334444333": "都市家庭",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=3729770379723233": "都市喜剧",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=8720044118264933": "情感悬疑",
+        "three_category_id_v2=8567632607202033": "追求梦想",
+        "three_category_id_v2=7487917376197733": "怀旧情感"
+      },
+      "three_category_id_v2=7045121828267433": {
+        "": "全部",
+        "three_category_id_v2=1515792640071333": "江湖恩怨",
+        "three_category_id_v2=3567732878488133": "传统武侠",
+        "three_category_id_v2=8229920785320233": "童年神剧",
+        "three_category_id_v2=8704000801310933": "功夫武打",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=3192319261764233": "个人成长"
+      },
+      "three_category_id_v2=2378923092196533": {
+        "": "全部",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=7855309334444333": "都市家庭",
+        "three_category_id_v2=7487917376197733": "怀旧情感",
+        "three_category_id_v2=7374009825824433": "乱世情缘",
+        "three_category_id_v2=5933319963355133": "破镜重圆",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=8696781308681733": "女性成长",
+        "three_category_id_v2=4004913265484633": "亲情"
+      },
+      "three_category_id_v2=4069086533300333": {
+        "": "全部",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=3641532136476233": "浪漫",
+        "three_category_id_v2=7661987365148633": "青春爱恋",
+        "three_category_id_v2=1693873458260733": "青春校园",
+        "three_category_id_v2=8567632607202033": "追求梦想",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=6767572444963133": "女性励志",
+        "three_category_id_v2=3192319261764233": "个人成长"
+      },
+      "three_category_id_v2=8902937931540733": {
+        "": "全部",
+        "three_category_id_v2=1693873458260733": "青春校园",
+        "three_category_id_v2=5962197933872333": "青春励志",
+        "three_category_id_v2=8567632607202033": "追求梦想",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=7661987365148633": "青春爱恋",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=6767572444963133": "女性励志",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=2800862328086833": "成长烦恼"
+      },
+      "three_category_id_v2=7146194725077733": {
+        "": "全部",
+        "three_category_id_v2=2504863130285333": "乡村题材",
+        "three_category_id_v2=2072495738375033": "时代报告"
+      },
+      "three_category_id_v2=1466860523361833": {
+        "": "全部",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=1009625990172533": "古偶甜宠",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=7661987365148633": "青春爱恋",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=5768875964576733": "甜虐爱情"
+      },
+      "three_category_id_v2=8035796650176933": {
+        "": "全部",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=1138774691652233": "奇幻冒险",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=6360072194331733": "前世今生",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=7661987365148633": "青春爱恋",
+        "three_category_id_v2=5768875964576733": "甜虐爱情"
+      },
+      "three_category_id_v2=7174270529747133": {
+        "": "全部",
+        "three_category_id_v2=5984658577608033": "历史演义",
+        "three_category_id_v2=8122430561728733": "革命抗战",
+        "three_category_id_v2=3000601624163933": "个人传奇",
+        "three_category_id_v2=4738092850282133": "历史剧"
+      },
+      "three_category_id_v2=4087536347797533": {
+        "": "全部",
+        "three_category_id_v2=7374009825824433": "乱世情缘",
+        "three_category_id_v2=7860122329530533": "年代爱情",
+        "three_category_id_v2=7408502957275533": "家族兴衰",
+        "three_category_id_v2=7487917376197733": "怀旧情感",
+        "three_category_id_v2=1674621477915933": "家族斗争",
+        "three_category_id_v2=3690464253185933": "战争传奇",
+        "three_category_id_v2=6242955980567433": "宅门风云",
+        "three_category_id_v2=8122430561728733": "革命抗战",
+        "three_category_id_v2=3540459239666133": "上海滩"
+      },
+      "three_category_id_v2=2771984357569433": {
+        "": "全部",
+        "three_category_id_v2=4208663390800233": "科幻冒险",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=1138774691652233": "奇幻冒险",
+        "three_category_id_v2=8019753333222833": "超能力"
+      },
+      "three_category_id_v2=3196330091002833": {
+        "": "全部",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=7284167250881933": "温暖人间",
+        "three_category_id_v2=7855309334444333": "都市家庭",
+        "three_category_id_v2=2121427855085033": "苦情催泪",
+        "three_category_id_v2=4615361475584233": "百姓趣闻",
+        "three_category_id_v2=8720044118264933": "情感悬疑",
+        "three_category_id_v2=3729770379723233": "都市喜剧",
+        "three_category_id_v2=7913065275478833": "家庭教育",
+        "three_category_id_v2=8567632607202033": "追求梦想",
+        "three_category_id_v2=1993081319452733": "知青往事",
+        "three_category_id_v2=2504863130285333": "乡村题材",
+        "three_category_id_v2=4004913265484633": "亲情"
+      },
+      "three_category_id_v2=3797954476777933": {
+        "": "全部",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=2009926802254433": "怀旧情感",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5671011731157433": "偶像爱情",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=1383435275200733": "婚姻生活"
+      },
+      "three_category_id_v2=2971723653646733": {
+        "": "全部",
+        "three_category_id_v2=5962197933872333": "青春励志",
+        "three_category_id_v2=6767572444963133": "女性励志",
+        "three_category_id_v2=7073197632936933": "个人奋斗",
+        "three_category_id_v2=8567632607202033": "追求梦想",
+        "three_category_id_v2=7284167250881933": "温暖人间",
+        "three_category_id_v2=7872956983093833": "乡村振兴",
+        "three_category_id_v2=6077709815941633": "时代变迁",
+        "three_category_id_v2=1699488619194533": "医疗题材",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=5488117917881733": "职场剧",
+        "three_category_id_v2=1726762258016433": "姐妹情"
+      },
+      "three_category_id_v2=7399679132950733": {
+        "": "全部",
+        "three_category_id_v2=1383435275200733": "婚姻生活",
+        "three_category_id_v2=6798054747175933": "都市生活",
+        "three_category_id_v2=8566830441354433": "家长里短",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=7845683344271933": "原生家庭",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=7913065275478833": "家庭教育",
+        "three_category_id_v2=2009926802254433": "怀旧情感",
+        "three_category_id_v2=5933319963355133": "破镜重圆",
+        "three_category_id_v2=4004913265484633": "亲情",
+        "three_category_id_v2=7284167250881933": "温暖人间",
+        "three_category_id_v2=2121427855085033": "苦情催泪",
+        "three_category_id_v2=4604131153716233": "虐心绝症",
+        "three_category_id_v2=1674621477915933": "家族斗争"
+      },
+      "three_category_id_v2=7245663290192433": {
+        "": "全部",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=4934623482968933": "警察故事",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=8898927102302033": "罪案纪实",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=6401784818411933": "推理解谜",
+        "three_category_id_v2=2859420434968733": "反腐倡廉",
+        "three_category_id_v2=3002205955859333": "情感悬疑",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=5016444399434033": "人性反思"
+      },
+      "three_category_id_v2=7655570038367133": {
+        "": "全部",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=6401784818411933": "推理解谜",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=3002205955859333": "情感悬疑",
+        "three_category_id_v2=7845683344271933": "原生家庭"
+      },
+      "three_category_id_v2=7174270529747233": {
+        "": "全部",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=6401784818411933": "推理解谜",
+        "three_category_id_v2=2760754035701733": "英雄正义",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=3839667100858533": "刑侦破案",
+        "three_category_id_v2=8867642634241733": "搭档破案",
+        "three_category_id_v2=5380627694289933": "扫黑缉毒",
+        "three_category_id_v2=3192319261764233": "个人成长"
+      },
+      "three_category_id_v2=3228416724910933": {
+        "": "全部",
+        "three_category_id_v2=7408502957275533": "家族兴衰",
+        "three_category_id_v2=6238945151329033": "青年奋斗",
+        "three_category_id_v2=6798054747175933": "都市生活"
+      },
+      "three_category_id_v2=6147498244691133": {
+        "": "全部",
+        "three_category_id_v2=1009625990172533": "古偶甜宠",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5984658577608033": "历史演义",
+        "three_category_id_v2=3990474280225833": "女性传奇",
+        "three_category_id_v2=5800160432637133": "男性传奇"
+      },
+      "three_category_id_v2=2702998094667233": {
+        "": "全部",
+        "three_category_id_v2=6608743607118633": "仙情侠缘",
+        "three_category_id_v2=7621076906916433": "仙侠玄幻",
+        "three_category_id_v2=4560012032092733": "古装爱情",
+        "three_category_id_v2=5768875964576733": "甜虐爱情",
+        "three_category_id_v2=6360072194331733": "前世今生",
+        "three_category_id_v2=3192319261764233": "个人成长"
+      },
+      "three_category_id_v2=2835355459537833": {
+        "": "全部",
+        "three_category_id_v2=1894414920185633": "古装神话",
+        "three_category_id_v2=6608743607118633": "仙情侠缘"
+      },
+      "three_category_id_v2=7086834452347833": {
+        "": "全部",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=2760754035701733": "英雄正义"
+      },
+      "three_category_id_v2=2681339616779433": {
+        "": "全部",
+        "three_category_id_v2=3192319261764233": "个人成长",
+        "three_category_id_v2=7629098565392933": "文学改编",
+        "three_category_id_v2=1384237441048433": "熟龄浪漫",
+        "three_category_id_v2=5768875964576733": "甜虐爱情"
+      },
+      "three_category_id_v2=8391958286555633": {
+        "": "全部",
+        "three_category_id_v2=8019753333222833": "超能力",
+        "three_category_id_v2=2710217587296533": "都市奇幻",
+        "three_category_id_v2=4208663390800233": "科幻冒险",
+        "three_category_id_v2=5800160432637133": "男性传奇",
+        "three_category_id_v2=3755439686850133": "探寻真相",
+        "three_category_id_v2=2147899328059033": "警匪罪案",
+        "three_category_id_v2=3839667100858533": "刑侦破案"
+      }
+    },
+    "movie": {
+      "": {
+        "": "全部",
+        "three_category_id_v2=1008823824324833": "奇幻喜剧",
+        "three_category_id_v2=1016043316954133": "古装探案",
+        "three_category_id_v2=1271934222370633": "科幻灾难",
+        "three_category_id_v2=1577559410344233": "校园喜剧",
+        "three_category_id_v2=1615261205186033": "悬疑犯罪",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=1735586082341233": "仙侠爱情",
+        "three_category_id_v2=1746014238361333": "动作枪战",
+        "three_category_id_v2=1812594003720533": "一见钟情",
+        "three_category_id_v2=2178381630271633": "环球动画",
+        "three_category_id_v2=2394966409150533": "家庭喜剧",
+        "three_category_id_v2=2662087636434633": "历史纪实",
+        "three_category_id_v2=2688559109409033": "古装喜剧",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=3260503358818833": "动作警匪",
+        "three_category_id_v2=3289381329336133": "夺宝盗墓",
+        "three_category_id_v2=3325478792482533": "科幻惊悚",
+        "three_category_id_v2=3384036899364633": "悬疑烧脑",
+        "three_category_id_v2=3511581269149033": "科幻喜剧",
+        "three_category_id_v2=3597413014852733": "犯罪历险",
+        "three_category_id_v2=3705705404292433": "索尼动画",
+        "three_category_id_v2=3879775393243133": "迪士尼动画",
+        "three_category_id_v2=3916675022237533": "青春成长",
+        "three_category_id_v2=3923894514866633": "时空穿越",
+        "three_category_id_v2=3939135665973133": "社会问题",
+        "three_category_id_v2=4251178180728233": "东方玄幻",
+        "three_category_id_v2=4261606336748533": "悬疑喜剧",
+        "three_category_id_v2=4447708813414833": "警匪犯罪",
+        "three_category_id_v2=4523112403098733": "奇幻传奇",
+        "three_category_id_v2=4629800460842833": "西方魔幻",
+        "three_category_id_v2=4912162839233233": "黑色幽默",
+        "three_category_id_v2=5143186603370733": "校园爱情",
+        "three_category_id_v2=5457635615669133": "动作喜剧",
+        "three_category_id_v2=5529028376114433": "剧情喜剧",
+        "three_category_id_v2=5539456532134633": "暧昧情愫",
+        "three_category_id_v2=5553093351545433": "科幻动作",
+        "three_category_id_v2=5616464453513733": "皮克斯动画",
+        "three_category_id_v2=5794545271703133": "恐怖惊悚",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=5948561114461633": "儿童动画",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=6113807279087833": "动作惊悚",
+        "three_category_id_v2=6268625287693933": "惊悚悬疑",
+        "three_category_id_v2=6301514087449533": "虐心爱情",
+        "three_category_id_v2=6339215882291533": "犯罪惊悚",
+        "three_category_id_v2=6518901032176133": "东北喜剧",
+        "three_category_id_v2=6594304621860133": "中年危机",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=6972124736126733": "爱情惊悚"
+      },
+      "three_category_id_v2=3842875764248933": {
+        "": "全部",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=2688559109409033": "古装喜剧",
+        "three_category_id_v2=1577559410344233": "校园喜剧",
+        "three_category_id_v2=4261606336748533": "悬疑喜剧",
+        "three_category_id_v2=5529028376114433": "剧情喜剧",
+        "three_category_id_v2=5457635615669133": "动作喜剧",
+        "three_category_id_v2=1008823824324833": "奇幻喜剧",
+        "three_category_id_v2=2394966409150533": "家庭喜剧",
+        "three_category_id_v2=4912162839233233": "黑色幽默",
+        "three_category_id_v2=3511581269149033": "科幻喜剧",
+        "three_category_id_v2=6518901032176133": "东北喜剧"
+      },
+      "three_category_id_v2=7821618368840933": {
+        "": "全部",
+        "three_category_id_v2=5948561114461633": "儿童动画",
+        "three_category_id_v2=2178381630271633": "环球动画",
+        "three_category_id_v2=3705705404292433": "索尼动画",
+        "three_category_id_v2=3879775393243133": "迪士尼动画",
+        "three_category_id_v2=5616464453513733": "皮克斯动画",
+        "three_category_id_v2=3396069387080133": "国漫",
+        "three_category_id_v2=1519001303462533": "日漫",
+        "three_category_id_v2=8433670910636033": "怪兽"
+      },
+      "three_category_id_v2=7086834452347833": {
+        "": "全部",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=6113807279087833": "动作惊悚",
+        "three_category_id_v2=5457635615669133": "动作喜剧",
+        "three_category_id_v2=5553093351545433": "科幻动作",
+        "three_category_id_v2=3260503358818833": "动作警匪",
+        "three_category_id_v2=7446204752117333": "动作武侠",
+        "three_category_id_v2=1746014238361333": "动作枪战",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=8297302716527133": "超级英雄"
+      },
+      "three_category_id_v2=8732878771828133": {
+        "": "全部",
+        "three_category_id_v2=1812594003720533": "一见钟情",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=7232026470781433": "青春恋歌",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=8476987866411933": "浪漫爱情",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=6301514087449533": "虐心爱情",
+        "three_category_id_v2=1735586082341233": "仙侠爱情",
+        "three_category_id_v2=5539456532134633": "暧昧情愫",
+        "three_category_id_v2=5143186603370733": "校园爱情",
+        "three_category_id_v2=6972124736126733": "爱情惊悚",
+        "three_category_id_v2=7106086432692633": "三角恋",
+        "three_category_id_v2=4513486412926333": "暗恋",
+        "three_category_id_v2=6615963099748033": "初恋",
+        "three_category_id_v2=1641732678160433": "纯爱"
+      },
+      "three_category_id_v2=7128547076428333": {
+        "": "全部",
+        "three_category_id_v2=5794545271703133": "恐怖惊悚",
+        "three_category_id_v2=6268625287693933": "惊悚悬疑",
+        "three_category_id_v2=6113807279087833": "动作惊悚",
+        "three_category_id_v2=6339215882291533": "犯罪惊悚"
+      },
+      "three_category_id_v2=4705204050526533": {
+        "": "全部",
+        "three_category_id_v2=7654767872519533": "军事战争",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=1746014238361333": "动作枪战"
+      },
+      "three_category_id_v2=8391958286555633": {
+        "": "全部",
+        "three_category_id_v2=6113807279087833": "动作惊悚",
+        "three_category_id_v2=5794545271703133": "恐怖惊悚",
+        "three_category_id_v2=6339215882291533": "犯罪惊悚",
+        "three_category_id_v2=6268625287693933": "惊悚悬疑",
+        "three_category_id_v2=6972124736126733": "爱情惊悚",
+        "three_category_id_v2=3325478792482533": "科幻惊悚",
+        "three_category_id_v2=8280457233725433": "民俗怪谈"
+      },
+      "three_category_id_v2=8201844980650933": {
+        "": "全部",
+        "three_category_id_v2=1746014238361333": "动作枪战",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=3260503358818833": "动作警匪",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=3597413014852733": "犯罪历险"
+      },
+      "three_category_id_v2=2771984357569433": {
+        "": "全部",
+        "three_category_id_v2=7698084828295333": "科幻冒险",
+        "three_category_id_v2=5553093351545433": "科幻动作",
+        "three_category_id_v2=3511581269149033": "科幻喜剧",
+        "three_category_id_v2=1271934222370633": "科幻灾难",
+        "three_category_id_v2=8297302716527133": "超级英雄",
+        "three_category_id_v2=3325478792482533": "科幻惊悚",
+        "three_category_id_v2=8314950365176633": "星际战争",
+        "three_category_id_v2=3923894514866633": "时空穿越",
+        "three_category_id_v2=6796450415480433": "外星人",
+        "three_category_id_v2=8433670910636033": "怪兽",
+        "three_category_id_v2=8453725056828833": "机甲"
+      },
+      "three_category_id_v2=7655570038367133": {
+        "": "全部",
+        "three_category_id_v2=1615261205186033": "悬疑犯罪",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=6339215882291533": "犯罪惊悚",
+        "three_category_id_v2=3260503358818833": "动作警匪",
+        "three_category_id_v2=3597413014852733": "犯罪历险"
+      },
+      "three_category_id_v2=5836257895783433": {
+        "": "全部",
+        "three_category_id_v2=1016043316954133": "古装探案",
+        "three_category_id_v2=3384036899364633": "悬疑烧脑",
+        "three_category_id_v2=4261606336748533": "悬疑喜剧",
+        "three_category_id_v2=1615261205186033": "悬疑犯罪",
+        "three_category_id_v2=8720044118264933": "情感悬疑",
+        "three_category_id_v2=6268625287693933": "惊悚悬疑",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=7864133158769133": "反特谍战"
+      },
+      "three_category_id_v2=8035796650176933": {
+        "": "全部",
+        "three_category_id_v2=1008823824324833": "奇幻喜剧",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=4251178180728233": "东方玄幻",
+        "three_category_id_v2=4629800460842833": "西方魔幻",
+        "three_category_id_v2=7099669105910933": "奇幻冒险",
+        "three_category_id_v2=4523112403098733": "奇幻传奇"
+      },
+      "three_category_id_v2=3797954476777933": {
+        "": "全部",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=5529028376114433": "剧情喜剧",
+        "three_category_id_v2=3939135665973133": "社会问题",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=8720044118264933": "情感悬疑",
+        "three_category_id_v2=1746014238361333": "动作枪战",
+        "three_category_id_v2=3597413014852733": "犯罪历险"
+      },
+      "three_category_id_v2=8902937931540733": {
+        "": "全部",
+        "three_category_id_v2=7232026470781433": "青春恋歌",
+        "three_category_id_v2=5143186603370733": "校园爱情",
+        "three_category_id_v2=3289381329336133": "夺宝盗墓",
+        "three_category_id_v2=8476987866411933": "浪漫爱情",
+        "three_category_id_v2=1577559410344233": "校园喜剧",
+        "three_category_id_v2=8333400179673633": "青年奋斗",
+        "three_category_id_v2=6615963099748033": "初恋",
+        "three_category_id_v2=4513486412926333": "暗恋",
+        "three_category_id_v2=1641732678160433": "纯爱"
+      },
+      "three_category_id_v2=2094956382110833": {
+        "": "全部",
+        "three_category_id_v2=7698084828295333": "科幻冒险",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=4251178180728233": "东方玄幻",
+        "three_category_id_v2=4629800460842833": "西方魔幻",
+        "three_category_id_v2=7099669105910933": "奇幻冒险",
+        "three_category_id_v2=3289381329336133": "夺宝盗墓",
+        "three_category_id_v2=5553093351545433": "科幻动作",
+        "three_category_id_v2=6113807279087833": "动作惊悚",
+        "three_category_id_v2=5457635615669133": "动作喜剧",
+        "three_category_id_v2=8433670910636033": "怪兽"
+      },
+      "three_category_id_v2=2375714428805633": {
+        "": "全部",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=2394966409150533": "家庭喜剧",
+        "three_category_id_v2=8506668002776933": "都市爱情",
+        "three_category_id_v2=3939135665973133": "社会问题",
+        "three_category_id_v2=6594304621860133": "中年危机"
+      },
+      "three_category_id_v2=7245663290192433": {
+        "": "全部",
+        "three_category_id_v2=1615261205186033": "悬疑犯罪",
+        "three_category_id_v2=3260503358818833": "动作警匪",
+        "three_category_id_v2=6700190513756433": "动作犯罪",
+        "three_category_id_v2=6339215882291533": "犯罪惊悚",
+        "three_category_id_v2=3597413014852733": "犯罪历险"
+      },
+      "three_category_id_v2=7174270529747133": {
+        "": "全部",
+        "three_category_id_v2=2662087636434633": "历史纪实",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=7654767872519533": "军事战争"
+      },
+      "three_category_id_v2=7045121828267433": {
+        "": "全部",
+        "three_category_id_v2=7446204752117333": "动作武侠",
+        "three_category_id_v2=5457635615669133": "动作喜剧",
+        "three_category_id_v2=4251178180728233": "东方玄幻"
+      },
+      "three_category_id_v2=6015140879820833": {
+        "": "全部",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=3939135665973133": "社会问题"
+      },
+      "three_category_id_v2=3281359670859033": {
+        "": "全部",
+        "three_category_id_v2=1271934222370633": "科幻灾难",
+        "three_category_id_v2=5794545271703133": "恐怖惊悚"
+      },
+      "three_category_id_v2=5002807580023233": {
+        "": "全部",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=2662087636434633": "历史纪实"
+      },
+      "three_category_id_v2=3341522109436533": {
+        "": "全部",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=3916675022237533": "青春成长"
+      },
+      "three_category_id_v2=1247067081091833": {
+        "": "全部",
+        "three_category_id_v2=7232026470781433": "青春恋歌",
+        "three_category_id_v2=5948561114461633": "儿童动画"
+      },
+      "three_category_id_v2=4150907449765833": {
+        "": "全部",
+        "three_category_id_v2=4629800460842833": "西方魔幻",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=1008823824324833": "奇幻喜剧",
+        "three_category_id_v2=5553093351545433": "科幻动作"
+      },
+      "three_category_id_v2=3567732878487833": {
+        "": "全部",
+        "three_category_id_v2=2792840669609833": "爱情喜剧",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=5529028376114433": "剧情喜剧",
+        "three_category_id_v2=8476987866411933": "浪漫爱情",
+        "three_category_id_v2=7232026470781433": "青春恋歌"
+      },
+      "three_category_id_v2=8795447707948733": {
+        "": "全部",
+        "three_category_id_v2=6035997191861033": "家庭情感"
+      },
+      "three_category_id_v2=2951669507454533": {
+        "": "全部",
+        "three_category_id_v2=4251178180728233": "东方玄幻",
+        "three_category_id_v2=1735586082341233": "仙侠爱情",
+        "three_category_id_v2=5800962598484933": "奇幻爱情",
+        "three_category_id_v2=1008823824324833": "奇幻喜剧"
+      },
+      "three_category_id_v2=5156021256933833": {
+        "": "全部",
+        "three_category_id_v2=6035997191861033": "家庭情感",
+        "three_category_id_v2=1676225809611433": "动作战争"
+      },
+      "three_category_id_v2=7455830742289933": {
+        "": "全部",
+        "three_category_id_v2=1676225809611433": "动作战争",
+        "three_category_id_v2=7654767872519533": "军事战争",
+        "three_category_id_v2=7698084828295333": "科幻冒险",
+        "three_category_id_v2=4629800460842833": "西方魔幻"
+      },
+      "three_category_id_v2=3727363882180333": {
+        "": "全部",
+        "three_category_id_v2=6668103879848433": "动作冒险",
+        "three_category_id_v2=1615261205186033": "悬疑犯罪",
+        "three_category_id_v2=4447708813414833": "警匪犯罪"
+      }
+    },
+    "variety": {
+      "": {
+        "": "全部",
+        "three_category_id_v2=1026471472974333": "文化",
+        "three_category_id_v2=1089842574942533": "亲情关系",
+        "three_category_id_v2=1139576857500033": "生活",
+        "three_category_id_v2=1295197031954033": "美食",
+        "three_category_id_v2=1326481500014133": "元宵",
+        "three_category_id_v2=1733179584798033": "音乐",
+        "three_category_id_v2=2260202546736833": "棚内游戏",
+        "three_category_id_v2=2564223403015233": "励志",
+        "three_category_id_v2=2573047227340033": "解谜",
+        "three_category_id_v2=2688559109408733": "表演",
+        "three_category_id_v2=3038303419005833": "体育",
+        "three_category_id_v2=4108392659837733": "纪实",
+        "three_category_id_v2=4180587586130633": "文艺",
+        "three_category_id_v2=4300110297437933": "娱乐热点",
+        "three_category_id_v2=4380326882208033": "代际关系",
+        "three_category_id_v2=4529529729880233": "旅行",
+        "three_category_id_v2=4575253183199033": "朋友关系",
+        "three_category_id_v2=4849593903112533": "健康",
+        "three_category_id_v2=5249874661114733": "时尚",
+        "three_category_id_v2=5309234933844733": "户外游戏",
+        "three_category_id_v2=5354156221315733": "婚恋交友",
+        "three_category_id_v2=5923693973182933": "跨年",
+        "three_category_id_v2=5946956782766133": "家庭关系",
+        "three_category_id_v2=6162739395797333": "小品",
+        "three_category_id_v2=6237340819633433": "乐队",
+        "three_category_id_v2=6253384136587433": "春节",
+        "three_category_id_v2=6419432467061433": "流行音乐",
+        "three_category_id_v2=7256091446212433": "冒险",
+        "three_category_id_v2=7512784517476633": "相声",
+        "three_category_id_v2=7825629198079633": "财经",
+        "three_category_id_v2=8240348941340433": "原创音乐",
+        "three_category_id_v2=8365486813581633": "体验",
+        "three_category_id_v2=8540358968380133": "益智",
+        "three_category_id_v2=8647047026124233": "说唱",
+        "three_category_id_v2=8718439786569533": "舞蹈"
+      },
+      "three_category_id_v2=3842875764248933": {
+        "": "全部",
+        "three_category_id_v2=1172465657255733": "喜剧竞演",
+        "three_category_id_v2=6947257594848333": "传统节日",
+        "three_category_id_v2=6253384136587433": "春节",
+        "three_category_id_v2=7297804070292833": "单口喜剧",
+        "three_category_id_v2=5371803869965233": "春节联欢"
+      },
+      "three_category_id_v2=7220796148913633": {
+        "": "全部",
+        "three_category_id_v2=6130652761889433": "游戏节目",
+        "three_category_id_v2=5309234933844733": "户外游戏",
+        "three_category_id_v2=7295397572749933": "旅行观光",
+        "three_category_id_v2=4524716734794033": "青春成长",
+        "three_category_id_v2=4894515190583633": "音乐",
+        "three_category_id_v2=7033891506399833": "达人秀场",
+        "three_category_id_v2=8205855809889533": "音乐竞演",
+        "three_category_id_v2=1663391156048233": "文化类",
+        "three_category_id_v2=4576055349046833": "亲子互动",
+        "three_category_id_v2=4466158627911933": "情感观察",
+        "three_category_id_v2=7690865335665933": "生活体验",
+        "three_category_id_v2=3950365987840833": "旅行",
+        "three_category_id_v2=5436779303629033": "职业体验",
+        "three_category_id_v2=6872656171012133": "户外探险",
+        "three_category_id_v2=6091346635352133": "女性力量",
+        "three_category_id_v2=5946956782766133": "家庭关系",
+        "three_category_id_v2=5354156221315733": "婚恋交友",
+        "three_category_id_v2=2009124636406733": "美食探索",
+        "three_category_id_v2=2792840669609733": "科技类",
+        "three_category_id_v2=5129549783959833": "美食类"
+      },
+      "three_category_id_v2=1733179584798033": {
+        "": "全部",
+        "three_category_id_v2=8205855809889533;should,three_category_id_v2=1745212072513533;should": "音乐竞演",
+        "three_category_id_v2=8647047026124233;should,three_category_id_v2=4807079113184733;should": "说唱",
+        "three_category_id_v2=4939436478055033": "音乐盛典",
+        "three_category_id_v2=1234232427528533": "音乐游学",
+        "three_category_id_v2=6419432467061433": "流行音乐",
+        "three_category_id_v2=8240348941340433": "原创音乐",
+        "three_category_id_v2=1683445302240533": "翻唱",
+        "three_category_id_v2=6237340819633433": "乐队",
+        "three_category_id_v2=1187706808362033": "民谣",
+        "three_category_id_v2=2688559109408633": "民族音乐",
+        "three_category_id_v2=1940138373504733": "美声",
+        "three_category_id_v2=5506567732378933": "古典音乐"
+      },
+      "three_category_id_v2=2279454527081633": {
+        "": "全部",
+        "three_category_id_v2=7380427152605933": "深度访谈",
+        "three_category_id_v2=5827434071458733": "辩论",
+        "three_category_id_v2=6064072996530333": "娱乐访谈"
+      },
+      "three_category_id_v2=3840469266705833": {
+        "": "全部",
+        "three_category_id_v2=5946956782766133": "家庭关系",
+        "three_category_id_v2=6386543667305833": "人文观察",
+        "three_category_id_v2=5354156221315733": "婚恋交友",
+        "three_category_id_v2=4466158627911933": "情感观察",
+        "three_category_id_v2=5889200841731933": "恋爱观察",
+        "three_category_id_v2=2520104281391733": "生活观察"
+      },
+      "three_category_id_v2=7119723252103433": {
+        "": "全部",
+        "three_category_id_v2=7380427152605933": "深度访谈",
+        "three_category_id_v2=6064072996530333": "娱乐访谈",
+        "three_category_id_v2=7420535444991133": "健康养生",
+        "three_category_id_v2=4576055349046833": "亲子互动",
+        "three_category_id_v2=4613757143888733": "创业精神"
+      },
+      "three_category_id_v2=2709415421448933": {
+        "": "全部",
+        "three_category_id_v2=5309234933844733": "户外游戏",
+        "three_category_id_v2=6130652761889433": "游戏节目",
+        "three_category_id_v2=2260202546736833": "棚内游戏",
+        "three_category_id_v2=7295397572749933": "旅行观光",
+        "three_category_id_v2=6872656171012133": "户外探险",
+        "three_category_id_v2=4576055349046833": "亲子互动",
+        "three_category_id_v2=4524716734794033": "青春成长"
+      },
+      "three_category_id_v2=6413015140279833": {
+        "": "全部",
+        "three_category_id_v2=6947257594848333": "传统节日",
+        "three_category_id_v2=5371803869965233": "春节联欢",
+        "three_category_id_v2=6253384136587433": "春节",
+        "three_category_id_v2=5923693973182933": "跨年",
+        "three_category_id_v2=2860222600816433": "跨年盛典",
+        "three_category_id_v2=2835355459537933": "年度盛典",
+        "three_category_id_v2=6010327884734433": "颁奖盛典",
+        "three_category_id_v2=6797252581328233": "公益晚会",
+        "three_category_id_v2=4939436478055033": "音乐盛典",
+        "three_category_id_v2=1326481500014133": "元宵",
+        "three_category_id_v2=2695778602038033": "奋斗精神",
+        "three_category_id_v2=6435475784015433": "影视盛典",
+        "three_category_id_v2=4877669707782033": "发布会"
+      },
+      "three_category_id_v2=6011130050582133": {
+        "": "全部",
+        "three_category_id_v2=5332497743427833": "京剧盛典",
+        "three_category_id_v2=6947257594848333": "传统节日",
+        "three_category_id_v2=8067883284084933": "曲苑杂坛",
+        "three_category_id_v2=6253384136587433": "春节",
+        "three_category_id_v2=5371803869965233": "春节联欢"
+      },
+      "three_category_id_v2=6149904742234233": {
+        "": "全部",
+        "three_category_id_v2=4010528426418333": "体育竞技",
+        "three_category_id_v2=2922791536937133": "体育项目竞技",
+        "three_category_id_v2=5309234933844733": "户外游戏",
+        "three_category_id_v2=3286172665945233": "创意竞技",
+        "three_category_id_v2=6130652761889433": "游戏节目",
+        "three_category_id_v2=7843276846729033": "脑力竞技"
+      },
+      "three_category_id_v2=1977840168346533": {
+        "": "全部",
+        "three_category_id_v2=8205855809889533": "音乐竞演",
+        "three_category_id_v2=4894515190583633": "音乐",
+        "three_category_id_v2=4524716734794033": "青春成长",
+        "three_category_id_v2=8777800059299433": "演技竞演",
+        "three_category_id_v2=1025669307126733": "偶像",
+        "three_category_id_v2=3969617968185633": "演技",
+        "three_category_id_v2=4654667602121333": "舞蹈",
+        "three_category_id_v2=6091346635352133": "女性力量",
+        "three_category_id_v2=1172465657255733": "喜剧竞演"
+      }
+    },
+    "anime": {
+      "": {
+        "": "全部",
+        "three_category_id_v2=1305625187973833": "少年向",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=2808081820716033": "冒险悬疑",
+        "three_category_id_v2=3315050636462333": "原创",
+        "three_category_id_v2=3634312643846933": "科幻机甲",
+        "three_category_id_v2=3831645442381133": "少女向",
+        "three_category_id_v2=4592098666000733": "漫画改编",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=5965406597263233": "轻小说改编",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=6873458336859633": "治愈成长",
+        "three_category_id_v2=7629098565392933": "文学改编",
+        "three_category_id_v2=8641431865190333": "游戏改编"
+      },
+      "three_category_id_v2=2951669507454533": {
+        "": "全部",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=3816404291274933": "仙侠派",
+        "three_category_id_v2=7001002706643933": "热血冒险",
+        "three_category_id_v2=2025970119208533": "东方玄幻"
+      },
+      "three_category_id_v2=8035796650176933": {
+        "": "全部",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=7001002706643933": "热血冒险",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=1940138373504533": "休闲搞笑"
+      },
+      "three_category_id_v2=7045121828267433": {
+        "": "全部",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=3816404291274933": "仙侠派",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=7001002706643933": "热血冒险"
+      },
+      "three_category_id_v2=1843878471780633": {
+        "": "全部",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=1940138373504533": "休闲搞笑"
+      },
+      "three_category_id_v2=1708312443519433": {
+        "": "全部",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=7001002706643933": "热血冒险"
+      },
+      "three_category_id_v2=5354958387163433": {
+        "": "全部",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=7001002706643933": "热血冒险",
+        "three_category_id_v2=3634312643846933": "科幻机甲",
+        "three_category_id_v2=8532337309903533": "异世界",
+        "three_category_id_v2=6873458336859633": "治愈成长",
+        "three_category_id_v2=3816404291274933": "仙侠派"
+      },
+      "three_category_id_v2=1521407801005233": {
+        "": "全部",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=5553093351545333": "武侠玄幻",
+        "three_category_id_v2=7001002706643933": "热血冒险",
+        "three_category_id_v2=3634312643846933": "科幻机甲"
+      },
+      "three_category_id_v2=6219693170984133": {
+        "": "全部",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=6873458336859633": "治愈成长",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=7300210567836133": "生活"
+      },
+      "three_category_id_v2=2771984357569433": {
+        "": "全部",
+        "three_category_id_v2=3634312643846933": "科幻机甲",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=6873458336859633": "治愈成长",
+        "three_category_id_v2=7001002706643933": "热血冒险"
+      },
+      "three_category_id_v2=7174270529747233": {
+        "": "全部",
+        "three_category_id_v2=2808081820716033": "冒险悬疑",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=5553093351545333": "武侠玄幻"
+      },
+      "three_category_id_v2=6149904742234233": {
+        "": "全部",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=7001002706643933": "热血冒险"
+      },
+      "three_category_id_v2=2971723653646733": {
+        "": "全部",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=1940138373504533": "休闲搞笑",
+        "three_category_id_v2=6873458336859633": "治愈成长"
+      },
+      "three_category_id_v2=4684347738486233": {
+        "": "全部",
+        "three_category_id_v2=3634312643846933": "科幻机甲",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=7001002706643933": "热血冒险",
+        "three_category_id_v2=2419031384581533": "太空歌剧"
+      },
+      "three_category_id_v2=4069086533300333": {
+        "": "全部",
+        "three_category_id_v2=6713827333167433": "言情纯爱",
+        "three_category_id_v2=6072094655007233": "职业竞技",
+        "three_category_id_v2=2616364183115633": "热血奇幻",
+        "three_category_id_v2=6873458336859633": "治愈成长"
+      }
+    },
+    "documentary": {
+      "": {
+        "": "全部",
+        "three_category_id_v2=1019251980344933": "品牌",
+        "three_category_id_v2=1109094555287533": "荒野",
+        "three_category_id_v2=1172465657255633": "自然风光",
+        "three_category_id_v2=1174069988951033": "人物传记",
+        "three_category_id_v2=1181289481580533": "探店",
+        "three_category_id_v2=1238243256767133": "著名战役",
+        "three_category_id_v2=1261506066350433": "米其林",
+        "three_category_id_v2=1448410708864533": "近代史",
+        "three_category_id_v2=1478893011077133": "创业",
+        "three_category_id_v2=1482101674467933": "自然灾难",
+        "three_category_id_v2=1551890103217733": "生育",
+        "three_category_id_v2=1563922590933333": "节庆食物",
+        "three_category_id_v2=1869547778906933": "手艺传承",
+        "three_category_id_v2=1940138373504633": "野外",
+        "three_category_id_v2=2123834352627833": "医生",
+        "three_category_id_v2=2198435776463933": "经济",
+        "three_category_id_v2=2270630702757033": "军事领袖",
+        "three_category_id_v2=2308332497598833": "地震",
+        "three_category_id_v2=2336408302268533": "海洋",
+        "three_category_id_v2=2440689862469433": "小众宠物",
+        "three_category_id_v2=2470369998834333": "体育运动",
+        "three_category_id_v2=2494434974265433": "现场还原",
+        "three_category_id_v2=2686152611865733": "养成系",
+        "three_category_id_v2=2845783615558033": "宗教",
+        "three_category_id_v2=2885891907942833": "著名景点",
+        "three_category_id_v2=2922791536937233": "时事",
+        "three_category_id_v2=3254086032037333": "野生动物",
+        "three_category_id_v2=3355158928847333": "医院",
+        "three_category_id_v2=3430562518531233": "小吃",
+        "three_category_id_v2=3578963200355833": "真人秀",
+        "three_category_id_v2=3630301814608533": "太空",
+        "three_category_id_v2=3659981950973333": "国粹",
+        "three_category_id_v2=3705705404292233": "调查",
+        "three_category_id_v2=3821217286361033": "疫情",
+        "three_category_id_v2=3937531334277533": "战争场面",
+        "three_category_id_v2=4118018650010133": "科技创新",
+        "three_category_id_v2=4164544269176633": "生物",
+        "three_category_id_v2=4217487215124933": "犯罪",
+        "three_category_id_v2=4255991175814533": "军政",
+        "three_category_id_v2=4270430161073433": "地理",
+        "three_category_id_v2=4274440990311533": "宠物真人秀",
+        "three_category_id_v2=4296901634047133": "古代史",
+        "three_category_id_v2=4305725458371933": "意外事故",
+        "three_category_id_v2=4316955780239733": "金融",
+        "three_category_id_v2=4357064072624733": "商业",
+        "three_category_id_v2=4493432266733733": "城镇",
+        "three_category_id_v2=4510277749535333": "唐宋",
+        "three_category_id_v2=4660282763055333": "宇航员",
+        "three_category_id_v2=4685149904334233": "植物",
+        "three_category_id_v2=4701193221288033": "养生"
+      },
+      "three_category_id_v2=7300210567835933": {
+        "": "全部",
+        "three_category_id_v2=3254086032037333": "野生动物",
+        "three_category_id_v2=4270430161073433": "地理",
+        "three_category_id_v2=1172465657255633": "自然风光",
+        "three_category_id_v2=8533139475750933": "风景",
+        "three_category_id_v2=1109094555287533": "荒野",
+        "three_category_id_v2=4725258196719233": "动物生存",
+        "three_category_id_v2=1905645242053533": "人与自然",
+        "three_category_id_v2=6015140879820733": "自然现象",
+        "three_category_id_v2=2336408302268533": "海洋",
+        "three_category_id_v2=6629599919158933": "自然奇观",
+        "three_category_id_v2=6381730672219433": "海洋生态",
+        "three_category_id_v2=5943748119375333": "动人风景",
+        "three_category_id_v2=4698786723744833": "致命动物",
+        "three_category_id_v2=3897423041892633": "地理风貌",
+        "three_category_id_v2=4685149904334233": "植物",
+        "three_category_id_v2=5479294093557133": "气候",
+        "three_category_id_v2=5792138774160033": "航拍",
+        "three_category_id_v2=6865436678382833": "气候变迁",
+        "three_category_id_v2=6293492428972533": "恐龙星球",
+        "three_category_id_v2=5863531534605233": "恐龙"
+      },
+      "three_category_id_v2=6475584076400333": {
+        "": "全部",
+        "three_category_id_v2=5641331594792433": "文物古迹",
+        "three_category_id_v2=5690263711502033": "历史人物",
+        "three_category_id_v2=8452120725133133": "考古",
+        "three_category_id_v2=4296901634047133": "古代史",
+        "three_category_id_v2=8995187004026033": "秘闻",
+        "three_category_id_v2=1448410708864533": "近代史",
+        "three_category_id_v2=8596510577719333": "年代史",
+        "three_category_id_v2=4510277749535333": "唐宋",
+        "three_category_id_v2=5171262408040333": "春秋战国",
+        "three_category_id_v2=8195427653869133": "民国",
+        "three_category_id_v2=7928306426585033": "三国"
+      },
+      "three_category_id_v2=2792840669609633": {
+        "": "全部",
+        "three_category_id_v2=6991376716471533": "文化遗产",
+        "three_category_id_v2=1174069988951033": "人物传记",
+        "three_category_id_v2=7692469667361233": "艺术",
+        "three_category_id_v2=8983154516310733": "历史演义",
+        "three_category_id_v2=6448310437578633": "风俗民俗",
+        "three_category_id_v2=1571142083562533": "非遗文化",
+        "three_category_id_v2=4934623482968733": "古典文化",
+        "three_category_id_v2=4750125337997633": "建筑",
+        "three_category_id_v2=8365486813581733": "娱乐",
+        "three_category_id_v2=1869547778906933": "手艺传承",
+        "three_category_id_v2=8488218188279933": "文学",
+        "three_category_id_v2=3659981950973333": "国粹",
+        "three_category_id_v2=3388047728603233": "逐梦人生",
+        "three_category_id_v2=5357364884706633": "工业技术",
+        "three_category_id_v2=2845783615558033": "宗教",
+        "three_category_id_v2=6869447507621033": "时尚",
+        "three_category_id_v2=4443697984176333": "传统节日",
+        "three_category_id_v2=5597212473168933": "哲学",
+        "three_category_id_v2=4701193221288033": "养生"
+      },
+      "three_category_id_v2=7186303017462533": {
+        "": "全部",
+        "three_category_id_v2=5083826330640833": "地域特色美食",
+        "three_category_id_v2=5979845582521833": "地方特色",
+        "three_category_id_v2=5812192920352633": "中餐",
+        "three_category_id_v2=3170660783876533": "中餐文化",
+        "three_category_id_v2=8298907048222433": "正餐",
+        "three_category_id_v2=8026170660004533": "主食",
+        "three_category_id_v2=3430562518531233": "小吃",
+        "three_category_id_v2=1181289481580533": "探店",
+        "three_category_id_v2=5095858818356333": "八大菜系",
+        "three_category_id_v2=7546475483079933": "网红打卡",
+        "three_category_id_v2=5219392358902133": "夜宵",
+        "three_category_id_v2=5270730973154933": "早餐",
+        "three_category_id_v2=4141281459593533": "辣味美食",
+        "three_category_id_v2=8886092448739133": "西餐",
+        "three_category_id_v2=5122330291330633": "路边摊",
+        "three_category_id_v2=4609746314650333": "美味夜宵",
+        "three_category_id_v2=1563922590933333": "节庆食物",
+        "three_category_id_v2=2766369196635533": "街头小吃",
+        "three_category_id_v2=2861826932512033": "西方美食"
+      },
+      "three_category_id_v2=8175373507676633": {
+        "": "全部",
+        "three_category_id_v2=7968414718970233": "医学科学",
+        "three_category_id_v2=2123834352627833": "医生",
+        "three_category_id_v2=3355158928847333": "医院",
+        "three_category_id_v2=3821217286361033": "疫情",
+        "three_category_id_v2=7621076906916133": "救助"
+      },
+      "three_category_id_v2=1001604331695633": {
+        "": "全部",
+        "three_category_id_v2=6769978942506433": "动物揭秘",
+        "three_category_id_v2=5618870951056833": "狗狗",
+        "three_category_id_v2=8964704701813433": "猫咪",
+        "three_category_id_v2=4274440990311533": "宠物真人秀",
+        "three_category_id_v2=2686152611865733": "养成系",
+        "three_category_id_v2=6881479995336533": "动物园",
+        "three_category_id_v2=2440689862469433": "小众宠物"
+      },
+      "three_category_id_v2=7533640829516933": {
+        "": "全部",
+        "three_category_id_v2=1478893011077133": "创业",
+        "three_category_id_v2=2526521608173433": "创业经历",
+        "three_category_id_v2=8213075302518733": "财富故事",
+        "three_category_id_v2=4357064072624733": "商业"
+      },
+      "three_category_id_v2=4041812894478533": {
+        "": "全部",
+        "three_category_id_v2=8406397271814233": "案件",
+        "three_category_id_v2=3705705404292233": "调查",
+        "three_category_id_v2=4217487215124933": "犯罪",
+        "three_category_id_v2=3341522109436633": "案件调查",
+        "three_category_id_v2=6427454125538533": "刑侦",
+        "three_category_id_v2=2494434974265433": "现场还原",
+        "three_category_id_v2=3586984858832833": "法律普及",
+        "three_category_id_v2=5043718038255833": "普法",
+        "three_category_id_v2=1924095056550633": "大案要案"
+      },
+      "three_category_id_v2=7705304320924433": {
+        "": "全部",
+        "three_category_id_v2=2470369998834333": "体育运动",
+        "three_category_id_v2=5097463150051733": "驾驶",
+        "three_category_id_v2=2238544068849033": "汽车竞技",
+        "three_category_id_v2=8407199437662133": "体育赛事",
+        "three_category_id_v2=6914368795092333": "极限运动"
+      },
+      "three_category_id_v2=7213576656284533": {
+        "": "全部",
+        "three_category_id_v2=4305725458371933": "意外事故",
+        "three_category_id_v2=5054948360123833": "自然灾害",
+        "three_category_id_v2=2308332497598833": "地震"
+      },
+      "three_category_id_v2=8326180687044233": {
+        "": "全部",
+        "three_category_id_v2=8868444800089633": "武器",
+        "three_category_id_v2=5234633510008433": "军史",
+        "three_category_id_v2=1238243256767133": "著名战役",
+        "three_category_id_v2=7300210567836033": "二战",
+        "three_category_id_v2=3937531334277533": "战争场面",
+        "three_category_id_v2=8153715029788933": "战争纪实",
+        "three_category_id_v2=1786122530746233": "二战纪实",
+        "three_category_id_v2=8870049131784833": "军队",
+        "three_category_id_v2=8271633409400733": "环球",
+        "three_category_id_v2=2149503659754333": "军事武器",
+        "three_category_id_v2=1631304522140133": "军事行动",
+        "three_category_id_v2=4255991175814533": "军政"
+      },
+      "three_category_id_v2=3891005715111133": {
+        "": "全部",
+        "three_category_id_v2=5384638523528433": "探秘",
+        "three_category_id_v2=7023463350379433": "求生",
+        "three_category_id_v2=8493031183365933": "极限挑战",
+        "three_category_id_v2=3258899027123633": "宇宙探索",
+        "three_category_id_v2=7910658777935933": "宇宙",
+        "three_category_id_v2=8210668804975433": "外星",
+        "three_category_id_v2=3630301814608533": "太空",
+        "three_category_id_v2=8117617566642233": "NASA",
+        "three_category_id_v2=4660282763055333": "宇航员"
+      },
+      "three_category_id_v2=5675022560395733": {
+        "": "全部",
+        "three_category_id_v2=4868043717609733": "民生",
+        "three_category_id_v2=6789230922851033": "热点",
+        "three_category_id_v2=5360573548097333": "城市发展",
+        "three_category_id_v2=5057354857666833": "教育",
+        "three_category_id_v2=7054747818439733": "家庭",
+        "three_category_id_v2=6387345833153533": "乡村振兴",
+        "three_category_id_v2=2198435776463933": "经济",
+        "three_category_id_v2=5055750525971333": "环保"
+      },
+      "three_category_id_v2=3208362578718433": {
+        "": "全部",
+        "three_category_id_v2=4118018650010133": "科技创新",
+        "three_category_id_v2=4164544269176633": "生物",
+        "three_category_id_v2=6543768173455033": "科普",
+        "three_category_id_v2=8213877468366333": "研发",
+        "three_category_id_v2=8180186502763033": "信息化",
+        "three_category_id_v2=5309234933844833": "人工智能",
+        "three_category_id_v2=6377719842981033": "互联网"
+      },
+      "three_category_id_v2=5893211670970233": {
+        "": "全部",
+        "three_category_id_v2=3869347237223133": "人文特色",
+        "three_category_id_v2=2885891907942833": "著名景点",
+        "three_category_id_v2=4493432266733733": "城镇",
+        "three_category_id_v2=6283064272952333": "国外风光",
+        "three_category_id_v2=8829940839400133": "自然风景",
+        "three_category_id_v2=1940138373504633": "野外",
+        "three_category_id_v2=3578963200355833": "真人秀",
+        "three_category_id_v2=6822119722606733": "国内风光"
+      }
+    },
+    "knowledge": {
+      "three_category_id_v2=3082422540629633": {
+        "": "全部",
+        "three_category_id_v2=7637922389717633": "儿童文学 ",
+        "three_category_id_v2=5666198736071133": "亲子教育",
+        "three_category_id_v2=1323272836623333": "科普百科",
+        "three_category_id_v2=4812694274118333": "儿童健康"
+      },
+      "three_category_id_v2=4431665496460733": {
+        "": "全部",
+        "three_category_id_v2=3911862027151133": "中国史",
+        "three_category_id_v2=6356863530940733": "世界史",
+        "three_category_id_v2=6897523312290533": "文学",
+        "three_category_id_v2=5537050034591433": "哲学与宗教"
+      },
+      "three_category_id_v2=2183194625357733": {
+        "": "全部",
+        "three_category_id_v2=6083324976875233": "学前",
+        "three_category_id_v2=1160433169540133": "小学",
+        "three_category_id_v2=8317356862719633": "初中",
+        "three_category_id_v2=8942244058077833": "高中"
+      },
+      "three_category_id_v2=2442294194164733": {
+        "": "全部",
+        "three_category_id_v2=2132658176952633": "少儿英语",
+        "three_category_id_v2=4349042414147733": "新概念英语"
+      },
+      "three_category_id_v2=2433470369840033": {
+        "": "全部",
+        "three_category_id_v2=8288478892202533": "健身塑形",
+        "three_category_id_v2=8873257795175733": "体育运动",
+        "three_category_id_v2=4044219392021633": "武术格斗"
+      }
+    }
+  },
+  "linked_subgenres_source": "iqiyi-official-all-tags-20260621-121530.json"
+}
