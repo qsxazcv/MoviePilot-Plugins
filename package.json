@@ -5,9 +5,10 @@
     "labels": "插件",
     "version": "1.0.32",
     "author": "qsxazcv",
-    "level": 2,
+    "level": 1,
     "v2": true,
     "release": true,
+    "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/programpreview.png",
     "history": {
       "v1.0.32": "接入优酷新片页 ku/new：合并剧集、电影、综艺、动漫、纪录片和少儿即将上线模块，并补充 SSR HTML 数据兜底解析。",
       "v1.0.31": "补强优酷文本兜底解析：结构化数据不可用时自动合并日期与邻近片名，避免只显示上线日期。",

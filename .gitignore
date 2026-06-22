@@ -1,0 +1,43 @@
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environments
+.env
+.env.*
+.venv/
+venv/
+env/
+
+# Local runtime/state files
+config/
+data/
+cache/
+logs/
+tmp/
+*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Local-only validation assets
+tests/
+
+# Archives and release artifacts are built outside the source tree
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

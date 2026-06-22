@@ -40,21 +40,24 @@ MoviePilot-Plugins/
 ├── package.json              # 默认插件清单，兼容 MoviePilot 文件列表安装
 ├── package.v2.json           # V2 插件清单文件
 ├── icons/                    # 插件图标
+│   ├── programpreview.png
 │   └── weiyuncookie.png
 ├── plugins/                  # 默认插件目录，兼容 MoviePilot 文件列表安装
 │   ├── programpreview/
 │   └── weiyuncookie/
-└── plugins.v2/               # V2 插件源码目录
-    ├── iqiyidiscover/        # 爱奇艺探索（插件 ID：IqiyiDiscover）
-    │   ├── __init__.py
-    │   └── official_filters.json
-    ├── programpreview/       # 四大平台节目预告
-    │   ├── __init__.py
-    │   ├── preview_core.py
-    │   └── requirements.txt
-    └── weiyuncookie/         # 微云Cookie助手
-        ├── __init__.py
-        └── README.md
+├── plugins.v2/               # V2 插件源码目录
+│   ├── iqiyidiscover/        # 爱奇艺探索（插件 ID：IqiyiDiscover）
+│   │   ├── __init__.py
+│   │   └── official_filters.json
+│   ├── programpreview/       # 四大平台节目预告
+│   │   ├── __init__.py
+│   │   ├── preview_core.py
+│   │   └── requirements.txt
+│   └── weiyuncookie/         # 微云Cookie助手
+│       ├── __init__.py
+│       └── README.md
+└── scripts/
+    └── validate_repo.py      # 仓库元数据与发布前校验
 ```
 
 ## 插件详情
@@ -95,8 +98,6 @@ MoviePilot-Plugins/
 - 安装并启用插件后，在 MoviePilot 探索页选择爱奇艺来源
 - 通过频道、排序和官方筛选项浏览爱奇艺片库
 - 电影返回 MoviePilot 标准 `电影` 类型，其余频道返回标准 `电视剧` 类型，以便详情识别和点击跳转
-
----
 
 ### 微云Cookie助手
 
@@ -145,8 +146,9 @@ MoviePilot-Plugins/
 提交插件变更前，建议执行以下检查：
 
 ```bash
+python scripts/validate_repo.py
 python3 -m json.tool package.v2.json >/dev/null
-PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile plugins.v2/programpreview/__init__.py plugins.v2/programpreview/preview_core.py plugins.v2/weiyuncookie/__init__.py
+PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile plugins.v2/iqiyidiscover/__init__.py plugins.v2/programpreview/__init__.py plugins.v2/programpreview/preview_core.py plugins.v2/weiyuncookie/__init__.py
 git status --short --branch
 ```
 

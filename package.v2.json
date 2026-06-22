@@ -2,11 +2,12 @@
   "programpreview": {
     "name": "四大平台节目预告",
     "description": "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入优酷新片页与爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。",
-    "labels": "插件",
+    "labels": "预告,爱奇艺,腾讯视频,芒果TV,优酷",
     "version": "1.0.32",
     "author": "qsxazcv",
-    "level": 2,
+    "level": 1,
     "release": true,
+    "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/programpreview.png",
     "history": {
       "v1.0.32": "接入优酷新片页 ku/new：合并剧集、电影、综艺、动漫、纪录片和少儿即将上线模块，并补充 SSR HTML 数据兜底解析。",
       "v1.0.31": "补强优酷文本兜底解析：结构化数据不可用时自动合并日期与邻近片名，避免只显示上线日期。",
@@ -35,7 +36,7 @@
     "labels": "探索,爱奇艺,片库",
     "version": "1.0.36",
     "author": "qsxazcv",
-    "level": 2,
+    "level": 1,
     "release": true,
     "icon": "https://www.iqiyi.com/logo.png",
     "history": {
@@ -48,7 +49,7 @@
     "labels": "工具,Cookie,微云,OpenList,Telegram",
     "version": "0.1.45",
     "author": "qsxazcv",
-    "level": 2,
+    "level": 1,
     "history": {
       "v0.1.45": "优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。",
       "v0.1.44": "浏览器模式文案简化为 Playwright / CloakBrowser。",
