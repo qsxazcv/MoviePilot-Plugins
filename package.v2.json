@@ -29,7 +29,7 @@
       "1.0.2": "爱奇艺新增搜索页兜底补齐漏项与预约数，修复频道接口偶发遗漏《恶念》等预约节目。"
     }
   },
-  "iqiyidiscover": {
+  "IqiyiDiscover": {
     "name": "爱奇艺探索",
     "description": "让 MoviePilot 探索页接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。",
     "labels": "探索,爱奇艺,片库",
@@ -37,6 +37,7 @@
     "author": "qsxazcv",
     "level": 1,
     "release": true,
+    "icon": "https://www.iqiyi.com/logo.png",
     "history": {
       "v1.0.36": "修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型，导致 MoviePilot 探索页类型标签不显示、点击详情无内容的问题。"
     }

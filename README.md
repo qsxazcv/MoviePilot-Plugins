@@ -9,7 +9,7 @@
 | 插件 ID | 插件名称 | 版本 | 简介 |
 | --- | --- | --- | --- |
 | `programpreview` | 四大平台节目预告 | `1.0.32` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入优酷新片页。 |
-| `iqiyidiscover` | 爱奇艺探索 | `1.0.36` | 接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。 |
+| `IqiyiDiscover` | 爱奇艺探索 | `1.0.36` | 接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。 |
 | `weiyuncookie` | 微云Cookie助手 | `0.1.45` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。 |
 
 ## 快速开始
@@ -45,7 +45,7 @@ MoviePilot-Plugins/
 │   ├── programpreview/
 │   └── weiyuncookie/
 └── plugins.v2/               # V2 插件源码目录
-    ├── iqiyidiscover/        # 爱奇艺探索
+    ├── iqiyidiscover/        # 爱奇艺探索（插件 ID：IqiyiDiscover）
     │   ├── __init__.py
     │   └── official_filters.json
     ├── programpreview/       # 四大平台节目预告
@@ -86,7 +86,7 @@ MoviePilot-Plugins/
 
 ### 爱奇艺探索
 
-**插件 ID**：`iqiyidiscover`
+**插件 ID**：`IqiyiDiscover`
 
 **功能**：让 MoviePilot 探索页接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。
 
