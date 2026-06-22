@@ -35,7 +35,7 @@
     "labels": "探索,爱奇艺,片库",
     "version": "1.0.36",
     "author": "qsxazcv",
-    "level": 1,
+    "level": 2,
     "release": true,
     "icon": "https://www.iqiyi.com/logo.png",
     "history": {
@@ -48,7 +48,7 @@
     "labels": "工具,Cookie,微云,OpenList,Telegram",
     "version": "0.1.45",
     "author": "qsxazcv",
-    "level": 1,
+    "level": 2,
     "history": {
       "v0.1.45": "优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。",
       "v0.1.44": "浏览器模式文案简化为 Playwright / CloakBrowser。",
