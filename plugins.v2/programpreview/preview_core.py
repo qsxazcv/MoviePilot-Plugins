@@ -1531,7 +1531,10 @@ def _dedupe_iqiyi_items(items, limit=50):
                     best[key] = item
                 elif new_has_time == old_has_time and _iqiyi_sort_key(item) < _iqiyi_sort_key(best[key]):
                     best[key] = item
-    deduped = sorted([best[k] for k in order], key=_iqiyi_sort_key)
+    deduped = sorted(
+        [best[k] for k in order if not _iqiyi_is_program_preview_date(str(best[k]).split('｜', 1)[0])],
+        key=_iqiyi_sort_key,
+    )
     # 去重后先对全部候选强制补数，再重新排序；搜索页失败的条目保持无预约数，下一次定时任务会继续重试。
     enriched = _iqiyi_force_search_reserve_items(deduped)
     return sorted(enriched, key=_iqiyi_sort_key)[:limit]
