@@ -67,6 +67,23 @@ def _normalize_date_text(date):
     date = re.sub(r'^(后日)', '后天', date)
     date = re.sub(r'^(今天|明天|后天)\s+(\d{1,2}:\d{2})', r'\1\2', date)
 
+    week_order = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7}
+    m = re.fullmatch(r'(本周|下周)(?:周)?([一二三四五六日天])\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?\s*(上线|上映|开播|首播)?', date)
+    if m:
+        now = datetime.now()
+        offset = (week_order[m.group(2)] - now.isoweekday()) % 7
+        if m.group(1) == '下周':
+            offset += 7
+        target = now + timedelta(days=offset)
+        if m.group(3) and m.group(4):
+            time_part = f'{int(m.group(3))}:{m.group(4)}'
+        elif m.group(5):
+            time_part = f'{int(m.group(5))}:00'
+        else:
+            time_part = ''
+        suffix = m.group(6) or ''
+        return f'{target.month}月{target.day}日{time_part}{suffix}'
+
     suffixes = r'(上线|上映|开播|首播)?'
     patterns = (
         rf'(?:\d{{4}}[./-])?0?(\d{{1,2}})[./-]0?(\d{{1,2}})\s*(?:(\d{{1,2}}:\d{{2}}))?\s*{suffixes}',
