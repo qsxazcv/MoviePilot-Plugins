@@ -32,7 +32,7 @@
   },
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
-    "description": "让 MoviePilot 探索页接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。",
+    "description": "让探索支持爱奇艺视频的数据浏览。",
     "labels": "探索,爱奇艺,片库",
     "version": "1.0.36",
     "author": "qsxazcv",
