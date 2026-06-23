@@ -1724,12 +1724,12 @@ class IqiyiDiscover(_PluginBase):
     """
 
     plugin_name = "爱奇艺探索"
-    plugin_desc = "让探索支持爱奇艺片库数据浏览，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识截图筛选。"
+    plugin_desc = "让探索支持爱奇艺视频的数据浏览。。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
     plugin_version = "1.0.36"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
-    author_url = "https://github.com/qsxazcv"
+    author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "iqiyidiscover_"
     plugin_order = 98
     auth_level = 1
