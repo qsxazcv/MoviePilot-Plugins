@@ -286,7 +286,7 @@ def _tencent_parse_text_module(text):
             # 用户只要具体节目预告：腾讯侧必须带明确日期/时间；
             # 过滤“今天｜仙逆”这类仅有相对日期、无具体时间/预约数/明确日期的更新状态条目。
             has_specific_date = bool(re.search(r'(?:\d{1,2}月\d{1,2}日|今天\d{1,2}:\d{2}|明天\d{1,2}:\d{2}|后天\d{1,2}:\d{2})', date))
-            if not has_specific_date:
+            if not has_specific_date or not _tencent_date_is_future(date):
                 continue
             suffix = f'（{reserve}）' if reserve else ''
             items.append(f'{date}｜{title}{suffix}')
@@ -318,26 +318,50 @@ def _sort_tencent_items(items):
     return sorted(items, key=_tencent_sort_key)
 
 
+def _tencent_date_is_future(date, now=None):
+    """Return True only when a Tencent preview date is still upcoming."""
+    now = now or datetime.now()
+    date = _normalize_date_text(date)
+    tm = re.search(r'(\d{1,2}):(\d{2})', date)
+    rel = {'今天': 0, '明天': 1, '后天': 2}
+    for label, offset in rel.items():
+        if date.startswith(label):
+            if offset > 0:
+                return True
+            if not tm:
+                return False
+            minutes = int(tm.group(1)) * 60 + int(tm.group(2))
+            return minutes > now.hour * 60 + now.minute
+    m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
+    if not m:
+        return False
+    mo, day = int(m.group(1)), int(m.group(2))
+    year = now.year
+    if (mo, day) < (now.month, now.day) and now.month >= 11 and mo <= 2:
+        year += 1
+    if tm:
+        target = datetime(year, mo, day, int(tm.group(1)), int(tm.group(2)))
+        return target > now
+    return (year, mo, day) > (now.year, now.month, now.day)
+
+
+def _filter_future_tencent_items(items, now=None):
+    return [item for item in items or [] if _tencent_date_is_future(str(item).split('｜', 1)[0], now=now)]
+
+
 def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
     """腾讯动态页偶发漏卡时，用同日缓存做保底合并。
 
-    只回填当天缓存中仍属于今天/明天/后天或未来月日的条目，避免长期保留过期节目。
+    只回填缓存中仍未到上线时间的条目，避免当天已上线节目继续显示。
     """
-    merged = list(items or [])
+    merged = _filter_future_tencent_items(items)
     try:
         cache = load_platform_cache()
         old = cache.get(cache_name, {}) if isinstance(cache, dict) else {}
         old_items = old.get('items') or []
         now = datetime.now()
         def _keep(item):
-            left = str(item).split('｜', 1)[0]
-            if left.startswith(('今天', '明天', '后天')):
-                return True
-            m = re.search(r'(\d{1,2})月(\d{1,2})日', left)
-            if not m:
-                return False
-            mo, day = int(m.group(1)), int(m.group(2))
-            return (mo, day) >= (now.month, now.day)
+            return _tencent_date_is_future(str(item).split('｜', 1)[0], now=now)
         for item in old_items:
             if _keep(item):
                 merged.append(item)
@@ -441,17 +465,21 @@ def _tencent_extract_json_items(html):
             # 只抓“预约”态，避免把每日更新、全集上线、已开播内容混入即将上线预告。
             if '预约' in blob and '敬请期待' not in blob and title:
                 date = ''
-                m1 = re.search(r'(\d{1,2})月(\d{1,2})日(?:\d{1,2}:\d{2}|\d{1,2}点)?(?:上线|开播|首播)?', blob)
+                m1 = re.search(r'(\d{1,2})月(\d{1,2})日\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?(?:上线|开播|首播)?', blob)
                 if m1:
                     # 输出统一为“M月D日｜标题”，避免“6月25日首播｜斩神2”和“6月25日｜斩神2”重复。
                     date = f'{m1.group(1)}月{m1.group(2)}日'
+                    if m1.group(3) and m1.group(4):
+                        date += f' {int(m1.group(3))}:{m1.group(4)}'
+                    elif m1.group(5):
+                        date += f' {int(m1.group(5))}:00'
                 elif re.fullmatch(r'\d{4}-\d{2}-\d{2}', publish):
                     try:
                         y, mo, d = publish.split('-')
                         date = f'{int(mo)}月{int(d)}日'
                     except Exception:
                         pass
-                if date:
+                if date and _tencent_date_is_future(date):
                     title = re.sub(r'[·・\s]*\d{1,2}月\d{1,2}日(?:上线|开播|首播)?$', '', str(title)).strip()
                     reserve = ''
                     rm = re.search(r'[\d.]+(?:万)?人预约', blob)
@@ -482,7 +510,7 @@ def extract_tencent_html(html, text):
     for title, date in re.findall(r'(?:title|name):"([^"·]{2,40})·(\d{1,2}月\d{1,2}日(?:开播|上线|首播))"', html):
         date = re.sub(r'(上线|开播|首播)$', '', date)
         items.append(f'{date}｜{title}')
-    return _sort_tencent_items(_dedupe_tencent_items(items, 30))
+    return _sort_tencent_items(_filter_future_tencent_items(_dedupe_tencent_items(items, 30)))
 
 
 IQIYI_CHANNELS = [
@@ -515,8 +543,14 @@ IQIYI_RANK_CHANNELS = [
 ]
 
 
+def _iqiyi_is_program_preview_date(date):
+    date = re.sub(r'\s+', '', str(date or '')).strip('：:')
+    return date in {'即将上线', '节目预告', '未定时', '待定', '敬请期待'}
+
+
 def _iqiyi_normalize_date(date):
-    return _normalize_date_text(date)
+    date = _normalize_date_text(date)
+    return '节目预告' if _iqiyi_is_program_preview_date(date) else date
 
 
 def _iqiyi_sort_key(item):
@@ -558,8 +592,8 @@ def _iqiyi_sort_key(item):
         target_day = now + timedelta(days=off)
         return (0, target_day.year, target_day.month, target_day.day, day_minute(date), item)
 
-    if '即将上线' in date:
-        return (8, now.year, 99, 99, 0, item)
+    if _iqiyi_is_program_preview_date(date):
+        return (0, now.year, now.month, now.day, 23 * 60 + 59, item)
     return (9, now.year, 99, 99, 0, item)
 
 
@@ -1394,6 +1428,10 @@ def _iqiyi_item_has_time(item):
     return bool(re.search(r'\d{1,2}:\d{2}', date))
 
 
+def _iqiyi_build_item(date, title, reserve=''):
+    return f'{_iqiyi_normalize_date(date)}｜{title}' + (reserve if reserve else '')
+
+
 def _iqiyi_attach_search_reserve(item):
     """对单条爱奇艺预告强制执行搜索页补数；失败时原样返回，保留后续重试空间。"""
     left, sep, right = str(item or '').partition('｜')
@@ -1448,6 +1486,16 @@ def _dedupe_iqiyi_items(items, limit=50):
         if key not in best:
             order.append(key); best[key] = item
         else:
+            old_left, _, old_right = best[key].partition('｜')
+            old_title, old_reserve = _iqiyi_split_title_reserve(old_right)
+            old_is_preview = _iqiyi_is_program_preview_date(old_left)
+            new_is_preview = _iqiyi_is_program_preview_date(date)
+            if old_is_preview != new_is_preview:
+                if old_is_preview:
+                    best[key] = _iqiyi_build_item(date, title, reserve or old_reserve)
+                elif reserve and not old_reserve:
+                    best[key] = _iqiyi_build_item(old_left, old_title or title, reserve)
+                continue
             # 同名/近似同名条目优先保留带预约数的版本；
             # 若两条预约数状态一致，优先保留带具体时间的版本，再按真实日期取更早版本。
             old_has_reserve = _iqiyi_item_has_reserve(best[key])
@@ -2194,13 +2242,10 @@ async def main(force_notify=False):
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
         md.append(f'\n【{name}】')
-        if name == '爱奇艺':
-            for it in result[name]:
-                if not it.startswith('即将上线｜'):
-                    md.append(f'- {it}')
-        else:
-            for it in result[name]:
-                md.append(f'- {it}')
+        for it in result[name]:
+            if name == '爱奇艺':
+                it = str(it).replace('即将上线｜', '节目预告｜', 1)
+            md.append(f'- {it}')
     msg = '\n'.join(md)
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(msg, encoding='utf-8')
