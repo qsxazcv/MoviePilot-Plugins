@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """四大平台即将上线/预约节目预告抓取。"""
 import argparse
@@ -67,6 +67,23 @@ def _normalize_date_text(date):
     date = re.sub(r'^(后日)', '后天', date)
     date = re.sub(r'^(今天|明天|后天)\s+(\d{1,2}:\d{2})', r'\1\2', date)
 
+    week_order = {'一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '日': 7, '天': 7}
+    m = re.fullmatch(r'(本周|下周)(?:周)?([一二三四五六日天])\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?\s*(上线|上映|开播|首播)?', date)
+    if m:
+        now = datetime.now()
+        offset = (week_order[m.group(2)] - now.isoweekday()) % 7
+        if m.group(1) == '下周':
+            offset += 7
+        target = now + timedelta(days=offset)
+        if m.group(3) and m.group(4):
+            time_part = f'{int(m.group(3))}:{m.group(4)}'
+        elif m.group(5):
+            time_part = f'{int(m.group(5))}:00'
+        else:
+            time_part = ''
+        suffix = m.group(6) or ''
+        return f'{target.month}月{target.day}日{time_part}{suffix}'
+
     suffixes = r'(上线|上映|开播|首播)?'
     patterns = (
         rf'(?:\d{{4}}[./-])?0?(\d{{1,2}})[./-]0?(\d{{1,2}})\s*(?:(\d{{1,2}}:\d{{2}}))?\s*{suffixes}',
@@ -80,6 +97,67 @@ def _normalize_date_text(date):
             return f'{int(m.group(1))}月{int(m.group(2))}日{time_part}{suffix}'
     return date
 
+def _schedule_time_parts(text):
+    """解析上线时间文本中的具体分钟，缺失时间时排到当天具体时间之后。"""
+    tm = re.search(r'(\d{1,2}):(\d{2})', str(text or ''))
+    if tm:
+        return 0, int(tm.group(1)) * 60 + int(tm.group(2))
+    tm = re.search(r'(\d{1,2})点', str(text or ''))
+    if tm:
+        return 0, int(tm.group(1)) * 60
+    return 1, 23 * 60 + 59
+
+
+def _schedule_calendar_key(item):
+    """统一四个平台的上线时间排序键。"""
+    raw = str(item or '')
+    date = _calendar_date_text(raw.split('｜', 1)[0])
+    now = datetime.now()
+    timed_rank, minute = _schedule_time_parts(date)
+
+    def calendar_key(mon, day):
+        year = now.year
+        mon = int(mon)
+        day = int(day)
+        if (mon, day) < (now.month, now.day):
+            year += 1
+        return (0, year, mon, day, timed_rank, minute, raw)
+
+    m = re.search(r'(?:\d{4}[./-])?(\d{1,2})[./-](\d{1,2})', date)
+    if m:
+        return calendar_key(m.group(1), m.group(2))
+    m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
+    if m:
+        return calendar_key(m.group(1), m.group(2))
+
+    week_order = {'周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7, '周天': 7}
+    m = re.search(r'(本周|下周)(?:周)?([一二三四五六日天])', date)
+    if m:
+        target_weekday = week_order.get('周' + m.group(2), 9)
+        offset = (target_weekday - now.isoweekday()) % 7
+        if m.group(1) == '下周':
+            offset += 7
+        target = now + timedelta(days=offset)
+        return (0, target.year, target.month, target.day, timed_rank, minute, raw)
+
+    return (9, now.year, 99, 99, 1, 23 * 60 + 59, raw)
+
+
+def _sort_platform_items(items):
+    """按统一上线时间轴排序平台预告条目。"""
+    return sorted(items or [], key=_schedule_calendar_key)
+
+
+def _calendar_date_text(text, now=None):
+    """把今天、明天、后天展开成具体月日文本。"""
+    now = now or datetime.now()
+    date = _normalize_date_text(text)
+    rel = {'今天': 0, '明天': 1, '后天': 2}
+    for label, offset in rel.items():
+        if date.startswith(label):
+            target = now + timedelta(days=offset)
+            return f'{target.month}月{target.day}日{date[len(label):]}'
+    return date
 
 async def page_text(url, wait=5000):
     try:
@@ -294,34 +372,23 @@ def _tencent_parse_text_module(text):
 
 
 def _tencent_sort_key(item):
-    # 腾讯视频按日期/时间从小到大排序；无年份时按当前年份折算，今天/明天/后天优先。
-    date = str(item).split('｜', 1)[0]
-    now = datetime.now()
-    m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
-    if m:
-        day_min = 0
-        tm = re.search(r'(\d{1,2}):(\d{2})', date)
-        if tm:
-            day_min = int(tm.group(1)) * 60 + int(tm.group(2))
-        return (int(m.group(1)), int(m.group(2)), day_min, item)
-    rel = {'今天': 0, '明天': 1, '后天': 2}
-    for k, off in rel.items():
-        if date.startswith(k):
-            tm = re.search(r'(\d{1,2}):(\d{2})', date)
-            day_min = int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
-            target = now.toordinal() + off
-            return (now.month, now.day + off, day_min, item)
-    return (99, 99, 0, item)
+    return _schedule_calendar_key(item)
 
 
 def _sort_tencent_items(items):
-    return sorted(items, key=_tencent_sort_key)
+    return _sort_platform_items(items)
 
 
 def _tencent_date_is_future(date, now=None):
     """Return True only when a Tencent preview date is still upcoming."""
     now = now or datetime.now()
     date = _normalize_date_text(date)
+    rel = {'今天': 0, '明天': 1, '后天': 2}
+    for label, offset in rel.items():
+        if date.startswith(label):
+            target = now + timedelta(days=offset)
+            date = f'{target.month}月{target.day}日{date[len(label):]}'
+            break
     tm = re.search(r'(\d{1,2}):(\d{2})', date)
     rel = {'今天': 0, '明天': 1, '后天': 2}
     for label, offset in rel.items():
@@ -549,52 +616,17 @@ def _iqiyi_is_program_preview_date(date):
 
 
 def _iqiyi_normalize_date(date):
-    date = _normalize_date_text(date)
+    date = _calendar_date_text(date)
     return '节目预告' if _iqiyi_is_program_preview_date(date) else date
 
 
 def _iqiyi_sort_key(item):
     item = re.sub(r'（[^）]*(?:人预约|人已预约|预约破[\d.]+(?:万|千|百)?)）$', '', str(item))
     date = item.split('｜', 1)[0]
-    now = datetime.now()
-
-    def day_minute(text):
-        tm = re.search(r'(\d{1,2}):(\d{2})', text)
-        return int(tm.group(1)) * 60 + int(tm.group(2)) if tm else 0
-
-    def calendar_key(mon, day, minute):
-        year = now.year
-        # 抓取“即将上线”时，跨年条目可能是明年一月；保证仍排在当前日期之后。
-        if (int(mon), int(day)) < (now.month, now.day):
-            year += 1
-        return (0, year, int(mon), int(day), minute, item)
-
-    m = re.search(r'(?:\d{4}[./-])?(\d{1,2})[./-](\d{1,2})', date)
-    if m:
-        return calendar_key(m.group(1), m.group(2), day_minute(date))
-    m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
-    if m:
-        return calendar_key(m.group(1), m.group(2), day_minute(date))
-
-    rel = {'今天': 0, '明天': 1, '后天': 2}
-    for k, off in rel.items():
-        if date.startswith(k):
-            target = now + timedelta(days=off)
-            return (0, target.year, target.month, target.day, day_minute(date), item)
-
-    week_order = {'周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7, '周天': 7}
-    m = re.search(r'(本周|下周)(?:周)?([一二三四五六日天])', date)
-    if m:
-        target = week_order.get('周' + m.group(2), 9)
-        off = (target - now.isoweekday()) % 7
-        if m.group(1) == '下周':
-            off += 7
-        target_day = now + timedelta(days=off)
-        return (0, target_day.year, target_day.month, target_day.day, day_minute(date), item)
-
     if _iqiyi_is_program_preview_date(date):
-        return (0, now.year, now.month, now.day, 23 * 60 + 59, item)
-    return (9, now.year, 99, 99, 0, item)
+        now = datetime.now()
+        return (8, now.year, 99, 99, 1, 23 * 60 + 59, item)
+    return _schedule_calendar_key(item)
 
 
 def _iqiyi_split_title_reserve(right):
@@ -1509,7 +1541,10 @@ def _dedupe_iqiyi_items(items, limit=50):
                     best[key] = item
                 elif new_has_time == old_has_time and _iqiyi_sort_key(item) < _iqiyi_sort_key(best[key]):
                     best[key] = item
-    deduped = sorted([best[k] for k in order], key=_iqiyi_sort_key)
+    deduped = sorted(
+        [best[k] for k in order if not _iqiyi_is_program_preview_date(str(best[k]).split('｜', 1)[0])],
+        key=_iqiyi_sort_key,
+    )
     # 去重后先对全部候选强制补数，再重新排序；搜索页失败的条目保持无预约数，下一次定时任务会继续重试。
     enriched = _iqiyi_force_search_reserve_items(deduped)
     return sorted(enriched, key=_iqiyi_sort_key)[:limit]
@@ -1763,7 +1798,7 @@ def extract_mgtv(lines):
             title = cand; break
         if title:
             items.append(f'{_normalize_date_text(line)}｜{title}')
-    return dedupe(items, 12)
+    return _sort_platform_items(dedupe(items, 12))
 
 
 def _youku_walk(o):
@@ -1889,25 +1924,7 @@ def _youku_has_fixed_date(date):
 
 
 def _youku_sort_key(item):
-    date = str(item).split('｜', 1)[0]
-    now = datetime.now()
-    m = re.search(r'(\d{1,2})月(\d{1,2})日', date)
-    if m:
-        tm = re.search(r'(\d{1,2}):(\d{2})', date)
-        day_min = int(tm.group(1))*60 + int(tm.group(2)) if tm else 0
-        return (0, int(m.group(1)), int(m.group(2)), day_min, item)
-    m = re.search(r'(\d{1,2})-(\d{1,2})', date)
-    if m:
-        tm = re.search(r'(\d{1,2}):(\d{2})', date)
-        day_min = int(tm.group(1))*60 + int(tm.group(2)) if tm else 0
-        return (0, int(m.group(1)), int(m.group(2)), day_min, item)
-    rel = {'今天': 0, '明天': 1, '后天': 2}
-    for k, off in rel.items():
-        if date.startswith(k):
-            tm = re.search(r'(\d{1,2}):(\d{2})', date)
-            day_min = int(tm.group(1))*60 + int(tm.group(2)) if tm else 0
-            return (0, now.month, now.day + off, day_min, item)
-    return (9, 99, 99, 0, item)
+    return _schedule_calendar_key(item)
 
 
 def _youku_normalize_title(title):
@@ -2115,6 +2132,8 @@ def apply_platform_cache(result):
                 stamp = old.get('time') or '上次'
                 result[name] = [f'{x}（沿用{stamp}缓存）' for x in old_items]
         else:
+            items = _sort_platform_items(items)
+            result[name] = items
             cache[name] = {'time': now, 'items': items}
             changed = True
     if changed:
@@ -2231,6 +2250,7 @@ async def fetch_site(name, url):
                 items = await asyncio.to_thread(_iqiyi_final_fill_missing_reserves, items)
             else:
                 items = []
+        items = _sort_platform_items(items)
         return name, items or ['暂未从公开页面提取到明确“即将上线/预约”条目']
     except Exception as e:
         return name, [f'抓取失败：{e!r}']
@@ -2242,7 +2262,7 @@ async def main(force_notify=False):
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
         md.append(f'\n【{name}】')
-        for it in result[name]:
+        for it in _sort_platform_items(result[name]):
             if name == '爱奇艺':
                 it = str(it).replace('即将上线｜', '节目预告｜', 1)
             md.append(f'- {it}')

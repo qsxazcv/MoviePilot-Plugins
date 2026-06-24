@@ -24,7 +24,7 @@ class programpreview(_PluginBase):
     plugin_name = "四大平台节目预告"
     plugin_desc = "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入优酷新片页与爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/programpreview.png"
-    plugin_version = "1.0.33"
+    plugin_version = "1.0.36"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "programpreview_"
