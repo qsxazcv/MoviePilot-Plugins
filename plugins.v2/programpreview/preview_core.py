@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """四大平台即将上线/预约节目预告抓取。"""
 import argparse
@@ -97,7 +97,6 @@ def _normalize_date_text(date):
             return f'{int(m.group(1))}月{int(m.group(2))}日{time_part}{suffix}'
     return date
 
-
 def _schedule_time_parts(text):
     """解析上线时间文本中的具体分钟，缺失时间时排到当天具体时间之后。"""
     tm = re.search(r'(\d{1,2}):(\d{2})', str(text or ''))
@@ -112,7 +111,7 @@ def _schedule_time_parts(text):
 def _schedule_calendar_key(item):
     """统一四个平台的上线时间排序键。"""
     raw = str(item or '')
-    date = _normalize_date_text(raw.split('｜', 1)[0])
+    date = _calendar_date_text(raw.split('｜', 1)[0])
     now = datetime.now()
     timed_rank, minute = _schedule_time_parts(date)
 
@@ -131,12 +130,6 @@ def _schedule_calendar_key(item):
     if m:
         return calendar_key(m.group(1), m.group(2))
 
-    rel = {'今天': 0, '明天': 1, '后天': 2}
-    for label, offset in rel.items():
-        if date.startswith(label):
-            target = now + timedelta(days=offset)
-            return (0, target.year, target.month, target.day, timed_rank, minute, raw)
-
     week_order = {'周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7, '周天': 7}
     m = re.search(r'(本周|下周)(?:周)?([一二三四五六日天])', date)
     if m:
@@ -154,6 +147,17 @@ def _sort_platform_items(items):
     """按统一上线时间轴排序平台预告条目。"""
     return sorted(items or [], key=_schedule_calendar_key)
 
+
+def _calendar_date_text(text, now=None):
+    """把今天、明天、后天展开成具体月日文本。"""
+    now = now or datetime.now()
+    date = _normalize_date_text(text)
+    rel = {'今天': 0, '明天': 1, '后天': 2}
+    for label, offset in rel.items():
+        if date.startswith(label):
+            target = now + timedelta(days=offset)
+            return f'{target.month}月{target.day}日{date[len(label):]}'
+    return date
 
 async def page_text(url, wait=5000):
     try:
@@ -379,6 +383,12 @@ def _tencent_date_is_future(date, now=None):
     """Return True only when a Tencent preview date is still upcoming."""
     now = now or datetime.now()
     date = _normalize_date_text(date)
+    rel = {'今天': 0, '明天': 1, '后天': 2}
+    for label, offset in rel.items():
+        if date.startswith(label):
+            target = now + timedelta(days=offset)
+            date = f'{target.month}月{target.day}日{date[len(label):]}'
+            break
     tm = re.search(r'(\d{1,2}):(\d{2})', date)
     rel = {'今天': 0, '明天': 1, '后天': 2}
     for label, offset in rel.items():
@@ -606,7 +616,7 @@ def _iqiyi_is_program_preview_date(date):
 
 
 def _iqiyi_normalize_date(date):
-    date = _normalize_date_text(date)
+    date = _calendar_date_text(date)
     return '节目预告' if _iqiyi_is_program_preview_date(date) else date
 
 
@@ -2254,7 +2264,7 @@ async def main(force_notify=False):
         md.append(f'\n【{name}】')
         for it in _sort_platform_items(result[name]):
             if name == '爱奇艺':
-                it = str(it).replace('即将上线｜', '节目预告｜', 1)
+                it = _calendar_date_text(str(it).replace('即将上线｜', '节目预告｜', 1))
             md.append(f'- {it}')
     msg = '\n'.join(md)
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
