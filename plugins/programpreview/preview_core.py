@@ -148,6 +148,17 @@ def _sort_platform_items(items):
     return sorted(items or [], key=_schedule_calendar_key)
 
 
+def _format_preview_item(platform, item):
+    """写入通知前统一把相对日期展开成具体日期。"""
+    item = str(item)
+    if platform == '爱奇艺':
+        item = item.replace('即将上线｜', '节目预告｜', 1)
+    if '｜' not in item:
+        return item
+    left, right = item.split('｜', 1)
+    return f'{_calendar_date_text(left)}｜{right}'
+
+
 def _calendar_date_text(text, now=None):
     """把今天、明天、后天展开成具体月日文本。"""
     now = now or datetime.now()
@@ -2263,9 +2274,7 @@ async def main(force_notify=False):
     for name, _ in SITES:
         md.append(f'\n【{name}】')
         for it in _sort_platform_items(result[name]):
-            if name == '爱奇艺':
-                it = str(it).replace('即将上线｜', '节目预告｜', 1)
-            md.append(f'- {it}')
+            md.append(f'- {_format_preview_item(name, it)}')
     msg = '\n'.join(md)
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(msg, encoding='utf-8')
