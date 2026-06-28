@@ -100,7 +100,7 @@ class P115StrmHelper(_PluginBase):
         "refs/heads/v2/src/assets/images/misc/u115.png"
     )
     # 插件版本
-    plugin_version = "2.8.53"
+    plugin_version = "2.8.48"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页

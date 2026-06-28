@@ -9,7 +9,7 @@
 | --- | --- | --- | --- |
 | `programpreview` | 四大平台节目预告 | `1.0.37` | 抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，过滤腾讯过时预告，统一排序并转换相对日期。 |
 | `IqiyiDiscover` | 爱奇艺探索 | `1.0.36` | 接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。 |
-| `P115StrmHelper` | 115网盘STRM助手 | `2.8.53` | 基于 DDSRem 原作维护，提供 115 网盘 STRM 生成、同步、整理和扫码登录能力，补充二维码 uid 修复并适配新版 p115client 云下载接口。 |
+| `P115StrmHelper` | 115网盘STRM助手 | `2.8.48` | 基于 DDSRem 原作维护，提供 115 网盘 STRM 生成、同步、整理和扫码登录能力，补充二维码 uid 修复并适配新版 p115client 云下载接口。 |
 | `P115Disk` | 115网盘储存 | `0.2.18` | 基于 DDSRem 原作维护的 115 网盘存储模块，升级 p115client 至 `0.0.9.0.2` 并适配新版云下载接口。 |
 | `weiyuncookie` | 微云Cookie助手 | `0.1.45` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。 |
 
@@ -26,6 +26,42 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 `P115StrmHelper` 和 `P115Disk` 均源自 [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins) 的优秀原作，感谢 DDSRem 长期维护 115 网盘生态插件、持续适配 MoviePilot 和 p115client 依赖变化。本仓库仅在原作基础上做个人维护与兼容性修复，保留原作者署名与致谢。
 
 ## 插件详情
+
+### 四大平台节目预告
+
+**插件 ID**：`programpreview`
+
+**作者**：qsxazcv
+
+**功能**：抓取爱奇艺、腾讯视频、芒果 TV、优酷即将上线或预约节目，按 Cron 周期推送通知。
+
+- 接入优酷新片页与爱奇艺片库 `videolib` 即将上线数据。
+- 统一四个平台的日期展示和排序，过滤过时或无效预告。
+- 适合追踪近期上线、预约和平台片单更新。
+
+### 爱奇艺探索
+
+**插件 ID**：`IqiyiDiscover`
+
+**作者**：qsxazcv
+
+**功能**：为 MoviePilot 探索页接入爱奇艺官方片库筛选和数据浏览。
+
+- 覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。
+- 修复部分频道返回非标准媒体类型导致的类型标签和详情展示问题。
+- 适合在 MoviePilot 内直接浏览和筛选爱奇艺内容。
+
+### 微云Cookie助手
+
+**插件 ID**：`weiyuncookie`
+
+**作者**：qsxazcv
+
+**功能**：支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。
+
+- 主页面与配置页默认隐藏 Cookie 明文，降低误泄露风险。
+- 支持 Cookie 有效性检测、复制和 OpenList 存储同步。
+- 支持 Telegram / MoviePilot 通知辅助重新登录。
 
 ### 115网盘STRM助手
 
@@ -53,9 +89,21 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ## 版本历史
 
+### `programpreview`
+
+- `1.0.37`：统一四个平台最终通知日期展示：腾讯视频、芒果 TV、优酷、爱奇艺的今天、明天、后天都会转换为具体月日。
+
+### `IqiyiDiscover`
+
+- `1.0.36`：修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型，导致 MoviePilot 探索页类型标签不显示、点击详情无内容的问题。
+
+### `weiyuncookie`
+
+- `0.1.45`：优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。
+
 ### `P115StrmHelper`
 
-- `2.8.53`：感谢 DDSRem 原作与长期维护；升级并适配 `p115client==0.0.9.0.2` 的云下载模块改名，使用 `clouddownload_iter` / `clouddownload_task_add_urls`；保留本仓库补充的 115 扫码二维码 `uid` 修复。
+- `2.8.48`：感谢 DDSRem 原作与长期维护；升级并适配 `p115client==0.0.9.0.2` 的云下载模块改名，使用 `clouddownload_iter` / `clouddownload_task_add_urls`；保留本仓库补充的 115 扫码二维码 `uid` 修复。
 
 ### `P115Disk`
 
