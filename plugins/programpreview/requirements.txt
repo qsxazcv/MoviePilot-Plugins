@@ -1,7 +1,0 @@
-# 四大平台节目预告插件依赖
-# Playwright 用于抓取爱奇艺、腾讯视频、芒果TV、优酷的动态页面
-playwright
-
-# MoviePilot 通常已内置，写入这里便于本地插件安装器统一检查/补齐
-apscheduler
-pytz

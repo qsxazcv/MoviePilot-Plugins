@@ -13,10 +13,10 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_V2 = REPO_ROOT / "package.v2.json"
-PACKAGE_V1 = REPO_ROOT / "package.json"
 README = REPO_ROOT / "README.md"
 PLUGINS_V2 = REPO_ROOT / "plugins.v2"
-PLUGINS_V1 = REPO_ROOT / "plugins"
+LEGACY_PACKAGE = REPO_ROOT / "package.json"
+LEGACY_PLUGINS = REPO_ROOT / "plugins"
 
 REQUIRED_PACKAGE_FIELDS = {
     "name",
@@ -185,6 +185,14 @@ def validate_package(package_path: Path, plugins_root: Path, errors: list[str]) 
     return package
 
 
+def validate_no_legacy_layout(errors: list[str]) -> None:
+    """Reject legacy V1 package files and plugin directories."""
+    if LEGACY_PACKAGE.exists():
+        errors.append("legacy V1 package index is not allowed: package.json")
+    if LEGACY_PLUGINS.exists():
+        errors.append("legacy V1 plugin directory is not allowed: plugins/")
+
+
 def validate_readme(package: dict[str, Any], errors: list[str]) -> None:
     """Ensure README documents every V2 package entry."""
     try:
@@ -229,9 +237,8 @@ def validate_sensitive_paths(errors: list[str]) -> None:
 def main() -> int:
     """Run all repository checks."""
     errors: list[str] = []
+    validate_no_legacy_layout(errors)
     package_v2 = validate_package(PACKAGE_V2, PLUGINS_V2, errors)
-    if PACKAGE_V1.exists():
-        validate_package(PACKAGE_V1, PLUGINS_V1, errors)
     validate_readme(package_v2, errors)
     validate_sensitive_paths(errors)
 
