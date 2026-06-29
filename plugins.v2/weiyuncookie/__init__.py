@@ -8,17 +8,13 @@
 from __future__ import annotations
 
 import base64
-import json
 import os
-import struct
 import threading
 import time
 import traceback
-import zlib
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from apscheduler.triggers.cron import CronTrigger
@@ -29,6 +25,17 @@ from app.core.event import Event, eventmanager
 from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas.types import EventType, NotificationType
+
+try:
+    from .browser import browser_args, prepare_cloakbrowser_env
+    from .cookie_utils import cookie_names, cookies_to_header, filter_relevant_cookies, looks_logged_in
+    from .image_utils import crop_qrcode_png, decode_data_image
+    from .openlist import OpenListClient, set_cookie_field
+except ImportError:  # pragma: no cover - 兼容直接从插件目录加载
+    from browser import browser_args, prepare_cloakbrowser_env
+    from cookie_utils import cookie_names, cookies_to_header, filter_relevant_cookies, looks_logged_in
+    from image_utils import crop_qrcode_png, decode_data_image
+    from openlist import OpenListClient, set_cookie_field
 
 try:
     from playwright.sync_api import sync_playwright
@@ -45,7 +52,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.45"
+    plugin_version = "0.1.46"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -294,7 +301,7 @@ class weiyuncookie(_PluginBase):
 
     def __api_qrcode_image(self):
         qrcode = self.get_data("qrcode") or ""
-        data, media_type = self.__decode_data_image(qrcode)
+        data, media_type = decode_data_image(qrcode)
         if not data:
             return Response(
                 content=b"qrcode not ready",
@@ -307,19 +314,6 @@ class weiyuncookie(_PluginBase):
             media_type=media_type,
             headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
         )
-
-    @staticmethod
-    def __decode_data_image(data_image: str) -> Tuple[Optional[bytes], str]:
-        if not data_image or not str(data_image).startswith("data:image/"):
-            return None, "image/png"
-        try:
-            header, raw = str(data_image).split(",", 1)
-            media_type = "image/png"
-            if ":" in header and ";" in header:
-                media_type = header.split(":", 1)[1].split(";", 1)[0] or media_type
-            return base64.b64decode(raw), media_type
-        except Exception:
-            return None, "image/png"
 
     @eventmanager.register(EventType.PluginAction)
     def plugin_action(self, event: Event):
@@ -461,9 +455,10 @@ class weiyuncookie(_PluginBase):
             self.__update_config()
             return {"success": False, "message": self._last_openlist_sync_status}
         try:
-            storage = self.__openlist_get_storage(self._openlist_storage_id)
-            updated = self.__openlist_set_cookie_field(storage, cookie)
-            self.__openlist_update_storage(updated)
+            client = OpenListClient(self._openlist_url, self._openlist_token)
+            storage = client.get_storage(self._openlist_storage_id)
+            updated = set_cookie_field(storage, cookie)
+            client.update_storage(updated, self._openlist_storage_id)
             self._last_openlist_sync_status = f"同步成功：已更新 OpenList 存储 {self._openlist_storage_id} 的 Cookie"
             logger.info("微云 Cookie 助手 OpenList 同步成功：source=%s, storage_id=%s", source, self._openlist_storage_id)
             self.__post_mp_notification(
@@ -483,101 +478,6 @@ class weiyuncookie(_PluginBase):
             )
             self.__update_config()
             return {"success": False, "message": self._last_openlist_sync_status}
-
-    def __openlist_headers(self) -> Dict[str, str]:
-        return {
-            "Authorization": self._openlist_token,
-            "Content-Type": "application/json;charset=utf-8",
-            "Accept": "application/json, text/plain, */*",
-        }
-
-    def __openlist_request(self, method: str, path: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        base = (self._openlist_url or "").rstrip("/")
-        url = f"{base}{path}"
-        body = None
-        headers = self.__openlist_headers()
-        if data is not None:
-            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        request = Request(url, data=body, headers=headers, method=method.upper())
-        try:
-            with urlopen(request, timeout=20) as response:
-                raw = response.read().decode("utf-8", errors="ignore")
-        except HTTPError as err:
-            raw = err.read().decode("utf-8", errors="ignore")
-            raise RuntimeError(f"OpenList HTTP {err.code}: {raw[:300]}") from err
-        except URLError as err:
-            raise RuntimeError(f"OpenList 连接失败：{err.reason}") from err
-        try:
-            result = json.loads(raw or "{}")
-        except Exception as err:
-            raise RuntimeError(f"OpenList 返回非 JSON：{raw[:300]}") from err
-        code = result.get("code")
-        if code not in (200, 0, None):
-            raise RuntimeError(result.get("message") or result.get("msg") or f"OpenList 返回 code={code}")
-        return result
-
-    def __openlist_get_storage(self, storage_id: int) -> Dict[str, Any]:
-        candidates = [
-            ("GET", f"/api/admin/storage/get?id={storage_id}", None),
-            ("GET", f"/api/admin/storage/detail?id={storage_id}", None),
-            ("POST", "/api/admin/storage/get", {"id": storage_id}),
-            ("POST", "/api/admin/storage/detail", {"id": storage_id}),
-        ]
-        errors = []
-        for method, path, data in candidates:
-            try:
-                result = self.__openlist_request(method, path, data)
-                storage = result.get("data")
-                if isinstance(storage, dict):
-                    return storage
-            except Exception as err:
-                errors.append(str(err))
-        raise RuntimeError("无法读取 OpenList 存储详情：" + " | ".join(errors[-2:]))
-
-    def __openlist_update_storage(self, storage: Dict[str, Any]) -> None:
-        storage_id = storage.get("id") or storage.get("ID") or self._openlist_storage_id
-        candidates = [
-            ("POST", "/api/admin/storage/update", storage),
-            ("PUT", "/api/admin/storage/update", storage),
-            ("POST", f"/api/admin/storage/update?id={storage_id}", storage),
-        ]
-        errors = []
-        for method, path, data in candidates:
-            try:
-                self.__openlist_request(method, path, data)
-                return
-            except Exception as err:
-                errors.append(str(err))
-        raise RuntimeError("无法更新 OpenList 存储：" + " | ".join(errors[-2:]))
-
-    def __openlist_set_cookie_field(self, storage: Dict[str, Any], cookie: str) -> Dict[str, Any]:
-        updated = json.loads(json.dumps(storage, ensure_ascii=False))
-        # OpenList/Alist 驱动配置常见字段：addition 是 JSON 字符串，可能包含 cookie/Cookie。
-        for key in ("addition", "Addition"):
-            if key in updated:
-                addition = updated.get(key)
-                if isinstance(addition, str):
-                    try:
-                        addition_obj = json.loads(addition or "{}")
-                    except Exception:
-                        addition_obj = {}
-                    addition_obj = self.__set_cookie_in_mapping(addition_obj, cookie)
-                    updated[key] = json.dumps(addition_obj, ensure_ascii=False)
-                    return updated
-                if isinstance(addition, dict):
-                    updated[key] = self.__set_cookie_in_mapping(addition, cookie)
-                    return updated
-        updated = self.__set_cookie_in_mapping(updated, cookie)
-        return updated
-
-    @staticmethod
-    def __set_cookie_in_mapping(mapping: Dict[str, Any], cookie: str) -> Dict[str, Any]:
-        if not isinstance(mapping, dict):
-            mapping = {}
-        lower_map = {str(k).lower(): k for k in mapping.keys()}
-        target = lower_map.get("cookie") or lower_map.get("cookies") or lower_map.get("ck") or "cookie"
-        mapping[target] = cookie
-        return mapping
 
     def check_cookie_validity(self, source: str = "scheduler") -> Dict[str, Any]:
         """检测已保存 Cookie 是否仍然有效，失效时只通知一次。"""
@@ -609,7 +509,7 @@ class weiyuncookie(_PluginBase):
             return {"valid": False, "message": self._last_check_status}
 
     def __probe_cookie(self, cookie: str) -> Tuple[bool, str]:
-        names = self.__cookie_names(cookie)
+        names = cookie_names(cookie)
         if not names.intersection({"TOK", "wyctoken", "p_skey", "pt4_token", "skey", "uin", "uid", "weiyun_wx_access_token"}):
             return False, "Cookie 缺少微云登录关键字段"
         request = Request(
@@ -634,17 +534,6 @@ class weiyuncookie(_PluginBase):
         if any(marker.lower() in low_body for marker in invalid_markers) and not ({"TOK", "wyctoken", "uid"}.intersection(names)):
             return False, "微云页面提示需要重新登录"
         return True, f"Cookie 有效，微云页面响应正常（HTTP {status}）"
-
-    @staticmethod
-    def __cookie_names(cookie: str) -> set:
-        names = set()
-        for part in str(cookie or "").split(";"):
-            if "=" not in part:
-                continue
-            name = part.split("=", 1)[0].strip()
-            if name:
-                names.add(name)
-        return names
 
     def __post_mp_notification(
             self,
@@ -692,7 +581,7 @@ class weiyuncookie(_PluginBase):
         if not qrcode:
             return None
         try:
-            data, _ = self.__decode_data_image(qrcode)
+            data, _ = decode_data_image(qrcode)
             if not data:
                 return None
             data_path = self.get_data_path()
@@ -786,7 +675,7 @@ class weiyuncookie(_PluginBase):
                     raise RuntimeError("当前环境未安装 Playwright，无法启动后端浏览器")
                 logger.info("微云 Cookie 助手启动 Playwright Chromium：headless=%s", self._headless)
                 playwright = sync_playwright().start()
-                browser = playwright.chromium.launch(headless=bool(self._headless), args=self.__browser_args())
+                browser = playwright.chromium.launch(headless=bool(self._headless), args=browser_args())
                 context = browser.new_context(locale="zh-CN", viewport={"width": 1280, "height": 900})
             page = context.new_page()
             logger.info("微云 Cookie 助手打开登录页：%s", self._login_url)
@@ -806,12 +695,12 @@ class weiyuncookie(_PluginBase):
             last_url = page.url
             while datetime.now() < deadline:
                 cookies = context.cookies()
-                extracted = self.__filter_cookies(cookies)
+                extracted = filter_relevant_cookies(cookies, self._include_qq_domain)
                 cookie_names = {c.get("name") for c in extracted}
                 if page.url != last_url:
                     logger.info("微云 Cookie 助手检测到页面跳转：%s -> %s", last_url, page.url)
                     last_url = page.url
-                if self.__looks_logged_in(cookie_names, page.url):
+                if looks_logged_in(cookie_names, page.url):
                     logger.info("微云 Cookie 助手检测到疑似登录 Cookie：count=%s, url=%s", len(extracted), page.url)
                     break
                 try:
@@ -824,8 +713,8 @@ class weiyuncookie(_PluginBase):
             else:
                 raise TimeoutError("等待扫码登录超时，未检测到有效微云登录 Cookie")
 
-            extracted = self.__filter_cookies(context.cookies())
-            cookie_string = self.__cookies_to_header(extracted)
+            extracted = filter_relevant_cookies(context.cookies(), self._include_qq_domain)
+            cookie_string = cookies_to_header(extracted)
             if not cookie_string:
                 raise RuntimeError("已结束等待，但未提取到 weiyun.com/qq.com Cookie")
             logger.info(
@@ -878,11 +767,11 @@ class weiyuncookie(_PluginBase):
     def __launch_cloakbrowser_context(self):
         if cloak_launch_context is None:
             raise RuntimeError("当前环境未安装 CloakBrowser，无法使用 MP CloakBrowser 兼容模式")
-        self.__prepare_cloakbrowser_env()
+        prepare_cloakbrowser_env(logger)
         logger.info("微云 Cookie 助手启动 MP CloakBrowser：headless=%s, cache_dir=%s", self._headless, os.environ.get("CLOAKBROWSER_CACHE_DIR"))
         context = cloak_launch_context(
             headless=bool(self._headless),
-            args=self.__browser_args(),
+            args=browser_args(),
             locale="zh-CN",
             viewport={"width": 1280, "height": 900},
             stealth_args=True,
@@ -892,29 +781,6 @@ class weiyuncookie(_PluginBase):
         except Exception as err:
             logger.debug("微云 Cookie 助手设置 CloakBrowser 请求头失败：%s", err)
         return context
-
-    @staticmethod
-    def __browser_args() -> List[str]:
-        return [
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-blink-features=AutomationControlled",
-            "--lang=zh-CN",
-        ]
-
-    @staticmethod
-    def __prepare_cloakbrowser_env() -> None:
-        """兼容 MoviePilot 容器内置的 /core/.cloakbrowser 内核目录。"""
-        if os.environ.get("CLOAKBROWSER_CACHE_DIR") or os.environ.get("CLOAKBROWSER_BINARY_PATH"):
-            return
-        for cache_dir in (Path("/core/.cloakbrowser"), Path("/moviepilot/.cloakbrowser")):
-            if not cache_dir.exists():
-                continue
-            binaries = sorted(cache_dir.glob("chromium-*/chrome"), reverse=True)
-            if binaries:
-                os.environ["CLOAKBROWSER_CACHE_DIR"] = str(cache_dir)
-                logger.info("微云 Cookie 助手已适配 CloakBrowser 内核目录：%s", cache_dir)
-                return
 
     def __select_login_type(self, page, login_type: str) -> None:
         logger.info("微云 Cookie 助手尝试切换登录方式：%s", login_type)
@@ -970,7 +836,7 @@ class weiyuncookie(_PluginBase):
                 locator = page.locator(selector).first
                 if locator.count():
                     data = locator.screenshot(type="png", timeout=5000)
-                    data = self.__crop_qrcode_png(data)
+                    data = crop_qrcode_png(data, logger=logger)
                     logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
                     return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
@@ -990,187 +856,15 @@ class weiyuncookie(_PluginBase):
                             "height": 240,
                         }
                         data = page.screenshot(type="png", clip=clip)
-                        data = self.__crop_qrcode_png(data)
+                        data = crop_qrcode_png(data, logger=logger)
                         logger.info("微云 Cookie 助手二维码截图从 iframe 中心裁剪：%s", selector)
                         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
                 logger.debug("微云 Cookie 助手 iframe 二维码裁剪失败：%s, err=%s", selector, err)
         data = page.screenshot(type="png", clip={"x": 440, "y": 180, "width": 360, "height": 360})
-        data = self.__crop_qrcode_png(data)
+        data = crop_qrcode_png(data, logger=logger)
         logger.info("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
-
-    @staticmethod
-    def __crop_qrcode_png(data: bytes, padding: int = 12) -> bytes:
-        """按二维码黑色模块裁掉截图空白和提示文字，保留扫码所需的白色静区。"""
-        if not data or not data.startswith(b"\x89PNG\r\n\x1a\n"):
-            return data
-        try:
-            pos = 8
-            width = height = bit_depth = color_type = None
-            idat = bytearray()
-            while pos + 8 <= len(data):
-                length = struct.unpack(">I", data[pos:pos + 4])[0]
-                chunk_type = data[pos + 4:pos + 8]
-                chunk_data = data[pos + 8:pos + 8 + length]
-                pos += 12 + length
-                if chunk_type == b"IHDR":
-                    width, height, bit_depth, color_type, compression, filter_method, interlace = struct.unpack(">IIBBBBB", chunk_data)
-                    if bit_depth != 8 or compression != 0 or filter_method != 0 or interlace != 0:
-                        return data
-                elif chunk_type == b"IDAT":
-                    idat.extend(chunk_data)
-                elif chunk_type == b"IEND":
-                    break
-            channels = {0: 1, 2: 3, 4: 2, 6: 4}.get(color_type)
-            if not width or not height or not channels or not idat:
-                return data
-            row_size = width * channels
-            raw = zlib.decompress(bytes(idat))
-            rows = []
-            dark_row_ranges = []
-            prev = bytearray(row_size)
-            offset = 0
-            for y in range(height):
-                filter_type = raw[offset]
-                offset += 1
-                scan = bytearray(raw[offset:offset + row_size])
-                offset += row_size
-                recon = bytearray(row_size)
-                for i, value in enumerate(scan):
-                    left = recon[i - channels] if i >= channels else 0
-                    up = prev[i]
-                    up_left = prev[i - channels] if i >= channels else 0
-                    if filter_type == 0:
-                        recon[i] = value
-                    elif filter_type == 1:
-                        recon[i] = (value + left) & 0xFF
-                    elif filter_type == 2:
-                        recon[i] = (value + up) & 0xFF
-                    elif filter_type == 3:
-                        recon[i] = (value + ((left + up) // 2)) & 0xFF
-                    elif filter_type == 4:
-                        p = left + up - up_left
-                        pa, pb, pc = abs(p - left), abs(p - up), abs(p - up_left)
-                        predictor = left if pa <= pb and pa <= pc else up if pb <= pc else up_left
-                        recon[i] = (value + predictor) & 0xFF
-                    else:
-                        return data
-                rgba = bytearray(width * 4)
-                row_min_x = width
-                row_max_x = -1
-                for x in range(width):
-                    idx = x * channels
-                    out = x * 4
-                    if color_type == 0:
-                        r = g = b = recon[idx]
-                        a = 255
-                    elif color_type == 2:
-                        r, g, b = recon[idx], recon[idx + 1], recon[idx + 2]
-                        a = 255
-                    elif color_type == 4:
-                        r = g = b = recon[idx]
-                        a = recon[idx + 1]
-                    else:
-                        r, g, b, a = recon[idx], recon[idx + 1], recon[idx + 2], recon[idx + 3]
-                    rgba[out:out + 4] = bytes((r, g, b, a))
-                    if a > 10 and r <= 120 and g <= 120 and b <= 120:
-                        row_min_x = min(row_min_x, x)
-                        row_max_x = max(row_max_x, x)
-                rows.append(rgba)
-                dark_row_ranges.append((row_min_x, row_max_x))
-                prev = recon
-            min_row_dark = max(3, width // 80)
-            max_gap = 8
-            segments = []
-            start = None
-            last_dark = None
-            gap = 0
-            for y, (row_min_x, row_max_x) in enumerate(dark_row_ranges):
-                dark_count = row_max_x - row_min_x + 1 if row_max_x >= row_min_x else 0
-                if dark_count >= min_row_dark:
-                    if start is None:
-                        start = y
-                    last_dark = y
-                    gap = 0
-                elif start is not None:
-                    gap += 1
-                    if gap > max_gap:
-                        segments.append((start, last_dark))
-                        start = None
-                        last_dark = None
-                        gap = 0
-            if start is not None and last_dark is not None:
-                segments.append((start, last_dark))
-            segments = [seg for seg in segments if seg[1] - seg[0] + 1 >= 32]
-            if not segments:
-                return data
-            min_y, max_y = max(
-                segments,
-                key=lambda seg: (
-                    seg[1] - seg[0] + 1,
-                    sum(
-                        (mx - mn + 1) if mx >= mn else 0
-                        for mn, mx in dark_row_ranges[seg[0]:seg[1] + 1]
-                    ),
-                ),
-            )
-            min_x, max_x = width, -1
-            for row_min_x, row_max_x in dark_row_ranges[min_y:max_y + 1]:
-                if row_max_x >= row_min_x:
-                    min_x = min(min_x, row_min_x)
-                    max_x = max(max_x, row_max_x)
-            if max_x < min_x or max_y < min_y:
-                return data
-            left = max(min_x - padding, 0)
-            top = max(min_y - padding, 0)
-            right = min(max_x + padding, width - 1)
-            bottom = min(max_y + padding, height - 1)
-            if left == 0 and top == 0 and right == width - 1 and bottom == height - 1:
-                return data
-            crop_width = right - left + 1
-            crop_height = bottom - top + 1
-            if crop_width < 64 or crop_height < 64:
-                return data
-            payload = bytearray()
-            for row in rows[top:bottom + 1]:
-                payload.append(0)
-                payload.extend(row[left * 4:(right + 1) * 4])
-            def chunk(kind: bytes, body: bytes) -> bytes:
-                return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body) & 0xFFFFFFFF)
-            ihdr = struct.pack(">IIBBBBB", crop_width, crop_height, 8, 6, 0, 0, 0)
-            return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(bytes(payload), 9)) + chunk(b"IEND", b"")
-        except Exception as err:
-            logger.debug("微云 Cookie 助手二维码空白裁剪失败：%s", err)
-            return data
-
-    def __filter_cookies(self, cookies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        result: List[Dict[str, Any]] = []
-        for cookie in cookies or []:
-            domain = str(cookie.get("domain") or "").lstrip(".").lower()
-            if domain.endswith("weiyun.com") or (self._include_qq_domain and domain.endswith("qq.com")):
-                result.append(cookie)
-        return result
-
-    @staticmethod
-    def __cookies_to_header(cookies: List[Dict[str, Any]]) -> str:
-        pairs = []
-        seen = set()
-        for cookie in cookies:
-            name = str(cookie.get("name") or "").strip()
-            value = str(cookie.get("value") or "")
-            if not name or name in seen:
-                continue
-            seen.add(name)
-            pairs.append(f"{name}={value}")
-        return "; ".join(pairs)
-
-    @staticmethod
-    def __looks_logged_in(cookie_names: set, url: str) -> bool:
-        important = {"uin", "skey", "p_skey", "pt4_token", "wxuin", "wxsid", "qqmusic_uin"}
-        if cookie_names.intersection(important) and "login" not in str(url).lower():
-            return True
-        return False
 
     def __update_config(self):
         self.update_config({

@@ -11,7 +11,7 @@
 | `IqiyiDiscover` | 爱奇艺探索 | `1.0.37` | 接入爱奇艺官方片库筛选，覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。 |
 | `P115StrmHelper` | 115网盘STRM助手 | `2.8.48` | 115网盘STRM生成一条龙服务。 |
 | `P115Disk` | 115网盘储存 | `0.2.18` | 更快更强的115网盘储存模块。 |
-| `weiyuncookie` | 微云Cookie助手 | `0.1.45` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。 |
+| `weiyuncookie` | 微云Cookie助手 | `0.1.46` | 支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList。 |
 
 ## 快速开始
 
@@ -62,6 +62,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 主页面与配置页默认隐藏 Cookie 明文，降低误泄露风险。
 - 支持 Cookie 有效性检测、复制和 OpenList 存储同步。
 - 支持 Telegram / MoviePilot 通知辅助重新登录。
+- 后端源码按 Cookie 工具、二维码处理、OpenList 同步和浏览器辅助分区维护。
 
 ### 115网盘STRM助手
 
@@ -96,6 +97,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `weiyuncookie`
 
+- `0.1.46`：按功能区拆分微云 Cookie 助手源码，分离 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器环境辅助逻辑，主插件类保留生命周期、API 与登录编排。
 - `0.1.45`：优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。
 
 ### `P115StrmHelper`
