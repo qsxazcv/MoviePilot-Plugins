@@ -16,11 +16,22 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.4` | 监测已安装插件并自动更新，MoviePilot 版本不满足时暂缓更新，兼容后自动继续。 |
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.38` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，定时推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
 ## 插件详情
+
+### 插件更新管理
+
+适合希望自动检查插件更新，并在环境满足条件时自动安装新版本的用户。
+
+- 原作者：`thsrite`，原插件仓库：[thsrite/MoviePilot-Plugins](https://github.com/thsrite/MoviePilot-Plugins)。感谢原作者提供插件更新管理能力，本版本在原作基础上做兼容性和通知体验优化。
+- 监测已安装插件，支持仅提醒或自动更新。
+- 自动更新前会跳过正在运行的插件，避免任务执行中被覆盖。
+- 当目标插件要求更高 MoviePilot 版本时，会标记为暂缓更新并说明最低版本要求。
+- MoviePilot 升级到兼容版本后，下次自动更新任务会继续安装待更新版本。
 
 ### 四大平台节目预告
 
@@ -58,6 +69,10 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 ## 更新记录
 
 这里只保留每个插件最近的主要更新，完整历史以 `package.v2.json` 为准。
+
+### `PluginAutoUpdate`
+
+- `2.0.4`：基于原作者 `thsrite` 版本继续维护，原插件仓库：[thsrite/MoviePilot-Plugins](https://github.com/thsrite/MoviePilot-Plugins)，感谢原作者贡献；优化 MoviePilot 版本不兼容场景，自动更新时暂缓安装并说明当前版本、目标版本和最低要求；支持官方 `>=`/`>` 版本约束、安全读取主程序版本、持久化通知去重，等待 MoviePilot 升级兼容后自动继续更新并发送恢复成功提醒；同时修复定时任务并发保护，避免同一轮自动更新重复执行和重复通知。
 
 ### `programpreview`
 
