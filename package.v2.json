@@ -1,7 +1,7 @@
 {
   "programpreview": {
     "name": "四大平台节目预告",
-    "description": "抓取爱奇艺、腾讯视频、芒果TV、优酷即将上线/预约节目，接入优酷新片页与爱奇艺片库 videolib 即将上线抓取，并按 Cron 周期推送通知。",
+    "description": "聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，定时推送即将上线/预约节目。",
     "labels": "预告,爱奇艺,腾讯视频,芒果TV,优酷",
     "version": "1.0.38",
     "author": "qsxazcv",
@@ -52,12 +52,13 @@
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",
-    "description": "支持 QQ / 微信扫码登录微云，自动提取并保存 Cookie，可检测有效性并同步到 OpenList；主页与配置页默认隐藏 Cookie 明文。",
+    "description": "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.46",
+    "version": "0.1.47",
     "author": "qsxazcv",
     "level": 1,
     "history": {
+      "v0.1.47": "优化插件简介文案，让扫码登录、Cookie 提取、有效性检测、隐藏展示和 OpenList 同步能力更直观。",
       "v0.1.46": "按功能区拆分源码：分离 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器环境辅助逻辑，主插件类保留生命周期、API 与登录编排。",
       "v0.1.45": "优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。",
       "v0.1.44": "浏览器模式文案简化为 Playwright / CloakBrowser。",
