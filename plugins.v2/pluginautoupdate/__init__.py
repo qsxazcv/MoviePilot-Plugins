@@ -33,7 +33,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件名称
     plugin_name = "插件更新管理"
     # 插件描述
-    plugin_desc = "基于 thsrite 原作维护；监测已安装插件，推送更新提醒，MoviePilot 版本不满足时暂缓更新。"
+    plugin_desc = "监测已安装插件，推送更新提醒，可配置自动更新"
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本

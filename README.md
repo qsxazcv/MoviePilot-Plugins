@@ -16,7 +16,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.4` | 监测已安装插件并自动更新，MoviePilot 版本不满足时暂缓更新，兼容后自动继续。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.4` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.38` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，定时推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
