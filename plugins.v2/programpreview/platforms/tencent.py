@@ -183,7 +183,8 @@ def _tencent_item_title(item):
 def _fill_tencent_missing_categories(items):
     out = []
     for item in items or []:
-        if item_category(item):
+        current_category = item_category(item)
+        if current_category and current_category != '未分类':
             out.append(item)
             continue
         title = _tencent_item_title(item)
