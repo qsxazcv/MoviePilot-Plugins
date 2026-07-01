@@ -46,8 +46,14 @@ def is_platform_cache_fresh(old, now_dt):
     return now_dt - cached_at <= timedelta(hours=PLATFORM_CACHE_TTL_HOURS)
 
 
-def apply_platform_cache(result):
-    """用缓存兜底抓取失败或空结果，成功结果会刷新缓存。"""
+def apply_platform_cache(result, use_cache_fallback=False):
+    """Use cached platform results only when fallback is explicitly enabled."""
+    if not use_cache_fallback:
+        for name, items in list(result.items()):
+            if not is_placeholder_items(items):
+                result[name] = sort_platform_items(items)
+        return result
+
     cache = load_platform_cache()
     now_dt = datetime.now()
     now = now_dt.strftime('%Y-%m-%d %H:%M')

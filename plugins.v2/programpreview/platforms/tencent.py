@@ -386,12 +386,14 @@ def _tencent_date_is_future(date, now=None):
 def _filter_future_tencent_items(items, now=None):
     return [item for item in items or [] if _tencent_date_is_future(str(item).split('｜', 1)[0], now=now)]
 
-def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
-    """腾讯动态页偶发漏卡时，用同日缓存做保底合并。
+def _merge_tencent_items_with_cache(items, cache_name='腾讯视频', use_cache_fallback=False):
+    """腾讯动态页偶发漏卡时，可显式用同日缓存做保底合并。
 
     只回填缓存中仍未到上线时间的条目，避免当天已上线节目继续显示。
     """
     merged = _filter_future_tencent_items(items)
+    if not use_cache_fallback:
+        return _fill_tencent_missing_categories(_sort_tencent_items(_dedupe_tencent_items(merged, 50)))
     try:
         cache = load_platform_cache()
         old = cache.get(cache_name, {}) if isinstance(cache, dict) else {}

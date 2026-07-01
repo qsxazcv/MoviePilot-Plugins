@@ -77,9 +77,9 @@ def extract_tencent_html(html, text):
     return _tencent.extract_tencent_html(html, text)
 
 
-def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
+def _merge_tencent_items_with_cache(items, cache_name='腾讯视频', use_cache_fallback=False):
     _sync_compat_state()
-    return _tencent._merge_tencent_items_with_cache(items, cache_name=cache_name)
+    return _tencent._merge_tencent_items_with_cache(items, cache_name=cache_name, use_cache_fallback=use_cache_fallback)
 
 
 if __name__ == '__main__':
