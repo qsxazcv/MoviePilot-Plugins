@@ -16,6 +16,33 @@ from ..text_utils import clean_lines, dedupe, html_unescape
 _IQIYI_SEARCH_RESERVE_CACHE = {}
 
 
+IQIYI_CHANNELS = [
+    ('tv', 'https://www.iqiyi.com/list/tv/%E5%85%A8%E9%83%A8%E5%89%A7%E9%9B%86.html'),
+    ('movie', 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
+    ('variety', 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
+    ('comic', 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+    ('documentary', 'https://www.iqiyi.com/list/documentary/%E5%85%A8%E9%83%A8.html'),
+]
+
+IQIYI_LIST_CHANNELS = [
+    ('tv', 2, 'https://www.iqiyi.com/list/tv/%E5%85%A8%E9%83%A8%E5%89%A7%E9%9B%86.html'),
+    ('movie', 1, 'https://www.iqiyi.com/list/movie/%E5%85%A8%E9%83%A8%E7%94%B5%E5%BD%B1.html'),
+    ('variety', 6, 'https://www.iqiyi.com/list/variety/%E5%85%A8%E9%83%A8.html'),
+    ('comic', 4, 'https://www.iqiyi.com/list/comic/%E5%85%A8%E9%83%A8%E5%8A%A8%E6%BC%AB.html'),
+    ('documentary', 3, 'https://www.iqiyi.com/list/documentary/%E5%85%A8%E9%83%A8.html'),
+]
+
+IQIYI_HOME_PREVIEW_CHANNELS = [
+    ('home_new_preview', 'https://www.iqiyi.com/'),
+]
+
+IQIYI_RANK_CHANNELS = [
+    ('rank_tv_reserve', 'https://www.iqiyi.com/ranks1/2/-8'),
+    ('rank_documentary_reserve', 'https://www.iqiyi.com/ranks1/3/-8'),
+    ('rank_all_reserve', 'https://www.iqiyi.com/ranks1PCA/-1/-8'),
+]
+
+
 def _iqiyi_reset_run_caches():
     _IQIYI_SEARCH_RESERVE_CACHE.clear()
 
