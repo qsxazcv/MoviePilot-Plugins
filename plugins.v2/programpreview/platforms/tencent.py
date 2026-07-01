@@ -4,6 +4,7 @@
 import asyncio
 import json
 import re
+import urllib.request
 from datetime import datetime, timedelta
 
 from ..cache import load_platform_cache
@@ -11,6 +12,86 @@ from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..fetcher import page_html_text
 from ..text_utils import clean_lines, dedupe, html_unescape
+
+try:
+    from app.log import logger
+except Exception:
+    import logging
+    logger = logging.getLogger(__name__)
+
+
+TENCENT_PAGESERVICE_CHANNELS = [
+    ('tv', '100113'),
+    ('tvdrama', '100173'),
+    ('variety', '100109'),
+    ('cartoon', '100119'),
+    ('movie', '100105'),
+    ('shortdrama', '100101'),
+]
+
+
+def _tencent_pageservice_payload(page_id):
+    url = 'https://pbaccess.video.qq.com/trpc.vector_layout.page_view.PageService/getPage?video_appid=3000010&vversion_platform=2'
+    body = {
+        'page_params': {
+            'page_type': 'channel',
+            'page_id': page_id,
+            'scene': 'channel',
+            'new_mark_label_enabled': '1',
+            'vl_to_mvl': '1' if page_id == '120188' else '',
+            'ad_exp_ids': '',
+            'ams_cookies': '',
+            'ad_trans_data': json.dumps({'ad_request_id': f'mp-{page_id}', 'game_sessions': []}),
+            'skip_privacy_types': '0',
+            'support_click_scan': '1',
+        },
+        'page_bypass_params': {
+            'params': {
+                'platform_id': '2',
+                'caller_id': '3000010',
+                'data_mode': 'default',
+                'user_mode': 'default',
+                'specified_strategy': '',
+                'page_type': 'channel',
+                'page_id': page_id,
+                'scene': 'channel',
+                'new_mark_label_enabled': '1',
+            },
+            'scene': 'channel',
+            'app_version': '',
+            'abtest_bypass_id': '',
+        },
+        'page_context': None,
+    }
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(body, ensure_ascii=False).encode('utf-8'),
+        method='POST',
+        headers={
+            'User-Agent': UA,
+            'Content-Type': 'application/json',
+            'Origin': 'https://v.qq.com',
+            'Referer': 'https://v.qq.com/channel/tv',
+        },
+    )
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        return json.loads(resp.read().decode('utf-8', 'ignore'))
+
+
+def _tencent_pageservice_pages():
+    pages = []
+    for channel, page_id in TENCENT_PAGESERVICE_CHANNELS:
+        try:
+            payload = _tencent_pageservice_payload(page_id)
+        except Exception:
+            continue
+        html = (
+            '<script id="__MP_CAPTURED_PAGESERVICE__" type="application/json">'
+            + json.dumps([payload], ensure_ascii=False)
+            + '</script>'
+        )
+        pages.append((channel, html, ''))
+    return pages
 
 
 async def tencent_page_html_text(url):
@@ -75,7 +156,11 @@ async def tencent_page_html_text(url):
                 out.append((ch, html, text))
             await browser.close()
         return out
-    except Exception:
+    except Exception as err:
+        logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
+        pages = await asyncio.to_thread(_tencent_pageservice_pages)
+        if pages:
+            return pages
         html, text = await page_html_text('https://v.qq.com/channel/tv', wait=5000)
         return [('tv', html, text)]
 
@@ -293,15 +378,45 @@ def _tencent_extract_json_items(html):
         except Exception:
             pass
 
+    def _params_title(params):
+        for key in ('mz_title', 'title_pc', 'priority_title', 'name', 'title'):
+            title = str(params.get(key) or '').strip()
+            if title:
+                return title
+        return ''
+
+    def _params_text_blob(params):
+        values = []
+        for k, v in params.items():
+            if re.match(r'marklabel_\d+_prime_text$', str(k)):
+                values.append(str(v or ''))
+        uni = str(params.get('uni_imgtag') or '')
+        if uni:
+            values.append(uni)
+            try:
+                tags = json.loads(uni)
+                def tag_walk(o):
+                    if isinstance(o, dict):
+                        for value in o.values():
+                            yield from tag_walk(value)
+                    elif isinstance(o, list):
+                        for value in o:
+                            yield from tag_walk(value)
+                    elif isinstance(o, (str, int, float)):
+                        yield str(o)
+                values.extend(tag_walk(tags))
+            except Exception:
+                pass
+        for key in ('holly_online_time', 'hollywood_online', 'publish_date'):
+            values.append(str(params.get(key) or ''))
+        return ' '.join(x for x in values if x)
+
     def walk(o):
         if isinstance(o, dict):
             params = o.get('params') if isinstance(o.get('params'), dict) else o
-            title = params.get('priority_title') or params.get('title') or params.get('mz_title') or params.get('name') or ''
-            mark_text = ' '.join(str(params.get(k) or '') for k in params if re.match(r'marklabel_\d+_prime_text$', str(k)))
-            uni = str(params.get('uni_imgtag') or '')
-            holly = str(params.get('holly_online_time') or '')
+            title = _params_title(params)
             publish = str(params.get('publish_date') or '')
-            blob = ' '.join([title, mark_text, uni, holly, publish])
+            blob = ' '.join([title, _params_text_blob(params)])
             # 只抓“预约”态，避免把每日更新、全集上线、已开播内容混入即将上线预告。
             if '预约' in blob and '敬请期待' not in blob and title:
                 date = ''
@@ -313,7 +428,16 @@ def _tencent_extract_json_items(html):
                         date += f' {int(m1.group(3))}:{m1.group(4)}'
                     elif m1.group(5):
                         date += f' {int(m1.group(5))}:00'
-                elif re.fullmatch(r'\d{4}-\d{2}-\d{2}', publish):
+                else:
+                    m_rel = re.search(r'(今日|明日|后日|今天|明天|后天)\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?(?:上线|开播|首播)?', blob)
+                    if m_rel:
+                        date = m_rel.group(1)
+                        if m_rel.group(2) and m_rel.group(3):
+                            date += f'{int(m_rel.group(2))}:{m_rel.group(3)}'
+                        elif m_rel.group(4):
+                            date += f'{int(m_rel.group(4))}:00'
+                        date = normalize_date_text(date + '上线')
+                if not date and re.fullmatch(r'\d{4}-\d{2}-\d{2}', publish):
                     try:
                         y, mo, d = publish.split('-')
                         date = f'{int(mo)}月{int(d)}日'
@@ -322,7 +446,7 @@ def _tencent_extract_json_items(html):
                 if date and _tencent_date_is_future(date):
                     title = re.sub(r'[·・\s]*\d{1,2}月\d{1,2}日(?:上线|开播|首播)?$', '', str(title)).strip()
                     reserve = ''
-                    rm = re.search(r'[\d.]+(?:万)?人预约', blob)
+                    rm = re.search(r'[\d.]+(?:万)?人(?:已)?预约', blob)
                     if rm:
                         reserve = rm.group(0)
                     if title and 2 <= len(title) <= 45:

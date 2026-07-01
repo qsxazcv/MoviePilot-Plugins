@@ -6,6 +6,12 @@ import urllib.request
 
 from .constants import UA
 
+try:
+    from app.log import logger
+except Exception:
+    import logging
+    logger = logging.getLogger(__name__)
+
 
 async def page_text(url, wait=5000):
     try:
@@ -18,7 +24,8 @@ async def page_text(url, wait=5000):
             text = await page.locator('body').inner_text(timeout=15000)
             await browser.close()
             return text
-    except Exception:
+    except Exception as err:
+        logger.warning(f'动态页面抓取失败，降级为静态页面：{url}，原因：{err!r}')
         req = urllib.request.Request(url, headers={'User-Agent': UA})
         with urllib.request.urlopen(req, timeout=25) as r:
             html = r.read().decode('utf-8', 'ignore')
@@ -36,7 +43,8 @@ async def page_html_text(url, wait=5000):
             html = await page.content()
             await browser.close()
             return html, text
-    except Exception:
+    except Exception as err:
+        logger.warning(f'动态页面抓取失败，降级为静态页面：{url}，原因：{err!r}')
         req = urllib.request.Request(url, headers={'User-Agent': UA})
         with urllib.request.urlopen(req, timeout=25) as r:
             html = r.read().decode('utf-8', 'ignore')

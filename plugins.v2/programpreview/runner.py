@@ -31,7 +31,7 @@ from .platforms.iqiyi import (
     iqiyi_prelw_payloads,
     iqiyi_rank_lines,
 )
-from .platforms.mgtv import extract_mgtv
+from .platforms.mgtv import extract_mgtv, mgtv_playbill_items
 from .platforms.tencent import (
     _dedupe_tencent_items,
     _merge_tencent_items_with_cache,
@@ -77,9 +77,11 @@ async def fetch_site(name, url):
                 items = _sort_tencent_items(_dedupe_tencent_items(extract_tencent(lines), 50))
         else:
             if name == '芒果TV':
-                txt = await page_text(url)
-                lines = clean_lines(txt)
-                items = extract_mgtv(lines)
+                items = await asyncio.to_thread(mgtv_playbill_items)
+                if not items:
+                    txt = await page_text(url)
+                    lines = clean_lines(txt)
+                    items = extract_mgtv(lines)
             elif name == '爱奇艺':
                 _iqiyi_reset_run_caches()
                 items = []

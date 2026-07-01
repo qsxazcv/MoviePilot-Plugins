@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 """芒果 TV 节目预告解析。"""
 
+import json
 import re
+import urllib.request
 
+from ..constants import UA
 from ..date_utils import normalize_date_text, sort_platform_items
 from ..text_utils import dedupe
+
+MGTV_PLAYBILL_URL = 'https://playbill.api.mgtv.com/yy/module?pbId=9&allowedRC=1&type=4&uuid=&ticket=&device=pcweb&_support=10000000'
 
 
 def extract_mgtv(lines):
@@ -32,3 +37,41 @@ def extract_mgtv(lines):
         if title:
             items.append(f'{normalize_date_text(line)}｜{title}')
     return sort_platform_items(dedupe(items, 12))
+
+
+def extract_mgtv_from_data(data):
+    """解析芒果 TV playbill 即将上线接口。"""
+    root = data.get('data') if isinstance(data, dict) else {}
+    if not isinstance(root, dict):
+        return []
+    if root.get('moduleTitle') != '即将上线':
+        return []
+    more = root.get('more') if isinstance(root.get('more'), dict) else {}
+    if more.get('moreName') != '我的预约':
+        return []
+    items = []
+    for row in root.get('data') or []:
+        if not isinstance(row, dict):
+            continue
+        date = str(row.get('beginTime') or '').strip()
+        title = str(row.get('title') or row.get('name') or '').strip()
+        if not title or date == '敬请期待':
+            continue
+        if not re.fullmatch(r'\d{2}-\d{2}\s+\d{2}:\d{2}', date):
+            continue
+        items.append(f'{normalize_date_text(date)}｜{title}')
+    return sort_platform_items(dedupe(items, 12))
+
+
+def mgtv_playbill_items():
+    """从芒果 TV 公开 playbill 接口读取即将上线预约节目。"""
+    req = urllib.request.Request(
+        MGTV_PLAYBILL_URL,
+        headers={
+            'User-Agent': UA,
+            'Referer': 'https://www.mgtv.com/',
+        },
+    )
+    with urllib.request.urlopen(req, timeout=25) as resp:
+        data = json.loads(resp.read().decode('utf-8', 'ignore'))
+    return extract_mgtv_from_data(data)
