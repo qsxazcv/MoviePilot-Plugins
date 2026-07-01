@@ -66,6 +66,8 @@ IQIYI_CHANNEL_ID_CATEGORY = {
     "4": "动漫",
     "6": "综艺",
     "15": "短剧",
+    "35": "短剧",
+    "37": "短剧",
 }
 
 
@@ -170,4 +172,3 @@ def category_summary(items):
         if category:
             counts[category] += 1
     return [(name, counts[name]) for name in CATEGORY_ORDER if counts.get(name)]
-

@@ -737,6 +737,7 @@ def _iqiyi_extract_newonline_items_sync():
     if not text:
         return []
     # NUXT 尾部参数中 r/ah 等短变量会映射到 "06月24日上线" 这类日期。
+    var_values = {}
     var_dates = {}
     nuxt_pos = text.find('window.__NUXT__=')
     nuxt_text = text[nuxt_pos:] if nuxt_pos >= 0 else ''
@@ -796,7 +797,9 @@ def _iqiyi_extract_newonline_items_sync():
         for name, val in zip(names, args):
             if len(name) > 3:
                 continue
-            raw = decode_js_string(val)
+            raw = decode_js_string(val) if str(val).strip().startswith('"') else str(val or '').strip()
+            if raw:
+                var_values[name] = raw
             if re.search(r'(?:\d{1,2}月\d{1,2}日|今日|明日|后日|今天|明天|后天|本周|下周)', raw) and re.search(r'上线|上映', raw):
                 var_dates[name] = raw
                 default_var_dates.setdefault(name, raw)
@@ -829,7 +832,16 @@ def _iqiyi_extract_newonline_items_sync():
             date += '上线'
         count_match = re.search(r'sub:\{[^{}]*?count:(?P<count>\d+)', card, re.S)
         reserve = _iqiyi_format_reserve_count(count_match.group('count')) if count_match else ''
-        items.append(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''))
+        category = ''
+        cid_match = re.search(r'cid:(?P<cid>"[^"]+"|[A-Za-z_$][\w$]*|\d+)', card)
+        if cid_match:
+            cid_token = cid_match.group('cid')
+            if cid_token.startswith('"'):
+                cid_value = decode_js_string(cid_token)
+            else:
+                cid_value = var_values.get(cid_token, cid_token)
+            category = category_from_iqiyi_obj({'cid': cid_value})
+        items.append(with_category(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''), category))
     return _dedupe_iqiyi_items(items, 80)
 
 def _iqiyi_is_short_drama_title(title):
