@@ -4,6 +4,8 @@
 import re
 from datetime import datetime, timedelta
 
+from .categories import split_category_prefix
+
 
 def normalize_date_text(date):
     date = re.sub(r'\s+', ' ', str(date or '')).strip()
@@ -98,7 +100,11 @@ def format_preview_item(platform, item):
     if '｜' not in item:
         return item
     left, right = item.split('｜', 1)
-    return f'{calendar_date_text(left)}｜{right}'
+    category, clean_right = split_category_prefix(right)
+    date = calendar_date_text(left)
+    if category:
+        return f'[{category}] {date}｜{clean_right}'
+    return f'{date}｜{right}'
 
 def calendar_date_text(text, now=None):
     """把今天、明天、后天展开成具体月日文本。"""

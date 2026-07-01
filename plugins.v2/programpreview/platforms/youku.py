@@ -6,6 +6,7 @@ import json
 import re
 import urllib.request
 
+from ..categories import category_from_marker, strip_item_category, with_category
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..text_utils import dedupe
@@ -137,7 +138,8 @@ def _dedupe_youku_items(items, limit=50):
         left, sep, right = str(raw).partition('｜')
         if not sep or not _youku_has_fixed_date(left):
             continue
-        title_key = re.sub(r'（[^）]*预约）$', '', right)
+        title_key = strip_item_category(f'{left}｜{right}').partition('｜')[2]
+        title_key = re.sub(r'（[^）]*预约）$', '', title_key)
         key = (_youku_normalize_date(left), _youku_normalize_title(title_key))
         item = f'{key[0]}｜{right}'
         if key not in best:
@@ -146,7 +148,7 @@ def _dedupe_youku_items(items, limit=50):
             best[key] = item
     return [best[k] for k in order[:limit]]
 
-def _youku_extract_reserve_modules(data):
+def _youku_extract_reserve_modules(data, category=None):
     """只从标题包含“即将上线”的优酷预约模块提取卡片，避免混入热播/推荐流。"""
     items = []
     if not data:
@@ -169,17 +171,18 @@ def _youku_extract_reserve_modules(data):
             tags = _youku_tag_titles(item)
             tag_date = next((t for t in tags if '上线' in t and t != '预约榜'), '')
             date = tag_date or (lb if '上线' in str(lb) else '') or reason or ''
+            item_category = category_from_marker(date) or category_from_marker(lb) or category_from_marker(reason) or category
             date = _youku_normalize_date(date)
             if not _youku_has_fixed_date(date):
                 continue
             reserve = _youku_reserve_desc(item)
             suffix = f'（{reserve}）' if reserve else ''
-            items.append(f'{date}｜{name}{suffix}')
+            items.append(with_category(f'{date}｜{name}{suffix}', item_category))
     return sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
 
-def extract_youku_from_data(data):
+def extract_youku_from_data(data, category=None):
     """从优酷 __INITIAL_DATA__ 提取预约/即将上线条目，优先限定在“即将上线”模块。"""
-    module_items = _youku_extract_reserve_modules(data)
+    module_items = _youku_extract_reserve_modules(data, category=category)
     if module_items:
         return module_items
     items = []
@@ -212,9 +215,10 @@ def extract_youku_from_data(data):
             date = _youku_normalize_date(date)
             if not _youku_has_fixed_date(date):
                 continue
+            item_category = category_from_marker(' '.join([date, lb, reason, top] + tags)) or category
             reserve = _youku_reserve_desc(item)
             suffix = f'（{reserve}）' if reserve else ''
-            items.append(f'{date}｜{title}{suffix}')
+            items.append(with_category(f'{date}｜{title}{suffix}', item_category))
     return sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
 
 def _youku_text_title_candidate(line, meta):

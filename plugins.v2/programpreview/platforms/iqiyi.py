@@ -7,6 +7,7 @@ import re
 import urllib.parse
 import urllib.request
 
+from ..categories import category_from_iqiyi_obj, split_category_prefix, with_category
 from ..constants import UA
 from ..date_utils import calendar_date_text, normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..fetcher import iqiyi_filtered_page_html_text, page_html_text
@@ -443,7 +444,13 @@ def _iqiyi_collect_prelw_items(text):
             if qid not in qids:
                 qids.append(qid)
         page_url = str(obj.get('page_url') or obj.get('url') or obj.get('native_url') or '')
-        rows.append({'date': _iqiyi_normalize_date(show_time), 'title': title, 'qids': qids, 'page_url': page_url})
+        rows.append({
+            'date': _iqiyi_normalize_date(show_time),
+            'title': title,
+            'qids': qids,
+            'page_url': page_url,
+            'category': category_from_iqiyi_obj(obj),
+        })
     return rows
 
 def _iqiyi_walk(o):
@@ -605,7 +612,7 @@ def _iqiyi_collect_videolib_items(data):
         for qid in _iqiyi_known_title_qids(title):
             if qid not in qids:
                 qids.append(qid)
-        rows.append({'date': date, 'title': title, 'qids': qids, 'page_url': page_url})
+        rows.append({'date': date, 'title': title, 'qids': qids, 'page_url': page_url, 'category': category_from_iqiyi_obj(obj)})
     return rows
 
 async def _iqiyi_videolib_payloads():
@@ -872,7 +879,8 @@ def _iqiyi_attach_search_reserve(item):
     left, sep, right = str(item or '').partition('｜')
     if not sep or _iqiyi_item_has_reserve(item):
         return item
-    title, reserve = _iqiyi_split_title_reserve(right)
+    category, clean_right = split_category_prefix(right)
+    title, reserve = _iqiyi_split_title_reserve(clean_right)
     if reserve or not title or _iqiyi_is_short_drama_title(title):
         return item
     reserve_desc = ''
@@ -885,7 +893,7 @@ def _iqiyi_attach_search_reserve(item):
     # 搜索页偶发空结果时不写入“0”或占位文案，保持无预约数条目，下一次定时任务会再次尝试补齐。
     if not reserve_desc:
         return item
-    return f'{_iqiyi_normalize_date(left)}｜{title}（{reserve_desc}）'
+    return with_category(f'{_iqiyi_normalize_date(left)}｜{title}（{reserve_desc}）', category)
 
 def _iqiyi_force_search_reserve_items(items):
     """对已识别到的爱奇艺条目逐条补预约数，保证 HTML/文本兜底条目也会重试。
@@ -909,25 +917,27 @@ def _dedupe_iqiyi_items(items, limit=50):
         if not sep:
             continue
         date = _iqiyi_normalize_date(left)
-        title, reserve = _iqiyi_split_title_reserve(right)
+        category, clean_right = split_category_prefix(right)
+        title, reserve = _iqiyi_split_title_reserve(clean_right)
         # 过滤爱奇艺题材/分类标签和 mini/短剧标题误入预告。
         if _iqiyi_is_noise_title(title) or _iqiyi_is_short_drama_title(title):
             continue
         title_key = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期)$', '', title)
         key = _iqiyi_title_alias_key(title_key)
-        item = f'{date}｜{title}' + (reserve if reserve else '')
+        item = with_category(f'{date}｜{title}' + (reserve if reserve else ''), category)
         if key not in best:
             order.append(key); best[key] = item
         else:
             old_left, _, old_right = best[key].partition('｜')
-            old_title, old_reserve = _iqiyi_split_title_reserve(old_right)
+            old_category, old_clean_right = split_category_prefix(old_right)
+            old_title, old_reserve = _iqiyi_split_title_reserve(old_clean_right)
             old_is_preview = _iqiyi_is_program_preview_date(old_left)
             new_is_preview = _iqiyi_is_program_preview_date(date)
             if old_is_preview != new_is_preview:
                 if old_is_preview:
-                    best[key] = _iqiyi_build_item(date, title, reserve or old_reserve)
+                    best[key] = with_category(_iqiyi_build_item(date, title, reserve or old_reserve), category or old_category)
                 elif reserve and not old_reserve:
-                    best[key] = _iqiyi_build_item(old_left, old_title or title, reserve)
+                    best[key] = with_category(_iqiyi_build_item(old_left, old_title or title, reserve), old_category or category)
                 continue
             # 同名/近似同名条目优先保留带预约数的版本；
             # 若两条预约数状态一致，优先保留带具体时间的版本，再按真实日期取更早版本。

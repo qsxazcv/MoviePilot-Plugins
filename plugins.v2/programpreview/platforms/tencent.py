@@ -8,6 +8,7 @@ import urllib.request
 from datetime import datetime, timedelta
 
 from ..cache import load_platform_cache
+from ..categories import strip_item_category, with_category_many
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..fetcher import page_html_text
@@ -359,7 +360,8 @@ def _dedupe_tencent_items(items, limit=30):
         left, sep, right = item.partition('｜')
         if not sep:
             continue
-        title_key = re.sub(r'（[^）]*预约）$', '', right)
+        title_key = strip_item_category(f'{left}｜{right}').partition('｜')[2]
+        title_key = re.sub(r'（[^）]*预约）$', '', title_key)
         title_key = re.sub(r'\s+', '', title_key)
         # 去掉季数后如果标题太短则仍保留原标题，避免误合并完全不同节目。
         key = title_key
@@ -469,7 +471,7 @@ def _tencent_extract_json_items(html):
         items.extend(walk(b))
     return items
 
-def extract_tencent_html(html, text):
+def extract_tencent_html(html, text, category=None):
     """腾讯各频道“即将上线”模块：解析激活 Tab 文本，并用 PageService 结构化数据补齐漏项。"""
     items = []
     # 结构化数据里能识别“预约+明确日期”的条目，优先用于补齐动漫等频道首屏漏项。
@@ -480,7 +482,8 @@ def extract_tencent_html(html, text):
     for title, date in re.findall(r'(?:title|name):"([^"·]{2,40})·(\d{1,2}月\d{1,2}日(?:开播|上线|首播))"', html):
         date = re.sub(r'(上线|开播|首播)$', '', date)
         items.append(f'{date}｜{title}')
-    return _sort_tencent_items(_filter_future_tencent_items(_dedupe_tencent_items(items, 30)))
+    items = _sort_tencent_items(_filter_future_tencent_items(_dedupe_tencent_items(items, 30)))
+    return with_category_many(items, category) if category else items
 
 def extract_tencent(lines):
     # 保留旧函数名兼容，实际优先 extract_tencent_html。

@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 
 from .cache import apply_platform_cache
+from .categories import ensure_category_many, source_category, with_category
 from .constants import OUT_FILE, SITES, STATE_FILE
 from .date_utils import format_preview_item, sort_platform_items
 from .fetcher import page_text
@@ -60,7 +61,7 @@ async def fetch_site(name, url):
             # 优酷主频道 + 电视剧/动漫/电影/综艺频道的“即将上线”合并去重，只保留已定档条目，按上线时间排序。
             items = []
             for _ch, _url, data in await youku_all_initial_data():
-                items.extend(extract_youku_from_data(data))
+                items.extend(extract_youku_from_data(data, category=source_category('youku', _ch)))
             items = sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
             if not items:
                 txt = await page_text(url)
@@ -69,12 +70,13 @@ async def fetch_site(name, url):
             pages = await tencent_page_html_text(url)
             items = []
             for _ch, html, txt in pages:
-                # 主频道 + 电视剧/动漫/综艺/电影频道统一合并，最终不分类，只按上线时间排序。
-                items.extend(extract_tencent_html(html, txt))
+                # 主频道 + 电视剧/动漫/综艺/电影频道统一合并，最终按来源频道补分类标签后按上线时间排序。
+                items.extend(extract_tencent_html(html, txt, category=source_category('tencent', _ch)))
             items = _merge_tencent_items_with_cache(items)
             if not items and pages:
                 lines = clean_lines(pages[0][2])
                 items = _sort_tencent_items(_dedupe_tencent_items(extract_tencent(lines), 50))
+                items = [with_category(item, source_category('tencent', pages[0][0])) for item in items]
         else:
             if name == '芒果TV':
                 items = await asyncio.to_thread(mgtv_playbill_items)
@@ -89,8 +91,11 @@ async def fetch_site(name, url):
                 payloads = await iqiyi_prelw_payloads()
                 prelw_rows = []
                 qipu_ids = []
-                for payload in payloads:
+                prelw_categories = ['电视剧', '动漫', '电影', '综艺']
+                for category, payload in zip(prelw_categories, payloads):
                     rows = _iqiyi_collect_prelw_items(payload)
+                    for row in rows:
+                        row['category'] = row.get('category') or category
                     prelw_rows.extend(rows)
                     for row in rows:
                         qipu_ids.extend(row.get('qids') or [])
@@ -99,7 +104,7 @@ async def fetch_site(name, url):
                     reserve = next((reserve_map.get(qid) for qid in row.get('qids') or [] if reserve_map.get(qid)), '')
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
-                    items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
+                    items.append(with_category(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''), row.get('category')))
                 # 首页“新片预告/新片速递”的真实数据在 newOnlinePCW SSR，合并进最终结果后统一去重。
                 items.extend(await asyncio.to_thread(_iqiyi_extract_newonline_items_sync))
                 # 再用爱奇艺五个片库频道兜底，补齐电视剧/电影/综艺/动漫/纪录片片库的“即将上线”。
@@ -118,7 +123,7 @@ async def fetch_site(name, url):
                         reserve = await asyncio.to_thread(_iqiyi_extract_page_reserve_sync, row.get('page_url'))
                     if not reserve:
                         reserve = await asyncio.to_thread(_iqiyi_search_page_reserve_sync, row.get('title'))
-                    items.append(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''))
+                    items.append(with_category(f"{row['date']}｜{row['title']}" + (f'（{reserve}）' if reserve else ''), row.get('category')))
                 # 已知公开页/接口偶发漏出的爱奇艺预约片名，用爱奇艺搜索页补候选与预约数。
                 # 这里只从爱奇艺搜索页取数，不跨平台混用；若频道恢复返回，去重逻辑会自动优先带预约数版本。
                 search_fallback_titles = ['恶念', '天才游戏', '豪门大嫂要掀桌，门风不正直接怼', '狄仁杰之血谜棺', '昨夜将至']
@@ -129,16 +134,20 @@ async def fetch_site(name, url):
                     # HTML parser targets older feedZaizhui card markup and may return only
                     # part of the visible list. Keep the text parser as a second pass so
                     # newer list cards such as "下周三上线｜昨夜将至" are not skipped.
-                    items.extend(html_items)
-                    items.extend(text_items)
+                    category = source_category('iqiyi', _ch)
+                    items.extend(with_category(item, category) for item in html_items)
+                    items.extend(with_category(item, category) for item in text_items)
                 for _ch, _html, _txt, _lines in await iqiyi_list_all_lines():
-                    items.extend(extract_iqiyi_html(_html))
-                    items.extend(extract_iqiyi(_lines))
+                    category = source_category('iqiyi', _ch)
+                    items.extend(with_category(item, category) for item in extract_iqiyi_html(_html))
+                    items.extend(with_category(item, category) for item in extract_iqiyi(_lines))
                 for _ch, _html, _txt, _lines in await iqiyi_home_preview_lines():
-                    items.extend(extract_iqiyi_html(_html))
-                    items.extend(extract_iqiyi(_lines))
+                    category = source_category('iqiyi', _ch)
+                    items.extend(with_category(item, category) for item in extract_iqiyi_html(_html))
+                    items.extend(with_category(item, category) for item in extract_iqiyi(_lines))
                 for _ch, _html, _txt, _lines in await iqiyi_rank_lines():
-                    items.extend(extract_iqiyi(_lines))
+                    category = source_category('iqiyi', _ch)
+                    items.extend(with_category(item, category) for item in extract_iqiyi(_lines))
                 # 对已识别到的爱奇艺条目做通用搜索页兜底补数：
                 # prelw/频道接口没给预约数时，只去爱奇艺搜索页按片名补齐，不跨平台混用。
                 items = _dedupe_iqiyi_items(items, 50)
@@ -147,7 +156,7 @@ async def fetch_site(name, url):
                 items = await asyncio.to_thread(_iqiyi_final_fill_missing_reserves, items)
             else:
                 items = []
-        items = sort_platform_items(items)
+        items = ensure_category_many(sort_platform_items(items))
         return name, items or ['暂未从公开页面提取到明确“即将上线/预约”条目']
     except Exception as e:
         return name, [f'抓取失败：{e!r}']
