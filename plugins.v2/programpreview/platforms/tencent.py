@@ -40,6 +40,7 @@ TENCENT_TITLE_ALIASES = {
 
 TENCENT_SEARCH_URL = 'https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2'
 _TENCENT_SEARCH_CATEGORY_CACHE = {}
+_TENCENT_SEARCH_RESERVE_CACHE = {}
 
 
 def _tencent_enabled_pageservice_channels(include_short_drama=False):
@@ -178,6 +179,57 @@ def _tencent_search_category(title):
     return category
 
 
+def _tencent_format_reserve_count(value):
+    text = re.sub(r'\s+', '', str(value or '')).strip()
+    if not text:
+        return ''
+    if re.fullmatch(r'[\d.]+(?:万)?人(?:已)?预约', text):
+        return text.replace('人已预约', '人预约')
+    if re.fullmatch(r'[\d.]+万', text):
+        return f'{text}人预约'
+    if re.fullmatch(r'\d{1,9}', text):
+        num = int(text)
+        return f'{num / 10000:.1f}万人预约' if num >= 10000 else f'{num}人预约'
+    return ''
+
+
+def _tencent_reserve_from_search_info(info):
+    if not isinstance(info, dict):
+        return ''
+    cover_doc = info.get('coverDoc')
+    if isinstance(cover_doc, dict):
+        reserve = _tencent_format_reserve_count(cover_doc.get('chaseNum'))
+        if reserve:
+            return reserve
+    for key in ('chaseNum', 'appointCount', 'appointmentCount', 'reserveCount', 'subscribeCount', 'subscribeNum'):
+        reserve = _tencent_format_reserve_count(info.get(key))
+        if reserve:
+            return reserve
+    return ''
+
+
+def _tencent_search_reserve_sync(title):
+    title = _normalize_tencent_title(title)
+    if not title:
+        return ''
+    if title in _TENCENT_SEARCH_RESERVE_CACHE:
+        return _TENCENT_SEARCH_RESERVE_CACHE[title]
+    reserve = ''
+    try:
+        payload = _tencent_search_payload(title)
+        for info in _iter_tencent_video_infos(payload):
+            found_title = re.sub(r'<[^>]+>', '', html_unescape(info.get('title') or '')).strip()
+            if _normalize_tencent_title(found_title) != title:
+                continue
+            reserve = _tencent_reserve_from_search_info(info)
+            if reserve:
+                break
+    except Exception as err:
+        logger.debug(f'腾讯视频搜索预约数补全失败：{title}，原因：{err!r}')
+    _TENCENT_SEARCH_RESERVE_CACHE[title] = reserve
+    return reserve
+
+
 def _tencent_item_title(item):
     clean = strip_item_category(item)
     _left, sep, right = str(clean).partition('｜')
@@ -197,6 +249,20 @@ def _fill_tencent_missing_categories(items):
         title = _tencent_item_title(item)
         category = _tencent_search_category(title) if title else ''
         out.append(with_category(item, category) if category else item)
+    return out
+
+
+def _fill_tencent_missing_reserves(items):
+    out = []
+    for item in items or []:
+        text = str(item or '')
+        left, sep, right = text.partition('｜')
+        if not sep or re.search(r'（[^）]*预约）$', right):
+            out.append(item)
+            continue
+        title = _tencent_item_title(item)
+        reserve = _tencent_search_reserve_sync(title) if title else ''
+        out.append(f'{left}｜{right}（{reserve}）' if reserve else item)
     return out
 
 
@@ -584,6 +650,7 @@ def extract_tencent_html(html, text, category=None):
         date = re.sub(r'(上线|开播|首播)$', '', date)
         items.append(f'{date}｜{title}')
     items = _sort_tencent_items(_filter_future_tencent_items(_dedupe_tencent_items(items, 30)))
+    items = _fill_tencent_missing_reserves(items)
     return with_category_many(items, category) if category else items
 
 def extract_tencent(lines):
