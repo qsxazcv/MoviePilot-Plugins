@@ -13,6 +13,9 @@ from ..fetcher import iqiyi_filtered_page_html_text, page_html_text
 from ..text_utils import clean_lines, dedupe, html_unescape
 
 
+_IQIYI_SEARCH_RESERVE_CACHE = {}
+
+
 def _iqiyi_reset_run_caches():
     _IQIYI_SEARCH_RESERVE_CACHE.clear()
 

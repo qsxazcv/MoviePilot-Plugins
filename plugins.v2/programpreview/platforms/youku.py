@@ -11,6 +11,15 @@ from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platfo
 from ..text_utils import dedupe
 
 
+YOUKU_CHANNELS = [
+    ('main', 'https://www.youku.com/ku/webhome'),
+    ('tv', 'https://tv.youku.com/'),
+    ('comic', 'https://comic.youku.com/'),
+    ('movie', 'https://movie.youku.com/'),
+    ('zy', 'https://zy.youku.com/'),
+]
+
+
 def _youku_walk(o):
     if isinstance(o, dict):
         yield o
