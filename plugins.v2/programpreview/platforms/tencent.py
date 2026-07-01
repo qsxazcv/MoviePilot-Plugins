@@ -29,6 +29,12 @@ TENCENT_PAGESERVICE_CHANNELS = [
     ('shortdrama', '100101'),
 ]
 
+TENCENT_TITLE_ALIASES = {
+    # 腾讯 PageService 的 title 字段偶尔是推荐文案，真实片名在 mz_title/title_pc。
+    # 旧缓存或文本兜底可能已保存该文案，这里统一修正显示。
+    '代露娃唐诗逸双强博弈': '画梦录',
+}
+
 
 def _tencent_pageservice_payload(page_id):
     url = 'https://pbaccess.video.qq.com/trpc.vector_layout.page_view.PageService/getPage?video_appid=3000010&vversion_platform=2'
@@ -303,6 +309,7 @@ def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
 def _normalize_tencent_title(title):
     original = str(title or '').strip()
     title = re.sub(r'[·・\s]*\d{1,2}月\d{1,2}日(?:上线|开播|首播)?$', '', original).strip()
+    title = TENCENT_TITLE_ALIASES.get(title, title)
     # 去掉平台常见季/期后缀，便于把“半熟恋人”和“半熟恋人 第5季”归并为同一节目。
     title = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期|第[一二三四五六七八九十百千万\d]+部)$', '', title).strip()
     # 腾讯动漫有时同一作品会出现短名/长名两种卡片，归并显示为短名，避免“斩神”和“斩神之凡尘神域”重复。
