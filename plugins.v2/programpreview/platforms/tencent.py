@@ -41,6 +41,12 @@ TENCENT_SEARCH_URL = 'https://pbaccess.video.qq.com/trpc.videosearch.mobile_sear
 _TENCENT_SEARCH_CATEGORY_CACHE = {}
 
 
+def _tencent_enabled_pageservice_channels(include_short_drama=False):
+    if include_short_drama:
+        return list(TENCENT_PAGESERVICE_CHANNELS)
+    return [(channel, page_id) for channel, page_id in TENCENT_PAGESERVICE_CHANNELS if channel != 'shortdrama']
+
+
 def _tencent_pageservice_payload(page_id):
     url = 'https://pbaccess.video.qq.com/trpc.vector_layout.page_view.PageService/getPage?video_appid=3000010&vversion_platform=2'
     body = {
@@ -89,9 +95,9 @@ def _tencent_pageservice_payload(page_id):
         return json.loads(resp.read().decode('utf-8', 'ignore'))
 
 
-def _tencent_pageservice_pages():
+def _tencent_pageservice_pages(include_short_drama=False):
     pages = []
-    for channel, page_id in TENCENT_PAGESERVICE_CHANNELS:
+    for channel, page_id in _tencent_enabled_pageservice_channels(include_short_drama):
         try:
             payload = _tencent_pageservice_payload(page_id)
         except Exception:
@@ -193,11 +199,13 @@ def _fill_tencent_missing_categories(items):
     return out
 
 
-async def tencent_page_html_text(url):
+async def tencent_page_html_text(url, include_short_drama=False):
     # 按用户偏好：腾讯只抓各频道页里的“即将上线”模块，不合并首页或其它推荐流。
     try:
         from playwright.async_api import async_playwright
         channels = ['tv', 'tvdrama', 'cartoon', 'variety', 'movie']
+        if include_short_drama:
+            channels.append('shortdrama')
         out = []
         page_jsons = []
         async with async_playwright() as p:
@@ -257,7 +265,7 @@ async def tencent_page_html_text(url):
         return out
     except Exception as err:
         logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
-        pages = await asyncio.to_thread(_tencent_pageservice_pages)
+        pages = await asyncio.to_thread(_tencent_pageservice_pages, include_short_drama)
         if pages:
             return pages
         html, text = await page_html_text('https://v.qq.com/channel/tv', wait=5000)

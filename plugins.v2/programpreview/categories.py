@@ -56,6 +56,7 @@ SOURCE_CATEGORY = {
         "comic": "动漫",
         "child": "少儿",
         "documentary": "纪录片",
+        "shortdrama": "短剧",
     },
 }
 
@@ -127,6 +128,17 @@ def item_category(item):
         category, _ = split_category_prefix(right)
         return category
     return ""
+
+
+def is_short_drama_item(item):
+    return item_category(item) == "短剧"
+
+
+def filter_short_drama_items(items, include_short_drama=False):
+    items = list(items or [])
+    if include_short_drama:
+        return items
+    return [item for item in items if not is_short_drama_item(item)]
 
 
 def strip_item_category(item):

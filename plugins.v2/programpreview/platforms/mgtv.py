@@ -183,7 +183,7 @@ def extract_mgtv(lines):
     return sort_platform_items(dedupe(items, 12))
 
 
-def extract_mgtv_from_data(data, category_lookup=None):
+def extract_mgtv_from_data(data, category_lookup=None, include_short_drama=False):
     """解析芒果 TV playbill 即将上线接口。"""
     root = data.get('data') if isinstance(data, dict) else {}
     if not isinstance(root, dict):
@@ -200,7 +200,19 @@ def extract_mgtv_from_data(data, category_lookup=None):
             continue
         date = str(row.get('beginTime') or '').strip()
         title = str(row.get('title') or row.get('name') or '').strip()
-        if not title or date == '敬请期待':
+        if not title:
+            continue
+        category = ''
+        if date == '敬请期待':
+            if not include_short_drama:
+                continue
+            try:
+                category = category_lookup(row)
+            except Exception:
+                category = ''
+            if normalize_category(category) != '短剧':
+                continue
+            items.append(with_category(f'敬请期待｜{title}', category))
             continue
         if not _mgtv_is_fixed_begin_time(date):
             continue
@@ -212,7 +224,7 @@ def extract_mgtv_from_data(data, category_lookup=None):
     return sort_platform_items(dedupe(items, 12))
 
 
-def mgtv_playbill_items():
+def mgtv_playbill_items(include_short_drama=False):
     """从芒果 TV 公开 playbill 接口读取即将上线预约节目。"""
     req = urllib.request.Request(
         MGTV_PLAYBILL_URL,
@@ -223,4 +235,4 @@ def mgtv_playbill_items():
     )
     with urllib.request.urlopen(req, timeout=25) as resp:
         data = json.loads(resp.read().decode('utf-8', 'ignore'))
-    return extract_mgtv_from_data(data)
+    return extract_mgtv_from_data(data, include_short_drama=include_short_drama)

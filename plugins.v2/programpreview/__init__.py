@@ -24,7 +24,7 @@ class programpreview(_PluginBase):
     plugin_name = "四大平台节目预告"
     plugin_desc = "聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/programpreview.png"
-    plugin_version = "1.0.47"
+    plugin_version = "1.0.48"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "programpreview_"
@@ -35,6 +35,7 @@ class programpreview(_PluginBase):
     _onlyonce: bool = False
     _notify: bool = True
     _force_notify: bool = True
+    _include_short_drama: bool = False
     _cron: str = "0 8 * * *"
     _last_run: str = ""
     _last_status: str = "未运行"
@@ -47,6 +48,7 @@ class programpreview(_PluginBase):
             self._onlyonce = bool(config.get("onlyonce", False))
             self._notify = bool(config.get("notify", True))
             self._force_notify = bool(config.get("force_notify", True))
+            self._include_short_drama = bool(config.get("include_short_drama", False))
             self._cron = config.get("cron") or "0 8 * * *"
             self._last_run = config.get("last_run") or ""
             self._last_status = config.get("last_status") or "未运行"
@@ -76,6 +78,7 @@ class programpreview(_PluginBase):
             "onlyonce": False,
             "notify": self._notify,
             "force_notify": self._force_notify,
+            "include_short_drama": self._include_short_drama,
             "cron": self._cron,
             "last_run": self._last_run,
             "last_status": self._last_status,
@@ -109,6 +112,7 @@ class programpreview(_PluginBase):
             "enabled": self._enabled,
             "notify": self._notify,
             "force_notify": self._force_notify,
+            "include_short_drama": self._include_short_drama,
             "cron": self._cron,
             "last_run": self._last_run,
             "last_status": self._last_status,
@@ -167,9 +171,9 @@ class programpreview(_PluginBase):
         try:
             preview_core = self._load_preview_core()
             if self._notify:
-                asyncio.run(preview_core.main(force_notify=bool(self._force_notify)))
+                asyncio.run(preview_core.main(force_notify=bool(self._force_notify), include_short_drama=bool(self._include_short_drama)))
             else:
-                asyncio.run(preview_core.main(force_notify=False))
+                asyncio.run(preview_core.main(force_notify=False, include_short_drama=bool(self._include_short_drama)))
             self._last_run = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self._last_status = "执行成功"
             logger.info(f"四大平台节目预告执行完成，完成时间：{self._last_run}")
@@ -198,6 +202,7 @@ class programpreview(_PluginBase):
             "onlyonce": False,
             "notify": self._notify,
             "force_notify": self._force_notify,
+            "include_short_drama": self._include_short_drama,
             "cron": self._cron,
             "last_run": self._last_run,
             "last_status": self._last_status,

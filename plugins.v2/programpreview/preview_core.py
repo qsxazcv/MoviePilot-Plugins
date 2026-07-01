@@ -85,5 +85,6 @@ def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='抓取四大平台节目预告并写入 MoviePilot 通知')
     parser.add_argument('--force-notify', action='store_true', help='即使内容未变化也发送 MoviePilot 通知')
+    parser.add_argument('--include-short-drama', action='store_true', help='抓取并显示短剧/微短剧条目')
     args = parser.parse_args()
-    asyncio.run(main(force_notify=args.force_notify))
+    asyncio.run(main(force_notify=args.force_notify, include_short_drama=args.include_short_drama))

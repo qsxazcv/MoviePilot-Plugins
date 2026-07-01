@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 from .cache import apply_platform_cache
-from .categories import ensure_category_many, source_category, with_category
+from .categories import ensure_category_many, filter_short_drama_items, source_category, with_category
 from .constants import OUT_FILE, SITES, STATE_FILE
 from .date_utils import format_preview_item, sort_platform_items
 from .fetcher import page_text
@@ -55,19 +55,23 @@ def digest(data):
     payload = json.dumps(data, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256(payload.encode()).hexdigest()
 
-async def fetch_site(name, url):
+def _placeholder_items():
+    return ['暂未从公开页面提取到明确“即将上线/预约”条目']
+
+
+async def fetch_site(name, url, include_short_drama=False):
     try:
         if name == '优酷':
             # 优酷主频道 + 电视剧/动漫/电影/综艺频道的“即将上线”合并去重，只保留已定档条目，按上线时间排序。
             items = []
-            for _ch, _url, data in await youku_all_initial_data():
-                items.extend(extract_youku_from_data(data, category=source_category('youku', _ch)))
+            for _ch, _url, data in await youku_all_initial_data(include_short_drama=include_short_drama):
+                items.extend(extract_youku_from_data(data, category=source_category('youku', _ch), include_short_drama=include_short_drama))
             items = sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
             if not items:
                 txt = await page_text(url)
                 items = extract_youku(clean_lines(txt))
         elif name == '腾讯视频':
-            pages = await tencent_page_html_text(url)
+            pages = await tencent_page_html_text(url, include_short_drama=include_short_drama)
             items = []
             for _ch, html, txt in pages:
                 # 主频道 + 电视剧/动漫/综艺/电影频道统一合并，最终按来源频道补分类标签后按上线时间排序。
@@ -79,7 +83,7 @@ async def fetch_site(name, url):
                 items = [with_category(item, source_category('tencent', pages[0][0])) for item in items]
         else:
             if name == '芒果TV':
-                items = await asyncio.to_thread(mgtv_playbill_items)
+                items = await asyncio.to_thread(mgtv_playbill_items, include_short_drama)
                 if not items:
                     txt = await page_text(url)
                     lines = clean_lines(txt)
@@ -156,14 +160,18 @@ async def fetch_site(name, url):
                 items = await asyncio.to_thread(_iqiyi_final_fill_missing_reserves, items)
             else:
                 items = []
+        items = filter_short_drama_items(items, include_short_drama)
         items = ensure_category_many(sort_platform_items(items))
-        return name, items or ['暂未从公开页面提取到明确“即将上线/预约”条目']
+        return name, items or _placeholder_items()
     except Exception as e:
         return name, [f'抓取失败：{e!r}']
 
-async def main(force_notify=False):
-    pairs = await asyncio.gather(*(fetch_site(name, url) for name, url in SITES))
+async def main(force_notify=False, include_short_drama=False):
+    pairs = await asyncio.gather(*(fetch_site(name, url, include_short_drama=include_short_drama) for name, url in SITES))
     result = apply_platform_cache(dict(pairs))
+    for name, items in list(result.items()):
+        filtered = filter_short_drama_items(items, include_short_drama)
+        result[name] = filtered or _placeholder_items()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
