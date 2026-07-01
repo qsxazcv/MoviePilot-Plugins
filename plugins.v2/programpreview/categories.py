@@ -37,6 +37,8 @@ SOURCE_CATEGORY = {
         "cartoon": "动漫",
         "comic": "动漫",
         "movie": "电影",
+        "doco": "纪录片",
+        "child": "少儿",
         "shortdrama": "短剧",
     },
     "iqiyi": {

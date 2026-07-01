@@ -24,10 +24,11 @@ except Exception:
 
 TENCENT_PAGESERVICE_CHANNELS = [
     ('tv', '100113'),
-    ('tvdrama', '100173'),
+    ('movie', '100173'),
     ('variety', '100109'),
     ('cartoon', '100119'),
-    ('movie', '100105'),
+    ('child', '100150'),
+    ('doco', '100105'),
     ('shortdrama', '100101'),
 ]
 
@@ -203,9 +204,7 @@ async def tencent_page_html_text(url, include_short_drama=False):
     # 按用户偏好：腾讯只抓各频道页里的“即将上线”模块，不合并首页或其它推荐流。
     try:
         from playwright.async_api import async_playwright
-        channels = ['tv', 'tvdrama', 'cartoon', 'variety', 'movie']
-        if include_short_drama:
-            channels.append('shortdrama')
+        channels = [channel for channel, _page_id in _tencent_enabled_pageservice_channels(include_short_drama)]
         out = []
         page_jsons = []
         async with async_playwright() as p:

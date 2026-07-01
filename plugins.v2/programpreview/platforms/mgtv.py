@@ -202,17 +202,7 @@ def extract_mgtv_from_data(data, category_lookup=None, include_short_drama=False
         title = str(row.get('title') or row.get('name') or '').strip()
         if not title:
             continue
-        category = ''
         if date == '敬请期待':
-            if not include_short_drama:
-                continue
-            try:
-                category = category_lookup(row)
-            except Exception:
-                category = ''
-            if normalize_category(category) != '短剧':
-                continue
-            items.append(with_category(f'敬请期待｜{title}', category))
             continue
         if not _mgtv_is_fixed_begin_time(date):
             continue

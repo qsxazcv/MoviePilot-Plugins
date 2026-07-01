@@ -6,18 +6,19 @@ import json
 import re
 import urllib.request
 
-from ..categories import category_from_marker, item_category, strip_item_category, with_category
+from ..categories import category_from_marker, strip_item_category, with_category
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..text_utils import dedupe
 
 
 YOUKU_CHANNELS = [
-    ('main', 'https://www.youku.com/ku/webhome'),
     ('tv', 'https://tv.youku.com/'),
     ('comic', 'https://comic.youku.com/'),
     ('movie', 'https://movie.youku.com/'),
     ('zy', 'https://zy.youku.com/'),
+    ('child', 'https://www.youku.com/ku/webchild'),
+    ('documentary', 'https://www.youku.com/ku/webdocumentary'),
 ]
 
 YOUKU_SHORT_DRAMA_CHANNELS = [
@@ -146,13 +147,12 @@ def _youku_normalize_title(title):
     title = re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期|[1234567890]+)$', '', title).strip()
     return title
 
-def _dedupe_youku_items(items, limit=50, allow_pending_short_drama=False):
+def _dedupe_youku_items(items, limit=50):
     best = {}
     order = []
     for raw in items:
         left, sep, right = str(raw).partition('｜')
-        pending_short_drama = allow_pending_short_drama and left == '敬请期待' and item_category(raw) == '短剧'
-        if not sep or (not _youku_has_fixed_date(left) and not pending_short_drama):
+        if not sep or not _youku_has_fixed_date(left):
             continue
         title_key = strip_item_category(f'{left}｜{right}').partition('｜')[2]
         title_key = re.sub(r'（[^）]*预约）$', '', title_key)
@@ -164,21 +164,11 @@ def _dedupe_youku_items(items, limit=50, allow_pending_short_drama=False):
             best[key] = item
     return [best[k] for k in order[:limit]]
 
-def _youku_is_pending_short_drama_card(item):
-    if not isinstance(item, dict):
-        return False
-    reason = _youku_item_reason(item)
-    top = _youku_item_top_mark(item)
-    tags = _youku_tag_titles(item)
-    return reason == '敬请期待' and (top == '预约榜' or '预告' in tags)
-
-
 def _youku_extract_reserve_modules(data, category=None, include_short_drama=False):
     """只从标题包含“即将上线”的优酷预约模块提取卡片，避免混入热播/推荐流。"""
     items = []
     if not data:
         return items
-    allow_pending_short_drama = include_short_drama and category == '短剧'
     for module in _youku_walk(data):
         if not isinstance(module, dict):
             continue
@@ -186,18 +176,13 @@ def _youku_extract_reserve_modules(data, category=None, include_short_drama=Fals
         item_list = module.get('itemList')
         if not isinstance(item_list, list):
             continue
-        if '即将上线' not in title and not allow_pending_short_drama:
+        if '即将上线' not in title:
             continue
         for item in item_list:
             if not isinstance(item, dict):
                 continue
             name = str(item.get('title') or '').strip()
             if not name or len(name) > 60 or re.search(r'上线|预约榜|TOP$', name):
-                continue
-            if allow_pending_short_drama and _youku_is_pending_short_drama_card(item):
-                items.append(with_category(f'敬请期待｜{name}', '短剧'))
-                continue
-            if '即将上线' not in title:
                 continue
             reason = _youku_item_reason(item)
             lb = item.get('lbTexts') or ''
@@ -211,11 +196,10 @@ def _youku_extract_reserve_modules(data, category=None, include_short_drama=Fals
             reserve = _youku_reserve_desc(item)
             suffix = f'（{reserve}）' if reserve else ''
             items.append(with_category(f'{date}｜{name}{suffix}', item_category))
-    return sorted(_dedupe_youku_items(items, 50, allow_pending_short_drama=allow_pending_short_drama), key=_youku_sort_key)
+    return sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
 
 def extract_youku_from_data(data, category=None, include_short_drama=False):
     """从优酷 __INITIAL_DATA__ 提取预约/即将上线条目，优先限定在“即将上线”模块。"""
-    allow_pending_short_drama = include_short_drama and category == '短剧'
     module_items = _youku_extract_reserve_modules(data, category=category, include_short_drama=include_short_drama)
     if module_items:
         return module_items
@@ -238,9 +222,6 @@ def extract_youku_from_data(data, category=None, include_short_drama=False):
         except Exception:
             pass
         tags = _youku_tag_titles(item)
-        if allow_pending_short_drama and _youku_is_pending_short_drama_card(item):
-            items.append(with_category(f'敬请期待｜{title}', '短剧'))
-            continue
         up_tags = [t for t in tags if re.search(r'上线|预约', t)]
         marker = ' '.join([lb, reason, top] + up_tags)
         if re.search(r'上线|预约榜|新剧预约|即将上线', marker):
@@ -256,7 +237,7 @@ def extract_youku_from_data(data, category=None, include_short_drama=False):
             reserve = _youku_reserve_desc(item)
             suffix = f'（{reserve}）' if reserve else ''
             items.append(with_category(f'{date}｜{title}{suffix}', item_category))
-    return sorted(_dedupe_youku_items(items, 50, allow_pending_short_drama=allow_pending_short_drama), key=_youku_sort_key)
+    return sorted(_dedupe_youku_items(items, 50), key=_youku_sort_key)
 
 def _youku_text_title_candidate(line, meta):
     title = re.sub(r'\s+', ' ', str(line or '')).strip(' -｜|')
