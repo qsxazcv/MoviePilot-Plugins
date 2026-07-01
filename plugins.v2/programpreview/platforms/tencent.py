@@ -4,11 +4,12 @@
 import asyncio
 import json
 import re
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
 
 from ..cache import load_platform_cache
-from ..categories import strip_item_category, with_category_many
+from ..categories import item_category, normalize_category, strip_item_category, with_category, with_category_many
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..fetcher import page_html_text
@@ -35,6 +36,9 @@ TENCENT_TITLE_ALIASES = {
     # 旧缓存或文本兜底可能已保存该文案，这里统一修正显示。
     '代露娃唐诗逸双强博弈': '画梦录',
 }
+
+TENCENT_SEARCH_URL = 'https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2'
+_TENCENT_SEARCH_CATEGORY_CACHE = {}
 
 
 def _tencent_pageservice_payload(page_id):
@@ -99,6 +103,93 @@ def _tencent_pageservice_pages():
         )
         pages.append((channel, html, ''))
     return pages
+
+
+def _tencent_search_payload(query):
+    body = {
+        'query': query,
+        'pagenum': 0,
+        'pagesize': 12,
+        'queryFrom': 'input',
+        'version': '8.2.96',
+        'clientType': 1,
+        'filterValue': '',
+        'retry': 0,
+        'featureList': [
+            'DEFAULT_FEFEATURE',
+            'PC_SHORT_VIDEOS_WATERFALL',
+            'PC_WANT_EPISODE_V2',
+            'PC_WANT_EPISODE',
+        ],
+    }
+    req = urllib.request.Request(
+        TENCENT_SEARCH_URL,
+        data=json.dumps(body, ensure_ascii=False).encode('utf-8'),
+        method='POST',
+        headers={
+            'User-Agent': UA,
+            'Content-Type': 'application/json',
+            'Origin': 'https://v.qq.com',
+            'Referer': 'https://v.qq.com/x/search/?q=' + urllib.parse.quote(query),
+        },
+    )
+    with urllib.request.urlopen(req, timeout=8) as resp:
+        return json.loads(resp.read().decode('utf-8', 'ignore'))
+
+
+def _iter_tencent_video_infos(obj):
+    if isinstance(obj, dict):
+        video_info = obj.get('videoInfo')
+        if isinstance(video_info, dict):
+            yield video_info
+        for value in obj.values():
+            yield from _iter_tencent_video_infos(value)
+    elif isinstance(obj, list):
+        for value in obj:
+            yield from _iter_tencent_video_infos(value)
+
+
+def _tencent_search_category(title):
+    title = _normalize_tencent_title(title)
+    if not title:
+        return ''
+    if title in _TENCENT_SEARCH_CATEGORY_CACHE:
+        return _TENCENT_SEARCH_CATEGORY_CACHE[title]
+    category = ''
+    try:
+        payload = _tencent_search_payload(title)
+        for info in _iter_tencent_video_infos(payload):
+            found_title = re.sub(r'<[^>]+>', '', html_unescape(info.get('title') or '')).strip()
+            if _normalize_tencent_title(found_title) != title:
+                continue
+            category = normalize_category(info.get('typeName'))
+            if category:
+                break
+    except Exception as err:
+        logger.debug(f'腾讯视频搜索分类补全失败：{title}，原因：{err!r}')
+    _TENCENT_SEARCH_CATEGORY_CACHE[title] = category
+    return category
+
+
+def _tencent_item_title(item):
+    clean = strip_item_category(item)
+    _left, sep, right = str(clean).partition('｜')
+    if not sep:
+        return ''
+    title = re.sub(r'（[^）]*预约）$', '', right).strip()
+    return _normalize_tencent_title(title)
+
+
+def _fill_tencent_missing_categories(items):
+    out = []
+    for item in items or []:
+        if item_category(item):
+            out.append(item)
+            continue
+        title = _tencent_item_title(item)
+        category = _tencent_search_category(title) if title else ''
+        out.append(with_category(item, category) if category else item)
+    return out
 
 
 async def tencent_page_html_text(url):
@@ -305,7 +396,7 @@ def _merge_tencent_items_with_cache(items, cache_name='腾讯视频'):
                 merged.append(item)
     except Exception:
         pass
-    return _sort_tencent_items(_dedupe_tencent_items(merged, 50))
+    return _fill_tencent_missing_categories(_sort_tencent_items(_dedupe_tencent_items(merged, 50)))
 
 def _normalize_tencent_title(title):
     original = str(title or '').strip()
