@@ -4,7 +4,7 @@
 import re
 from datetime import datetime, timedelta
 
-from .categories import split_category_prefix
+from .categories import short_category_label, split_category_prefix
 
 
 def normalize_date_text(date):
@@ -103,7 +103,7 @@ def format_preview_item(platform, item):
     category, clean_right = split_category_prefix(right)
     date = calendar_date_text(left)
     if category:
-        return f'[{category}] {date}｜{clean_right}'
+        return f'[{short_category_label(category)}] {date}｜{clean_right}'
     return f'{date}｜{right}'
 
 def calendar_date_text(text, now=None):

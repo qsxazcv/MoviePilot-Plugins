@@ -29,6 +29,17 @@ CATEGORY_ALIASES = {
     "未分类": "未分类",
 }
 
+CATEGORY_SHORT_LABELS = {
+    "电影": "影",
+    "电视剧": "剧",
+    "综艺": "综",
+    "动漫": "漫",
+    "纪录片": "纪",
+    "短剧": "短",
+    "少儿": "少",
+    "未分类": "?",
+}
+
 SOURCE_CATEGORY = {
     "tencent": {
         "tv": "电视剧",
@@ -79,6 +90,11 @@ def normalize_category(category):
     if not text:
         return ""
     return CATEGORY_ALIASES.get(text, text if text in CATEGORY_ORDER else "")
+
+
+def short_category_label(category):
+    label = normalize_category(category)
+    return CATEGORY_SHORT_LABELS.get(label, label[:1] if label else "?")
 
 
 def source_category(platform, source):
