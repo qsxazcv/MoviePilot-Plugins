@@ -16,7 +16,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.4` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.5` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.53` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
@@ -79,6 +79,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `2.0.5`：修复自动更新插件后动态注册插件 API 时透传 `allow_anonymous` 等 MoviePilot 扩展字段导致 `APIRouter.add_api_route()` 抛出 `unexpected keyword argument` 的异常；优先调用系统插件 API 注册流程，兼容旧环境时过滤非 FastAPI 原生字段。
 - `2.0.4`：基于原作者 `thsrite` 版本继续维护，原插件仓库：[thsrite/MoviePilot-Plugins](https://github.com/thsrite/MoviePilot-Plugins)，感谢原作者贡献；优化 MoviePilot 版本不兼容场景，自动更新时暂缓安装并说明当前版本、目标版本和最低要求；支持官方 `>=`/`>` 版本约束、安全读取主程序版本、持久化通知去重，等待 MoviePilot 升级兼容后自动继续更新并发送恢复成功提醒；同时修复定时任务并发保护，避免同一轮自动更新重复执行和重复通知。
 
 ### `programpreview`

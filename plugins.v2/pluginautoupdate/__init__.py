@@ -37,7 +37,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "2.0.4"
+    plugin_version = "2.0.5"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -574,6 +574,14 @@ class PluginAutoUpdate(_PluginBase):
         """
         注册插件API（先删除后新增）
         """
+        try:
+            from app.api.endpoints.plugin import register_plugin_api as register_api
+
+            register_api(plugin_id)
+            return
+        except Exception as err:
+            logger.warning(f"调用系统插件API注册失败，尝试兼容注册：{err}")
+
         apis: List[Dict[str, Any]] = []
         for api in PluginManager().get_plugin_apis():
             if plugin_id in api.get("path"):
@@ -584,7 +592,10 @@ class PluginAutoUpdate(_PluginBase):
                 if r.path == api.get("path"):
                     router.routes.remove(r)
                     break
-            router.add_api_route(**api)
+            route_api = dict(api)
+            route_api.pop("allow_anonymous", None)
+            route_api.pop("auth", None)
+            router.add_api_route(**route_api)
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
         """
