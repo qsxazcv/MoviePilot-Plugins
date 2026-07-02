@@ -5,7 +5,7 @@ const platformMeta={"爱奇艺":['mdi-alpha-q-circle-outline','pink'],"腾讯视
 const categoryOrder=['电影','电视剧','综艺','动漫','纪录片','短剧','少儿','未分类'];
 const categoryColors={"电影":"deep-purple","电视剧":"indigo","综艺":"green","动漫":"cyan","纪录片":"blue-grey","短剧":"pink","少儿":"orange","未分类":"grey"};
 const categoryShort={"电影":"影","电视剧":"剧","剧集":"剧","综艺":"综","动漫":"漫","动画":"漫","纪录片":"纪","纪录":"纪","纪实":"纪","短剧":"短","少儿":"少","未分类":"?"};
-function parsePreview(text=''){const groups=[];let cur=null;String(text||'').split(/\r?\n/).forEach(line=>{const t=line.trim();const m=t.match(/^【(.+?)】$/);if(m){cur={name:m[1],items:[]};groups.push(cur);return}if(cur&&t.startsWith('- '))cur.items.push(t.slice(2));});return groups}
+function parsePreview(text=''){const groups=[];let cur=null;String(text||'').split(/\r?\n/).forEach(line=>{const t=line.trim();const m=t.match(/^【(.+?)】$/)||t.match(/^━+\s*(.+?)\s+·\s+\d+条(?:\s+·\s+.*?)?\s+━+$/);if(m){cur={name:m[1],items:[]};groups.push(cur);return}if(cur&&t.startsWith('- '))cur.items.push(t.slice(2));});return groups}
 function itemCategory(item=''){const m=String(item||'').trim().match(/^\[([^\]]{1,12})\]\s*/);return m?m[1]:''}
 function shortCategoryLabel(category=''){return categoryShort[category]||category.slice(0,1)||'?'}
 function cleanPreviewItem(item=''){return String(item||'').trim().replace(/^\[[^\]]{1,12}\]\s*/,'')}

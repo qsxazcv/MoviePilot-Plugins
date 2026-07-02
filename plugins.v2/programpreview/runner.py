@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 
 from .cache import apply_platform_cache
-from .categories import ensure_category_many, filter_short_drama_items, source_category, with_category
+from .categories import category_summary, ensure_category_many, filter_short_drama_items, short_category_label, source_category, with_category
 from .constants import OUT_FILE, SITES, STATE_FILE
 from .date_utils import format_preview_item, sort_platform_items
 from .fetcher import page_text
@@ -57,6 +57,15 @@ def digest(data):
 
 def _placeholder_items():
     return ['暂未从公开页面提取到明确“即将上线/预约”条目']
+
+
+def platform_heading(name, items):
+    items = list(items or [])
+    summary = ' '.join(f'{short_category_label(category)}{count}' for category, count in category_summary(items))
+    parts = [name, f'{len(items)}条']
+    if summary:
+        parts.append(summary)
+    return f"━━━━ {' · '.join(parts)} ━━━━"
 
 
 async def fetch_site(name, url, include_short_drama=False):
@@ -175,8 +184,9 @@ async def main(force_notify=False, include_short_drama=False):
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     md = [f'四大平台即将上线节目预告（{now}）']
     for name, _ in SITES:
-        md.append(f'\n【{name}】')
-        for it in sort_platform_items(result[name]):
+        items = sort_platform_items(result[name])
+        md.append(f'\n{platform_heading(name, items)}')
+        for it in items:
             md.append(f'- {format_preview_item(name, it)}')
     msg = '\n'.join(md)
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
