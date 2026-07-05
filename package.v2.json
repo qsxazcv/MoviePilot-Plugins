@@ -89,7 +89,7 @@
     "author": "DDSRem",
     "level": 1,
     "history": {
-      "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，更新下载源和配置结构；感谢原作者 DDSRem",
+      "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，更新下载源、配置结构和依赖声明；感谢原作者 DDSRem",
       "v1.0.7": "兼容 MacOS 系统",
       "v1.0.6": "再修复 URL 编码问题",
       "v1.0.5": "修复 URL 编码问题",
