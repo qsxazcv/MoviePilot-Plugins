@@ -84,22 +84,12 @@
     "name": "MediaWarp",
     "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。",
     "labels": "云盘",
-    "version": "1.0.10",
+    "version": "1.0.8",
     "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
     "author": "DDSRem",
     "level": 1,
     "history": {
-      "v1.0.10": "移除高级设置页签，配置页恢复 1.0.7 的简洁结构；缓存、HTTPStrm 和 AlistStrm 等高级项改由 config.yaml 手动维护；感谢原作者 DDSRem",
-      "v1.0.9": "修复 MediaWarp 启动工作目录，确保相对路径 config/config.yaml 能读取到插件数据目录下的配置文件；感谢原作者 DDSRem",
-      "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，更新下载源、配置结构和依赖声明；感谢原作者 DDSRem",
-      "v1.0.7": "兼容 MacOS 系统",
-      "v1.0.6": "再修复 URL 编码问题",
-      "v1.0.5": "修复 URL 编码问题",
-      "v1.0.4": "修复配置缺失",
-      "v1.0.3": "修复afusekt播放器无法播放",
-      "v1.0.2": "下载使用MP代理",
-      "v1.0.1": "兼容更多友商STRM文件地址，修复STRM地址编码错误",
-      "v1.0.0": "发布"
+      "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 config.yaml 手动维护；感谢原作者 DDSRem"
     }
   },
   "weiyuncookie": {
