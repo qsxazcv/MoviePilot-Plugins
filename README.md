@@ -19,6 +19,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.5` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.53` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
 ## 插件详情
@@ -57,6 +58,15 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 覆盖电视剧、电影、综艺、动漫、少儿、短剧、漫剧、纪录片和知识频道。
 - 适配爱奇艺官方片库筛选与媒体转换逻辑。
 - 修复部分频道返回非标准媒体类型导致的类型标签和详情展示问题。
+
+### MediaWarp
+
+适合需要在 EmbyServer/Jellyfin 前面增强 STRM 播放、样式和客户端访问控制的用户。
+
+- 原作者：`DDSRem`，原插件仓库：[DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。感谢原作者提供 MoviePilot 插件适配基础。
+- 上游服务：[AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp)，当前适配 `v0.2.4`。
+- 支持自动下载 MediaWarp 二进制并生成新版小写配置结构。
+- 支持缓存 TTL、HTTPStrm 代理/最终地址/兼容模式、AlistStrm 代理/原始地址和字幕转换配置。
 
 ### 微云Cookie助手
 
@@ -106,6 +116,10 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 - `1.0.37`：按功能区拆分爱奇艺探索源码，分离常量、筛选、请求、媒体转换和探索页 UI 生成逻辑，便于后续维护官方分类和接口适配。
 - `1.0.36`：修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型导致的类型标签和详情展示问题。
+
+### `MediaWarp`
+
+- `1.0.8`：适配 [AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp) `v0.2.4`，更新下载源和配置结构；感谢原作者 `DDSRem` 及 [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。
 
 ### `weiyuncookie`
 

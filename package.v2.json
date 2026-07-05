@@ -80,6 +80,26 @@
       "v1.0.36": "修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型，导致 MoviePilot 探索页类型标签不显示、点击详情无内容的问题。"
     }
   },
+  "MediaWarp": {
+    "name": "MediaWarp",
+    "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。",
+    "labels": "云盘",
+    "version": "1.0.8",
+    "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
+    "author": "DDSRem",
+    "level": 1,
+    "history": {
+      "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，更新下载源和配置结构；感谢原作者 DDSRem",
+      "v1.0.7": "兼容 MacOS 系统",
+      "v1.0.6": "再修复 URL 编码问题",
+      "v1.0.5": "修复 URL 编码问题",
+      "v1.0.4": "修复配置缺失",
+      "v1.0.3": "修复afusekt播放器无法播放",
+      "v1.0.2": "下载使用MP代理",
+      "v1.0.1": "兼容更多友商STRM文件地址，修复STRM地址编码错误",
+      "v1.0.0": "发布"
+    }
+  },
   "weiyuncookie": {
     "name": "微云Cookie助手",
     "description": "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。",
