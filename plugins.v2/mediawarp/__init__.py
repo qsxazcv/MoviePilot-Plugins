@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "1.0.9"
+    plugin_version = "1.0.10"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -63,16 +63,6 @@ class MediaWarp(_PluginBase):
     _danmaku = False
     _video_together = False
     _srt2ass = False
-    _cache_enable = True
-    _cache_http_strm_ttl = "1m"
-    _cache_alist_api_ttl = "10m"
-    _cache_image_ttl = "10m"
-    _cache_subtitle_ttl = "2h"
-    _http_strm_proxy = False
-    _http_strm_final_url = True
-    _http_strm_compatibility_mode = False
-    _alist_strm_proxy = True
-    _alist_strm_raw_url = False
 
     def __init__(self):
         """
@@ -116,18 +106,6 @@ class MediaWarp(_PluginBase):
             self._danmaku = config.get("danmaku")
             self._video_together = config.get("video_together")
             self._srt2ass = config.get("srt2ass")
-            self._cache_enable = config.get("cache_enable", True)
-            self._cache_http_strm_ttl = config.get("cache_http_strm_ttl") or "1m"
-            self._cache_alist_api_ttl = config.get("cache_alist_api_ttl") or "10m"
-            self._cache_image_ttl = config.get("cache_image_ttl") or "10m"
-            self._cache_subtitle_ttl = config.get("cache_subtitle_ttl") or "2h"
-            self._http_strm_proxy = config.get("http_strm_proxy", False)
-            self._http_strm_final_url = config.get("http_strm_final_url", True)
-            self._http_strm_compatibility_mode = config.get(
-                "http_strm_compatibility_mode", False
-            )
-            self._alist_strm_proxy = config.get("alist_strm_proxy", True)
-            self._alist_strm_raw_url = config.get("alist_strm_raw_url", False)
 
             # 获取媒体服务器
             if self._mediaservers:
@@ -179,16 +157,6 @@ class MediaWarp(_PluginBase):
                 "danmaku": self._danmaku,
                 "video_together": self._video_together,
                 "srt2ass": self._srt2ass,
-                "cache_enable": self._cache_enable,
-                "cache_http_strm_ttl": self._cache_http_strm_ttl,
-                "cache_alist_api_ttl": self._cache_alist_api_ttl,
-                "cache_image_ttl": self._cache_image_ttl,
-                "cache_subtitle_ttl": self._cache_subtitle_ttl,
-                "http_strm_proxy": self._http_strm_proxy,
-                "http_strm_final_url": self._http_strm_final_url,
-                "http_strm_compatibility_mode": self._http_strm_compatibility_mode,
-                "alist_strm_proxy": self._alist_strm_proxy,
-                "alist_strm_raw_url": self._alist_strm_raw_url,
             }
         )
 
@@ -339,174 +307,6 @@ class MediaWarp(_PluginBase):
                                     "model": "srt2ass",
                                     "label": "SRT转ASS",
                                     "hint": "SRT 字幕转 ASS 字幕",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
-        ]
-
-        advanced = [
-            {
-                "component": "VRow",
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "cache_enable",
-                                    "label": "启用缓存",
-                                    "hint": "启用 MediaWarp 内置缓存",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "http_strm_proxy",
-                                    "label": "HTTPStrm代理",
-                                    "hint": "允许流量经过媒体服务器",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "http_strm_final_url",
-                                    "label": "获取最终链接",
-                                    "hint": "减少客户端重定向次数",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
-            {
-                "component": "VRow",
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "http_strm_compatibility_mode",
-                                    "label": "兼容模式",
-                                    "hint": "使用更兼容但效率较低的最终链接获取方式",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "alist_strm_proxy",
-                                    "label": "AlistStrm代理",
-                                    "hint": "允许 AlistStrm 流量经过媒体服务器",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "alist_strm_raw_url",
-                                    "label": "使用RawURL",
-                                    "hint": "直接响应 Alist 上游真实链接",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
-            {
-                "component": "VRow",
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 3},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model": "cache_http_strm_ttl",
-                                    "label": "HTTPStrm缓存",
-                                    "hint": "示例：1m、2h；0 为关闭",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 3},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model": "cache_alist_api_ttl",
-                                    "label": "Alist API缓存",
-                                    "hint": "示例：10m",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 3},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model": "cache_image_ttl",
-                                    "label": "图片缓存",
-                                    "hint": "示例：10m",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 3},
-                        "content": [
-                            {
-                                "component": "VTextField",
-                                "props": {
-                                    "model": "cache_subtitle_ttl",
-                                    "label": "字幕缓存",
-                                    "hint": "示例：2h",
                                     "persistent-hint": True,
                                 },
                             }
@@ -727,21 +527,6 @@ class MediaWarp(_PluginBase):
                                     {"component": "span", "text": "字体相关设置"},
                                 ],
                             },
-                            {
-                                "component": "VTab",
-                                "props": {"value": "advanced"},
-                                "content": [
-                                    {
-                                        "component": "VIcon",
-                                        "props": {
-                                            "icon": "mdi-tune",
-                                            "start": True,
-                                            "color": "#FF9800",
-                                        },
-                                    },
-                                    {"component": "span", "text": "高级设置"},
-                                ],
-                            },
                         ],
                     },
                     {"component": "VDivider"},
@@ -766,13 +551,6 @@ class MediaWarp(_PluginBase):
                                     {"component": "VCardText", "content": subtitle}
                                 ],
                             },
-                            {
-                                "component": "VWindowItem",
-                                "props": {"value": "advanced"},
-                                "content": [
-                                    {"component": "VCardText", "content": advanced}
-                                ],
-                            },
                         ],
                     },
                 ],
@@ -789,16 +567,6 @@ class MediaWarp(_PluginBase):
             "danmaku": False,
             "video_together": False,
             "srt2ass": False,
-            "cache_enable": True,
-            "cache_http_strm_ttl": "1m",
-            "cache_alist_api_ttl": "10m",
-            "cache_image_ttl": "10m",
-            "cache_subtitle_ttl": "2h",
-            "http_strm_proxy": False,
-            "http_strm_final_url": True,
-            "http_strm_compatibility_mode": False,
-            "alist_strm_proxy": True,
-            "alist_strm_raw_url": False,
             "tab": "web-ui",
         }
 
@@ -833,11 +601,6 @@ class MediaWarp(_PluginBase):
             else "Emby",
             "server.addr": self._emby_host,
             "server.auth": self._emby_apikey,
-            "cache.enable": bool(self._cache_enable),
-            "cache.http_strm_ttl": self._cache_http_strm_ttl or "1m",
-            "cache.alist_api_ttl": self._cache_alist_api_ttl or "10m",
-            "cache.image_ttl": self._cache_image_ttl or "10m",
-            "cache.subtitle_ttl": self._cache_subtitle_ttl or "2h",
             "web.index": bool(
                 Path(self.__config_path / "static" / "index.html").exists()
             ),
@@ -847,16 +610,7 @@ class MediaWarp(_PluginBase):
             "web.danmaku": bool(self._danmaku),
             "web.external_player_url": bool(self._external_player_url),
             "web.video_together": bool(self._video_together),
-            "http_strm.enable": True,
-            "http_strm.proxy": bool(self._http_strm_proxy),
-            "http_strm.final_url": bool(self._http_strm_final_url),
-            "http_strm.compatibility_mode": bool(
-                self._http_strm_compatibility_mode
-            ),
             "http_strm.prefix_list": self.__get_prefix_list(),
-            "alist_strm.enable": True,
-            "alist_strm.proxy": bool(self._alist_strm_proxy),
-            "alist_strm.raw_url": bool(self._alist_strm_raw_url),
             "subtitle.srt2ass": bool(self._srt2ass),
         }
 
