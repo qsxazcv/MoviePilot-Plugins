@@ -37,7 +37,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "2.0.6"
+    plugin_version = "2.0.7"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -66,6 +66,8 @@ class PluginAutoUpdate(_PluginBase):
     _update_lock = Lock()
     _waiting_notified = set()
     _waiting_updates_data_key = "waiting_updates"
+    _manual_update_results_data_key = "manual_update_results"
+    _manual_update_dedupe_seconds = 300
 
     def init_plugin(self, config: dict = None):
         # 停止现有任务
@@ -140,12 +142,16 @@ class PluginAutoUpdate(_PluginBase):
                 return
             logger.info("收到命令，开始插件更新 ...")
             update_forced = True
-            self.post_message(channel=event.event_data.get("channel"),
-                              title="开始插件更新 ...",
-                              userid=event.event_data.get("user"))
 
         if not self._update_lock.acquire(blocking=False):
             logger.warning("已有插件更新任务正在运行，本次跳过，避免重复更新和重复通知")
+            if event:
+                event_data = event.event_data
+                if event_data and event_data.get("action") == "plugin_update":
+                    self.post_message(channel=event_data.get("channel"),
+                                      title="插件更新检查正在进行中",
+                                      text="请稍后查看本次检查结果。",
+                                      userid=event_data.get("user"))
             return
 
         logger.info("插件更新任务开始")
@@ -217,7 +223,7 @@ class PluginAutoUpdate(_PluginBase):
                             title = waiting["title"]
                             logger.warning(waiting["log"])
                             self.__send_waiting_notify(waiting)
-                            manual_update_results.append(self.__format_manual_update_result(waiting))
+                            manual_update_results.append(waiting)
                             continue
                         waiting_dedupe_key = None
                         waiting_entry = None
@@ -248,7 +254,7 @@ class PluginAutoUpdate(_PluginBase):
                                     title = waiting["title"]
                                     logger.warning(waiting["log"])
                                     self.__send_waiting_notify(waiting)
-                                    manual_update_results.append(self.__format_manual_update_result(waiting))
+                                    manual_update_results.append(waiting)
                                     continue
                                 title = f"插件 {plugin.plugin_name} 更新失败"
                                 logger.error(f"{title} {version_text}，原因：{msg}")
@@ -280,9 +286,10 @@ class PluginAutoUpdate(_PluginBase):
             event_data = event.event_data
             if not event_data or event_data.get("action") != "plugin_update":
                 return
+            reply_title, reply_text = self.__build_manual_update_reply(event_data, manual_update_results)
             self.post_message(channel=event_data.get("channel"),
-                              title="插件更新任务完成",
-                              text="\n\n".join(manual_update_results),
+                              title=reply_title,
+                              text=reply_text,
                               userid=event_data.get("user"))
             return
 
@@ -314,6 +321,85 @@ class PluginAutoUpdate(_PluginBase):
             f"要求：{waiting.get('system_requirement')}，"
             f"当前 MoviePilot：{waiting.get('current_system_version')}"
         )
+
+    def __build_manual_update_reply(self, event_data: Dict[str, Any],
+                                    waiting_updates: List[Dict[str, str]]) -> Tuple[str, str]:
+        if self.__is_repeated_manual_update_result(event_data, waiting_updates):
+            return "插件更新状态未变化", self.__format_manual_update_unchanged_summary(waiting_updates)
+        return "插件更新任务完成", "\n\n".join(
+            self.__format_manual_update_result(waiting)
+            for waiting in waiting_updates
+        )
+
+    def __is_repeated_manual_update_result(self, event_data: Dict[str, Any],
+                                           waiting_updates: List[Dict[str, str]]) -> bool:
+        fingerprint = self.__manual_update_result_fingerprint(waiting_updates)
+        if not fingerprint:
+            return False
+        scope = self.__manual_update_result_scope(event_data)
+        now_ts = datetime.now(tz=pytz.timezone(settings.TZ)).timestamp()
+        try:
+            data = self.get_data(self._manual_update_results_data_key) or {}
+        except Exception as err:
+            logger.warning(f"读取手动插件更新结果记录失败：{str(err)}")
+            data = {}
+        if not isinstance(data, dict):
+            data = {}
+        entry = data.get(scope) or {}
+        repeated = (
+                entry.get("fingerprint") == fingerprint
+                and now_ts - float(entry.get("last_seen_ts") or 0) <= self._manual_update_dedupe_seconds
+        )
+        data[scope] = {
+            "fingerprint": fingerprint,
+            "last_seen_ts": now_ts,
+            "summary_count": len(waiting_updates),
+        }
+        try:
+            self.save_data(self._manual_update_results_data_key, data)
+        except Exception as err:
+            logger.warning(f"保存手动插件更新结果记录失败：{str(err)}")
+        return repeated
+
+    @staticmethod
+    def __manual_update_result_scope(event_data: Dict[str, Any]) -> str:
+        return f"{event_data.get('channel') or '-'}:{event_data.get('user') or '-'}"
+
+    @staticmethod
+    def __manual_update_result_fingerprint(waiting_updates: List[Dict[str, str]]) -> str:
+        items = []
+        for waiting in waiting_updates:
+            items.append("|".join([
+                str(waiting.get("plugin_id") or ""),
+                str(waiting.get("current_plugin_version") or ""),
+                str(waiting.get("target_plugin_version") or ""),
+                "waiting",
+                str(waiting.get("system_requirement") or ""),
+                str(waiting.get("current_system_version") or ""),
+            ]))
+        return "\n".join(sorted(items))
+
+    @staticmethod
+    def __format_manual_update_unchanged_summary(waiting_updates: List[Dict[str, str]]) -> str:
+        count = len(waiting_updates)
+        if count == 1:
+            waiting = waiting_updates[0]
+            return (
+                "仍有 1 个插件暂缓更新：\n"
+                f"{waiting.get('plugin_name')} "
+                f"v{waiting.get('current_plugin_version')} -> v{waiting.get('target_plugin_version')}\n"
+                f"要求 {waiting.get('system_requirement')}，"
+                f"当前 {waiting.get('current_system_version')}"
+            )
+        lines = [f"仍有 {count} 个插件暂缓更新："]
+        for index, waiting in enumerate(waiting_updates, start=1):
+            lines.append(
+                f"{index}. {waiting.get('plugin_name')} "
+                f"v{waiting.get('current_plugin_version')} -> v{waiting.get('target_plugin_version')}"
+            )
+        lines.append("")
+        lines.append("部分插件需升级 MoviePilot 后才能更新。")
+        return "\n".join(lines)
 
     @staticmethod
     def _get_current_system_version() -> str:
