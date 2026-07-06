@@ -37,7 +37,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "2.0.7"
+    plugin_version = "2.0.8"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -118,6 +118,7 @@ class PluginAutoUpdate(_PluginBase):
                                         run_date=datetime.now(tz=pytz.timezone(settings.TZ)) + timedelta(seconds=1),
                                         id="pluginautoupdate_once",
                                         name="插件自动更新",
+                                        kwargs={"manual_once": True},
                                         replace_existing=True,
                                         max_instances=1)
 
@@ -127,7 +128,7 @@ class PluginAutoUpdate(_PluginBase):
                 self._scheduler.start()
 
     @eventmanager.register(EventType.PluginAction)
-    def plugin_update(self, event: Event = None):
+    def plugin_update(self, event: Event = None, manual_once: bool = False):
         """
         插件自动更新
         """
@@ -156,13 +157,13 @@ class PluginAutoUpdate(_PluginBase):
 
         logger.info("插件更新任务开始")
         try:
-            self.__plugin_update(event=event, update_forced=update_forced)
+            self.__plugin_update(event=event, update_forced=update_forced, manual_once=manual_once)
         except Exception as err:
             logger.error(f"插件更新任务异常：{str(err)} - {traceback.format_exc()}")
         finally:
             self._update_lock.release()
 
-    def __plugin_update(self, event: Event = None, update_forced: bool = False):
+    def __plugin_update(self, event: Event = None, update_forced: bool = False, manual_once: bool = False):
         # 已安装插件
         install_plugins = SystemConfigOper().get(SystemConfigKey.UserInstalledPlugins) or []
 
@@ -220,6 +221,7 @@ class PluginAutoUpdate(_PluginBase):
                         if not self._is_system_version_compatible(plugin, current_system_version):
                             waiting = self._build_waiting_update(plugin, install_plugin_version,
                                                                  current_system_version)
+                            waiting["already_notified"] = self.__is_waiting_already_notified(waiting)
                             title = waiting["title"]
                             logger.warning(waiting["log"])
                             self.__send_waiting_notify(waiting)
@@ -251,6 +253,7 @@ class PluginAutoUpdate(_PluginBase):
                                     install_message=msg
                                 )
                                 if waiting:
+                                    waiting["already_notified"] = self.__is_waiting_already_notified(waiting)
                                     title = waiting["title"]
                                     logger.warning(waiting["log"])
                                     self.__send_waiting_notify(waiting)
@@ -282,15 +285,25 @@ class PluginAutoUpdate(_PluginBase):
                         self.__send_notify(title=title, plugin=plugin, version_text=version_text)
 
         # 重载插件管理器
-        if event and manual_update_results:
-            event_data = event.event_data
-            if not event_data or event_data.get("action") != "plugin_update":
+        if (event or manual_once) and manual_update_results:
+            event_data = event.event_data if event else None
+            if event and (not event_data or event_data.get("action") != "plugin_update"):
                 return
-            reply_title, reply_text = self.__build_manual_update_reply(event_data, manual_update_results)
-            self.post_message(channel=event_data.get("channel"),
-                              title=reply_title,
-                              text=reply_text,
-                              userid=event_data.get("user"))
+            reply_title, reply_text = self.__build_manual_update_reply(
+                event_data=event_data or {},
+                waiting_updates=manual_update_results,
+                force_unchanged=bool(manual_once and all(
+                    waiting.get("already_notified") for waiting in manual_update_results
+                ))
+            )
+            post_kwargs = {
+                "title": reply_title,
+                "text": reply_text,
+            }
+            if event_data:
+                post_kwargs["channel"] = event_data.get("channel")
+                post_kwargs["userid"] = event_data.get("user")
+            self.post_message(**post_kwargs)
             return
 
         if not title:
@@ -323,13 +336,21 @@ class PluginAutoUpdate(_PluginBase):
         )
 
     def __build_manual_update_reply(self, event_data: Dict[str, Any],
-                                    waiting_updates: List[Dict[str, str]]) -> Tuple[str, str]:
-        if self.__is_repeated_manual_update_result(event_data, waiting_updates):
+                                    waiting_updates: List[Dict[str, str]],
+                                    force_unchanged: bool = False) -> Tuple[str, str]:
+        if force_unchanged or self.__is_repeated_manual_update_result(event_data, waiting_updates):
             return "插件更新状态未变化", self.__format_manual_update_unchanged_summary(waiting_updates)
         return "插件更新任务完成", "\n\n".join(
             self.__format_manual_update_result(waiting)
             for waiting in waiting_updates
         )
+
+    def __is_waiting_already_notified(self, waiting: Dict[str, str]) -> bool:
+        dedupe_key = waiting.get("dedupe_key")
+        if not dedupe_key:
+            return False
+        entry = self.__load_waiting_updates().get(dedupe_key) or {}
+        return bool(entry.get("notified")) or dedupe_key in self._waiting_notified
 
     def __is_repeated_manual_update_result(self, event_data: Dict[str, Any],
                                            waiting_updates: List[Dict[str, str]]) -> bool:

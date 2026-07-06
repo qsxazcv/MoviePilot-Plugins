@@ -16,7 +16,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.7` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.53` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
@@ -89,6 +89,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `2.0.8`：修复配置页“立即运行”和 `/plugin_update` 的结果通知不一致：一次性立即运行会识别为人工触发，遇到已通知过的暂缓项时同样返回“插件更新状态未变化”短摘要，同时保留更新成功通知。
 - `2.0.7`：优化手动触发 `/plugin_update` 的重复回执体验：移除即时开始通知，同一会话 5 分钟内相同暂缓结果只返回“插件更新状态未变化”短摘要，并在任务已运行时返回检查中提示。
 - `2.0.6`：修复手动触发 `/plugin_update` 时遇到已通知过的版本不兼容暂缓项，只收到开始消息、没有任务结束回执的问题；保留暂缓通知去重，同时向当前命令频道返回本次仍暂缓的插件摘要。
 - `2.0.5`：修复自动更新插件后动态注册插件 API 时透传 `allow_anonymous` 等 MoviePilot 扩展字段导致 `APIRouter.add_api_route()` 抛出 `unexpected keyword argument` 的异常；优先调用系统插件 API 注册流程，兼容旧环境时过滤非 FastAPI 原生字段。
