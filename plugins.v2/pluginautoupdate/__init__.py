@@ -37,7 +37,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "2.0.5"
+    plugin_version = "2.0.6"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -186,6 +186,7 @@ class PluginAutoUpdate(_PluginBase):
                 running_scheduler.append(scheduler.id)
 
         title = None
+        manual_update_results = []
         current_system_version = self._get_current_system_version()
         # 支持更新的插件自动更新
         for plugin in online_plugins:
@@ -216,6 +217,7 @@ class PluginAutoUpdate(_PluginBase):
                             title = waiting["title"]
                             logger.warning(waiting["log"])
                             self.__send_waiting_notify(waiting)
+                            manual_update_results.append(self.__format_manual_update_result(waiting))
                             continue
                         waiting_dedupe_key = None
                         waiting_entry = None
@@ -246,6 +248,7 @@ class PluginAutoUpdate(_PluginBase):
                                     title = waiting["title"]
                                     logger.warning(waiting["log"])
                                     self.__send_waiting_notify(waiting)
+                                    manual_update_results.append(self.__format_manual_update_result(waiting))
                                     continue
                                 title = f"插件 {plugin.plugin_name} 更新失败"
                                 logger.error(f"{title} {version_text}，原因：{msg}")
@@ -273,6 +276,16 @@ class PluginAutoUpdate(_PluginBase):
                         self.__send_notify(title=title, plugin=plugin, version_text=version_text)
 
         # 重载插件管理器
+        if event and manual_update_results:
+            event_data = event.event_data
+            if not event_data or event_data.get("action") != "plugin_update":
+                return
+            self.post_message(channel=event_data.get("channel"),
+                              title="插件更新任务完成",
+                              text="\n\n".join(manual_update_results),
+                              userid=event_data.get("user"))
+            return
+
         if not title:
             logger.info("所有插件已是最新版本")
             if event:
@@ -292,6 +305,15 @@ class PluginAutoUpdate(_PluginBase):
                     self.post_message(channel=event.event_data.get("channel"),
                                       title=title,
                                       userid=event.event_data.get("user"))
+
+    @staticmethod
+    def __format_manual_update_result(waiting: Dict[str, str]) -> str:
+        return (
+            f"{waiting.get('title')}\n"
+            f"{waiting.get('version_text')}\n"
+            f"要求：{waiting.get('system_requirement')}，"
+            f"当前 MoviePilot：{waiting.get('current_system_version')}"
+        )
 
     @staticmethod
     def _get_current_system_version() -> str:
