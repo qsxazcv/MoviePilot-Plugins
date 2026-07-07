@@ -14,6 +14,7 @@ from ..fetcher import (
     is_playwright_browser_missing_error,
     mark_playwright_browser_unavailable,
     playwright_browser_available,
+    playwright_launch_kwargs,
 )
 from ..text_utils import dedupe
 
@@ -90,7 +91,7 @@ async def youku_initial_data(url):
             raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA)
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             await page.wait_for_timeout(1800)

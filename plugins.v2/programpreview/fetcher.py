@@ -26,6 +26,20 @@ _PLAYWRIGHT_BROWSER_MISSING_MARKERS = (
     "chromium_headless_shell",
     "chrome-headless-shell",
 )
+_PLAYWRIGHT_EXECUTABLE_CANDIDATE_ROOTS = (
+    Path('/moviepilot/.cache/ms-playwright'),
+    Path('/moviepilot/.cloakbrowser'),
+    Path('/core/.cloakbrowser'),
+)
+_CLOAKBROWSER_CACHE_DIRS = (
+    Path('/core/.cloakbrowser'),
+    Path('/moviepilot/.cloakbrowser'),
+)
+_PLAYWRIGHT_EXECUTABLE_PATTERNS = (
+    'chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell',
+    'chromium-*/chrome-linux64/chrome',
+    'chromium-*/chrome',
+)
 
 
 def is_playwright_browser_missing_error(err):
@@ -66,15 +80,62 @@ def browser_args():
     ]
 
 
+def _existing_browser_executable():
+    for env_name in (
+        'PROGRAM_PREVIEW_BROWSER_EXECUTABLE',
+        'PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH',
+        'CLOAKBROWSER_BINARY_PATH',
+    ):
+        executable = os.environ.get(env_name)
+        if executable and Path(executable).exists():
+            return executable
+    for root in _PLAYWRIGHT_EXECUTABLE_CANDIDATE_ROOTS:
+        if not root.exists():
+            continue
+        for pattern in _PLAYWRIGHT_EXECUTABLE_PATTERNS:
+            for executable in sorted(root.glob(pattern), reverse=True):
+                if executable.exists():
+                    return str(executable)
+    return None
+
+
+def playwright_launch_kwargs():
+    kwargs = {
+        'headless': True,
+        'args': browser_args(),
+    }
+    executable = _existing_browser_executable()
+    if executable:
+        kwargs['executable_path'] = executable
+    return kwargs
+
+
+def _cloakbrowser_chrome_in_cache(cache_dir):
+    if not cache_dir or not Path(cache_dir).exists():
+        return None
+    binaries = sorted(Path(cache_dir).glob('chromium-*/chrome'), reverse=True)
+    for binary in binaries:
+        if binary.exists():
+            return binary
+    return None
+
+
 def prepare_cloakbrowser_env():
-    if os.environ.get('CLOAKBROWSER_CACHE_DIR') or os.environ.get('CLOAKBROWSER_BINARY_PATH'):
+    binary = os.environ.get('CLOAKBROWSER_BINARY_PATH')
+    if binary and Path(binary).exists():
         return
-    for cache_dir in (Path('/core/.cloakbrowser'), Path('/moviepilot/.cloakbrowser')):
+    cache_env = os.environ.get('CLOAKBROWSER_CACHE_DIR')
+    binary = _cloakbrowser_chrome_in_cache(cache_env)
+    if binary:
+        os.environ['CLOAKBROWSER_BINARY_PATH'] = str(binary)
+        return
+    for cache_dir in _CLOAKBROWSER_CACHE_DIRS:
         if not cache_dir.exists():
             continue
-        binaries = sorted(cache_dir.glob('chromium-*/chrome'), reverse=True)
-        if binaries:
+        binary = _cloakbrowser_chrome_in_cache(cache_dir)
+        if binary:
             os.environ['CLOAKBROWSER_CACHE_DIR'] = str(cache_dir)
+            os.environ['CLOAKBROWSER_BINARY_PATH'] = str(binary)
             return
 
 
@@ -191,7 +252,7 @@ async def _dynamic_html_text(url, wait=5000, viewport=None):
     try:
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page_args = {'user_agent': UA}
             if viewport:
                 page_args['viewport'] = viewport
@@ -248,7 +309,7 @@ async def iqiyi_filtered_page_html_text(url, wait=5000):
     try:
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             await page.wait_for_timeout(min(wait, 2500))

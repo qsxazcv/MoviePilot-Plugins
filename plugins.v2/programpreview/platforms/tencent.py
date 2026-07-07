@@ -18,6 +18,7 @@ from ..fetcher import (
     mark_playwright_browser_unavailable,
     page_html_text,
     playwright_browser_available,
+    playwright_launch_kwargs,
 )
 from ..text_utils import clean_lines, dedupe, html_unescape
 
@@ -45,6 +46,7 @@ TENCENT_TITLE_ALIASES = {
 }
 
 TENCENT_SEARCH_URL = 'https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2'
+TENCENT_SEARCH_FALLBACK_TITLES = ['百花杀']
 _TENCENT_SEARCH_CATEGORY_CACHE = {}
 _TENCENT_SEARCH_RESERVE_CACHE = {}
 
@@ -254,6 +256,72 @@ def _tencent_search_reserve_sync(title):
     return reserve
 
 
+def _tencent_release_date_from_text(text):
+    text = str(text or '')
+    if not re.search(r'定档|上线|开播|首播|预约', text):
+        return ''
+    m = re.search(r'(\d{1,2})月(\d{1,2})日\s*(?:上线|开播|首播|定档)?', text)
+    if m:
+        return f'{int(m.group(1))}月{int(m.group(2))}日'
+    m = re.search(r'(?:定档|上线|开播|首播)\D{0,4}([01]?\d)([0-3]\d)', text)
+    if not m:
+        m = re.search(r'([01]?\d)([0-3]\d)\D{0,4}(?:定档|上线|开播|首播)', text)
+    if not m:
+        return ''
+    mo, day = int(m.group(1)), int(m.group(2))
+    if 1 <= mo <= 12 and 1 <= day <= 31:
+        return f'{mo}月{day}日'
+    return ''
+
+
+def _tencent_search_release_date(info):
+    candidates = []
+    for key in ('subTitle', 'highlightSubTitle', 'descrip', 'imgTag'):
+        candidates.append(info.get(key))
+    for site_key in ('episodeSites', 'playSites'):
+        for site in info.get(site_key) or []:
+            if not isinstance(site, dict):
+                continue
+            for episode in site.get('episodeInfoList') or []:
+                if not isinstance(episode, dict):
+                    continue
+                for key in ('title', 'fullTitle', 'episodeTitle', 'markLabel'):
+                    candidates.append(episode.get(key))
+    for text in candidates:
+        date = _tencent_release_date_from_text(text)
+        if date and _tencent_date_is_future(date):
+            return date
+    return ''
+
+
+def _tencent_search_fallback_items_sync(titles=None):
+    items = []
+    for title in titles or TENCENT_SEARCH_FALLBACK_TITLES:
+        title = _normalize_tencent_title(title)
+        if not title:
+            continue
+        try:
+            payload = _tencent_search_payload(title)
+        except Exception as err:
+            logger.debug(f'腾讯视频搜索补漏失败：{title}，原因：{err!r}')
+            continue
+        for info in _iter_tencent_video_infos(payload):
+            found_title = re.sub(r'<[^>]+>', '', html_unescape(info.get('title') or '')).strip()
+            if _normalize_tencent_title(found_title) != title:
+                continue
+            reserve = _tencent_reserve_from_search_info(info)
+            if not reserve or '预约' not in json.dumps(info, ensure_ascii=False):
+                continue
+            date = _tencent_search_release_date(info)
+            if not date:
+                continue
+            item = f'{date}｜{title}（{reserve}）'
+            category = normalize_category(info.get('typeName'))
+            items.append(with_category(item, category) if category else item)
+            break
+    return _sort_tencent_items(_dedupe_tencent_items(items, 50))
+
+
 def _tencent_item_title(item):
     clean = strip_item_category(item)
     _left, sep, right = str(clean).partition('｜')
@@ -300,7 +368,7 @@ async def tencent_page_html_text(url, include_short_drama=False):
         out = []
         page_jsons = []
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             async def _capture_response(resp):
                 # 腾讯频道新版页面把更完整的频道模块放在 PageService JSON 中；记录下来供解析函数兜底使用。

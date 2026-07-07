@@ -18,6 +18,7 @@ from ..fetcher import (
     mark_playwright_browser_unavailable,
     page_html_text,
     playwright_browser_available,
+    playwright_launch_kwargs,
 )
 from ..text_utils import clean_lines, dedupe, html_unescape
 
@@ -648,7 +649,7 @@ async def _iqiyi_videolib_payloads():
             raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             async def capture(resp):
                 if 'mesh.if.iqiyi.com/portal/lw/videolib/data' not in resp.url:
@@ -1180,7 +1181,7 @@ async def iqiyi_home_preview_html_text(url, wait=5000):
             raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             await page.wait_for_timeout(min(wait, 2500))

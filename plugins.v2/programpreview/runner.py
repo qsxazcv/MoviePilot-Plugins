@@ -36,6 +36,7 @@ from .platforms.mgtv import extract_mgtv, mgtv_playbill_items
 from .platforms.tencent import (
     _dedupe_tencent_items,
     _merge_tencent_items_with_cache,
+    _tencent_search_fallback_items_sync,
     _sort_tencent_items,
     extract_tencent,
     extract_tencent_html,
@@ -85,6 +86,7 @@ async def fetch_site(name, url, include_short_drama=False):
             for _ch, html, txt in pages:
                 # 主频道 + 电视剧/动漫/综艺/电影频道统一合并，最终按来源频道补分类标签后按上线时间排序。
                 items.extend(extract_tencent_html(html, txt, category=source_category('tencent', _ch)))
+            items.extend(await asyncio.to_thread(_tencent_search_fallback_items_sync))
             items = _merge_tencent_items_with_cache(items)
             if not items and pages:
                 lines = clean_lines(pages[0][2])
