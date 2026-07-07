@@ -22,6 +22,7 @@ _CLOAKBROWSER_AVAILABLE = None
 _CLOAKBROWSER_WARNING_EMITTED = False
 _PLAYWRIGHT_BROWSER_MISSING_MARKERS = (
     "Executable doesn't exist",
+    "No module named 'playwright'",
     "playwright install",
     "chromium_headless_shell",
     "chrome-headless-shell",
@@ -48,11 +49,8 @@ def is_playwright_browser_missing_error(err):
 
 
 def mark_playwright_browser_unavailable(err=None):
-    global _PLAYWRIGHT_BROWSER_AVAILABLE, _PLAYWRIGHT_BROWSER_WARNING_EMITTED
+    global _PLAYWRIGHT_BROWSER_AVAILABLE
     _PLAYWRIGHT_BROWSER_AVAILABLE = False
-    if err is not None and not _PLAYWRIGHT_BROWSER_WARNING_EMITTED:
-        _PLAYWRIGHT_BROWSER_WARNING_EMITTED = True
-        logger.warning("Playwright 浏览器内核缺失，本轮优先尝试 MP CloakBrowser，仍不可用时改用静态页面/API 降级抓取；如需 Playwright 动态渲染，请在 MoviePilot 容器内安装 Playwright 浏览器。")
 
 
 def playwright_browser_available():
