@@ -9,6 +9,12 @@ import urllib.request
 from ..categories import category_from_marker, strip_item_category, with_category
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
+from ..fetcher import (
+    cloakbrowser_evaluate_sync,
+    is_playwright_browser_missing_error,
+    mark_playwright_browser_unavailable,
+    playwright_browser_available,
+)
 from ..text_utils import dedupe
 
 
@@ -80,6 +86,8 @@ def _youku_initial_data_from_html(html):
 async def youku_initial_data(url):
     data = None
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
@@ -90,8 +98,13 @@ async def youku_initial_data(url):
             await browser.close()
             if data:
                 return data
-    except Exception:
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
         pass
+    data = await asyncio.to_thread(cloakbrowser_evaluate_sync, url, 'window.__INITIAL_DATA__ || null', 1800)
+    if data:
+        return data
     try:
         req = urllib.request.Request(url, headers={'User-Agent': UA})
         with urllib.request.urlopen(req, timeout=25) as r:

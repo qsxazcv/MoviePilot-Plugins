@@ -12,7 +12,12 @@ from ..cache import load_platform_cache
 from ..categories import item_category, normalize_category, strip_item_category, with_category, with_category_many
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
-from ..fetcher import page_html_text
+from ..fetcher import (
+    is_playwright_browser_missing_error,
+    mark_playwright_browser_unavailable,
+    page_html_text,
+    playwright_browser_available,
+)
 from ..text_utils import clean_lines, dedupe, html_unescape
 
 try:
@@ -269,6 +274,8 @@ def _fill_tencent_missing_reserves(items):
 async def tencent_page_html_text(url, include_short_drama=False):
     # 按用户偏好：腾讯只抓各频道页里的“即将上线”模块，不合并首页或其它推荐流。
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         channels = [channel for channel, _page_id in _tencent_enabled_pageservice_channels(include_short_drama)]
         out = []
@@ -329,7 +336,10 @@ async def tencent_page_html_text(url, include_short_drama=False):
             await browser.close()
         return out
     except Exception as err:
-        logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
+        elif str(err) != "Playwright browser disabled":
+            logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
         pages = await asyncio.to_thread(_tencent_pageservice_pages, include_short_drama)
         if pages:
             return pages
