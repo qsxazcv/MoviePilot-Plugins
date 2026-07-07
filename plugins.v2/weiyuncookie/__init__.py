@@ -27,12 +27,12 @@ from app.plugins import _PluginBase
 from app.schemas.types import EventType, NotificationType
 
 try:
-    from .browser import browser_args, prepare_cloakbrowser_env
+    from .browser import browser_args, playwright_launch_kwargs, prepare_cloakbrowser_env
     from .cookie_utils import cookie_names, cookies_to_header, filter_relevant_cookies, looks_logged_in
     from .image_utils import crop_qrcode_png, decode_data_image
     from .openlist import OpenListClient, set_cookie_field
 except ImportError:  # pragma: no cover - 兼容直接从插件目录加载
-    from browser import browser_args, prepare_cloakbrowser_env
+    from browser import browser_args, playwright_launch_kwargs, prepare_cloakbrowser_env
     from cookie_utils import cookie_names, cookies_to_header, filter_relevant_cookies, looks_logged_in
     from image_utils import crop_qrcode_png, decode_data_image
     from openlist import OpenListClient, set_cookie_field
@@ -52,7 +52,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "0.1.46"
+    plugin_version = "0.1.47"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -673,9 +673,14 @@ class weiyuncookie(_PluginBase):
             else:
                 if sync_playwright is None:
                     raise RuntimeError("当前环境未安装 Playwright，无法启动后端浏览器")
-                logger.info("微云 Cookie 助手启动 Playwright Chromium：headless=%s", self._headless)
+                launch_kwargs = playwright_launch_kwargs(headless=bool(self._headless))
+                logger.info(
+                    "微云 Cookie 助手启动 Playwright Chromium：headless=%s, executable=%s",
+                    self._headless,
+                    launch_kwargs.get("executable_path") or "playwright-default",
+                )
                 playwright = sync_playwright().start()
-                browser = playwright.chromium.launch(headless=bool(self._headless), args=browser_args())
+                browser = playwright.chromium.launch(**launch_kwargs)
                 context = browser.new_context(locale="zh-CN", viewport={"width": 1280, "height": 900})
             page = context.new_page()
             logger.info("微云 Cookie 助手打开登录页：%s", self._login_url)
@@ -767,8 +772,13 @@ class weiyuncookie(_PluginBase):
     def __launch_cloakbrowser_context(self):
         if cloak_launch_context is None:
             raise RuntimeError("当前环境未安装 CloakBrowser，无法使用 MP CloakBrowser 兼容模式")
-        prepare_cloakbrowser_env(logger)
-        logger.info("微云 Cookie 助手启动 MP CloakBrowser：headless=%s, cache_dir=%s", self._headless, os.environ.get("CLOAKBROWSER_CACHE_DIR"))
+        browser_binary = prepare_cloakbrowser_env(logger)
+        logger.info(
+            "微云 Cookie 助手启动 MP CloakBrowser：headless=%s, cache_dir=%s, executable=%s",
+            self._headless,
+            os.environ.get("CLOAKBROWSER_CACHE_DIR"),
+            browser_binary or os.environ.get("CLOAKBROWSER_BINARY_PATH") or "cloakbrowser-default",
+        )
         context = cloak_launch_context(
             headless=bool(self._headless),
             args=browser_args(),

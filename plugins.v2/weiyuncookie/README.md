@@ -13,6 +13,7 @@
 - 支持 Telegram 命令触发登录、查询状态和立即检测。
 - 优化二维码推送：提供可点击二维码链接，并支持本地图片文件推送，减少 Telegram 图片缓存或地址解析导致的异常。
 - 后端源码按 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器辅助模块拆分，便于维护。
+- 浏览器启动优先复用 MoviePilot 容器内 `/moviepilot` 已存在的 Playwright 或 CloakBrowser 内核。
 
 ## 命令
 
@@ -27,6 +28,11 @@
 填写 OpenList 地址、管理员 Token 和目标存储 ID 后，可在扫码成功后自动将最新 Cookie 写入 OpenList 存储配置。也可在 Cookie 失效后重新登录成功时自动同步。
 
 ## 版本说明
+
+### v0.1.47
+
+- 显式复用 MoviePilot 容器内已有浏览器内核：Playwright 优先直接调用 `/moviepilot/.cache/ms-playwright` 或 `/moviepilot/.cloakbrowser` 中存在的可执行文件。
+- MP CloakBrowser 同步设置 `CLOAKBROWSER_BINARY_PATH`，避免路径存在但启动仍误报缺失。
 
 ### v0.1.46
 

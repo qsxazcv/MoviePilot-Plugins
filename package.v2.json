@@ -106,10 +106,11 @@
     "name": "微云Cookie助手",
     "description": "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "0.1.46",
+    "version": "0.1.47",
     "author": "qsxazcv",
     "level": 1,
     "history": {
+      "v0.1.47": "显式复用 MoviePilot 容器内已有浏览器内核：Playwright 优先直接调用 /moviepilot/.cache/ms-playwright 或 /moviepilot/.cloakbrowser 中存在的可执行文件，MP CloakBrowser 同步设置 CLOAKBROWSER_BINARY_PATH，避免路径存在但启动仍误报缺失。",
       "v0.1.46": "按功能区拆分源码：分离 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器环境辅助逻辑，主插件类保留生命周期、API 与登录编排。",
       "v0.1.45": "优化状态轮询安全性：状态接口不再反复返回完整 Cookie，复制时才按需读取；同时加锁避免重复启动扫码线程并清理重复二维码缓存函数。",
       "v0.1.44": "浏览器模式文案简化为 Playwright / CloakBrowser。",

@@ -20,7 +20,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 四大平台节目预告 | `programpreview` | 预告 | `1.0.60` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
-| 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
+| 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
 ## 插件详情
 
@@ -77,6 +77,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 支持 Cookie 有效性检测、复制和 OpenList 存储同步。
 - 主页面与配置页默认隐藏 Cookie 明文，降低误泄露风险。
 - 支持 Telegram / MoviePilot 通知辅助重新登录。
+- 浏览器启动优先复用 MoviePilot 容器内 `/moviepilot` 已存在的 Playwright 或 CloakBrowser 内核。
 
 ## 安全提醒
 
@@ -134,5 +135,6 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `weiyuncookie`
 
+- `0.1.47`：显式复用 MoviePilot 容器内已有浏览器内核；Playwright 启动时优先直接调用 `/moviepilot/.cache/ms-playwright` 或 `/moviepilot/.cloakbrowser` 中存在的可执行文件，并为 MP CloakBrowser 设置 `CLOAKBROWSER_BINARY_PATH`，避免路径存在但启动仍误报缺失。
 - `0.1.46`：按功能区拆分微云 Cookie 助手源码，分离 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器环境辅助逻辑，主插件类保留生命周期、API 与登录编排。
 - `0.1.45`：优化状态轮询安全性，状态接口不再反复返回完整 Cookie，复制时才按需读取，并加锁避免重复启动扫码线程。
