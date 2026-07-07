@@ -17,7 +17,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 四大平台节目预告 | `programpreview` | 预告 | `1.0.53` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
+| 四大平台节目预告 | `programpreview` | 预告 | `1.0.56` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.46` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
@@ -97,6 +97,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `programpreview`
 
+- `1.0.56`：补齐腾讯视频 CloakBrowser 动态兜底；Playwright 浏览器内核缺失时，腾讯频道页会先用 MP CloakBrowser 激活“即将上线”模块，再回退到 PageService/API，减少只剩少量预约条目的情况。
 - `1.0.55`：接入 MoviePilot 自带 CloakBrowser 动态抓取兜底；Playwright 浏览器内核缺失时，通用页面抓取、爱奇艺片库/首页/搜索补数和优酷初始数据会先尝试 MP CloakBrowser，再降级到静态页面/API。
 - `1.0.54`：修复 Playwright 浏览器内核缺失时动态抓取反复报错的问题；检测到缺失后本轮只提示一次，并让爱奇艺、腾讯视频、优酷统一走静态页面/API 降级兜底。
 - `1.0.53`：优化通知平台分组标题，改为“分隔线 + 平台名 + 条数 + 分类摘要”，例如 `━━━━ 爱奇艺 · 16条 · 剧4 综1 影1 纪9 ━━━━`，并兼容详情页解析新标题格式。

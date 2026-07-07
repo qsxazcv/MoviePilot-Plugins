@@ -13,6 +13,7 @@ from ..categories import item_category, normalize_category, strip_item_category,
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
 from ..fetcher import (
+    cloakbrowser_page_html_text,
     is_playwright_browser_missing_error,
     mark_playwright_browser_unavailable,
     page_html_text,
@@ -115,6 +116,24 @@ def _tencent_pageservice_pages(include_short_drama=False):
             + '</script>'
         )
         pages.append((channel, html, ''))
+    return pages
+
+
+async def _tencent_cloakbrowser_pages(include_short_drama=False):
+    channels = [channel for channel, _page_id in _tencent_enabled_pageservice_channels(include_short_drama)]
+    pages = []
+    for ch in channels:
+        page_url = f'https://v.qq.com/channel/{ch}?listpage=2&channel={ch}&itype=1'
+        result = await cloakbrowser_page_html_text(
+            page_url,
+            wait=2500,
+            viewport={'width': 1366, 'height': 900},
+            activate_labels=('即将上线',),
+        )
+        if not result:
+            continue
+        html, text = result
+        pages.append((ch, html, text))
     return pages
 
 
@@ -340,6 +359,9 @@ async def tencent_page_html_text(url, include_short_drama=False):
             mark_playwright_browser_unavailable(err)
         elif str(err) != "Playwright browser disabled":
             logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
+        pages = await _tencent_cloakbrowser_pages(include_short_drama)
+        if pages:
+            return pages
         pages = await asyncio.to_thread(_tencent_pageservice_pages, include_short_drama)
         if pages:
             return pages
