@@ -10,7 +10,16 @@ import urllib.request
 from ..categories import category_from_iqiyi_obj, split_category_prefix, with_category
 from ..constants import UA
 from ..date_utils import calendar_date_text, normalize_date_text, schedule_calendar_key, sort_platform_items
-from ..fetcher import iqiyi_filtered_page_html_text, page_html_text
+from ..fetcher import (
+    cloakbrowser_page_html_text,
+    cloakbrowser_page_html_text_sync,
+    iqiyi_filtered_page_html_text,
+    is_playwright_browser_missing_error,
+    mark_playwright_browser_unavailable,
+    page_html_text,
+    playwright_browser_available,
+    playwright_launch_kwargs,
+)
 from ..text_utils import clean_lines, dedupe, html_unescape
 
 
@@ -259,6 +268,8 @@ def _iqiyi_search_page_reserve_once_sync(title):
     url = 'https://www.iqiyi.com/search/' + urllib.parse.quote(title) + '.html'
     texts = []
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
@@ -270,8 +281,14 @@ def _iqiyi_search_page_reserve_once_sync(title):
                 pass
             texts.append(page.locator('body').inner_text(timeout=8000))
             browser.close()
-    except Exception:
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
         pass
+    result = cloakbrowser_page_html_text_sync(url, wait=2500)
+    if result:
+        _html, text = result
+        texts.append(text)
     try:
         req = urllib.request.Request(url, headers={
             'User-Agent': UA,
@@ -341,6 +358,8 @@ def _iqiyi_search_page_items_sync(titles):
         return []
     items = []
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.sync_api import sync_playwright
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
@@ -402,7 +421,9 @@ def _iqiyi_search_page_items_sync(titles):
                         items.append(f'{date}｜{title}' + (f'（{reserve}）' if reserve else ''))
                         break
             browser.close()
-    except Exception:
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
         return []
     return _dedupe_iqiyi_items(items, 50)
 
@@ -624,9 +645,11 @@ async def _iqiyi_videolib_payloads():
     """
     payloads = []
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             async def capture(resp):
                 if 'mesh.if.iqiyi.com/portal/lw/videolib/data' not in resp.url:
@@ -656,7 +679,9 @@ async def _iqiyi_videolib_payloads():
                 except Exception:
                     continue
             await browser.close()
-    except Exception:
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
         pass
     # 静态接口兜底：有些环境浏览器无法跨域捕获，但服务端直连偶尔可用。
     async def one(channel_id, referer):
@@ -1152,9 +1177,11 @@ async def iqiyi_rank_lines():
 async def iqiyi_home_preview_html_text(url, wait=5000):
     """Load iQIYI homepage and activate the new preview/upcoming module."""
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             await page.goto(url, wait_until='domcontentloaded', timeout=30000)
             await page.wait_for_timeout(min(wait, 2500))
@@ -1171,7 +1198,18 @@ async def iqiyi_home_preview_html_text(url, wait=5000):
             html = await page.content()
             await browser.close()
             return html, text
-    except Exception:
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
+        result = await cloakbrowser_page_html_text(
+            url,
+            wait=wait,
+            viewport={'width': 1366, 'height': 900},
+            activate_labels=('新片预告', '新片速递', '即将上线'),
+            scroll_labels=True,
+        )
+        if result:
+            return result
         return await page_html_text(url, wait=wait)
 
 iqiyi_reset_run_caches = _iqiyi_reset_run_caches

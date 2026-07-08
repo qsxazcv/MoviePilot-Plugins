@@ -12,7 +12,14 @@ from ..cache import load_platform_cache
 from ..categories import item_category, normalize_category, strip_item_category, with_category, with_category_many
 from ..constants import UA
 from ..date_utils import normalize_date_text, schedule_calendar_key, sort_platform_items
-from ..fetcher import page_html_text
+from ..fetcher import (
+    cloakbrowser_page_html_text,
+    is_playwright_browser_missing_error,
+    mark_playwright_browser_unavailable,
+    page_html_text,
+    playwright_browser_available,
+    playwright_launch_kwargs,
+)
 from ..text_utils import clean_lines, dedupe, html_unescape
 
 try:
@@ -39,6 +46,8 @@ TENCENT_TITLE_ALIASES = {
 }
 
 TENCENT_SEARCH_URL = 'https://pbaccess.video.qq.com/trpc.videosearch.mobile_search.MultiTerminalSearch/MbSearch?vversion_platform=2'
+TENCENT_CARD_URL = 'https://pbaccess.video.qq.com/trpc.vector_layout.page_view.PageService/getCard?video_appid=3000010&vversion_platform=2'
+TENCENT_SEARCH_FALLBACK_TITLES = ['百花杀']
 _TENCENT_SEARCH_CATEGORY_CACHE = {}
 _TENCENT_SEARCH_RESERVE_CACHE = {}
 
@@ -97,6 +106,76 @@ def _tencent_pageservice_payload(page_id):
         return json.loads(resp.read().decode('utf-8', 'ignore'))
 
 
+def _tencent_getcard_payload(page_params, page_context=None, flip_info=None):
+    body = {
+        'page_params': page_params or {},
+        'page_context': page_context,
+        'flip_info': flip_info,
+    }
+    req = urllib.request.Request(
+        TENCENT_CARD_URL,
+        data=json.dumps(body, ensure_ascii=False).encode('utf-8'),
+        method='POST',
+        headers={
+            'User-Agent': UA,
+            'Content-Type': 'application/json',
+            'Origin': 'https://v.qq.com',
+            'Referer': 'https://v.qq.com/channel/tv',
+        },
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode('utf-8', 'ignore'))
+
+
+def _tencent_coming_soon_tab_payloads(payload):
+    """Fetch Tencent's real "即将上线" tab data from the channel pc_shelves module."""
+    out = []
+    try:
+        cards = (((payload or {}).get('data') or {}).get('CardList') or [])
+    except Exception:
+        return out
+    for card in cards:
+        if not isinstance(card, dict):
+            continue
+        params = card.get('params') if isinstance(card.get('params'), dict) else {}
+        multi_tab = params.get('multi_tab')
+        if not multi_tab:
+            continue
+        try:
+            tabs = json.loads(multi_tab)
+        except Exception:
+            continue
+        coming_tab = next(
+            (
+                tab for tab in tabs
+                if isinstance(tab, dict)
+                and (tab.get('tab_type') == 'coming_soon' or tab.get('tab_name') == '即将上线')
+            ),
+            None,
+        )
+        if not coming_tab:
+            continue
+        flip_info = ((card.get('flip_infos') or {}).get('change') or {})
+        page_params = {
+            **coming_tab,
+            'page_id': 'scms_shake',
+            'page_type': 'scms_shake',
+            'new_mark_label_enabled': '1',
+        }
+        try:
+            tab_payload = _tencent_getcard_payload(
+                page_params=page_params,
+                page_context={'page_index': '1'},
+                flip_info=flip_info,
+            )
+        except Exception as err:
+            logger.debug(f'腾讯视频即将上线 Tab 补抓失败：{err!r}')
+            continue
+        if tab_payload:
+            out.append(tab_payload)
+    return out
+
+
 def _tencent_pageservice_pages(include_short_drama=False):
     pages = []
     for channel, page_id in _tencent_enabled_pageservice_channels(include_short_drama):
@@ -104,12 +183,32 @@ def _tencent_pageservice_pages(include_short_drama=False):
             payload = _tencent_pageservice_payload(page_id)
         except Exception:
             continue
+        payloads = [payload]
+        payloads.extend(_tencent_coming_soon_tab_payloads(payload))
         html = (
             '<script id="__MP_CAPTURED_PAGESERVICE__" type="application/json">'
-            + json.dumps([payload], ensure_ascii=False)
+            + json.dumps(payloads, ensure_ascii=False)
             + '</script>'
         )
         pages.append((channel, html, ''))
+    return pages
+
+
+async def _tencent_cloakbrowser_pages(include_short_drama=False):
+    channels = [channel for channel, _page_id in _tencent_enabled_pageservice_channels(include_short_drama)]
+    pages = []
+    for ch in channels:
+        page_url = f'https://v.qq.com/channel/{ch}?listpage=2&channel={ch}&itype=1'
+        result = await cloakbrowser_page_html_text(
+            page_url,
+            wait=2500,
+            viewport={'width': 1366, 'height': 900},
+            activate_labels=('即将上线',),
+        )
+        if not result:
+            continue
+        html, text = result
+        pages.append((ch, html, text))
     return pages
 
 
@@ -230,6 +329,72 @@ def _tencent_search_reserve_sync(title):
     return reserve
 
 
+def _tencent_release_date_from_text(text):
+    text = str(text or '')
+    if not re.search(r'定档|上线|开播|首播|预约', text):
+        return ''
+    m = re.search(r'(\d{1,2})月(\d{1,2})日\s*(?:上线|开播|首播|定档)?', text)
+    if m:
+        return f'{int(m.group(1))}月{int(m.group(2))}日'
+    m = re.search(r'(?:定档|上线|开播|首播)\D{0,4}([01]?\d)([0-3]\d)', text)
+    if not m:
+        m = re.search(r'([01]?\d)([0-3]\d)\D{0,4}(?:定档|上线|开播|首播)', text)
+    if not m:
+        return ''
+    mo, day = int(m.group(1)), int(m.group(2))
+    if 1 <= mo <= 12 and 1 <= day <= 31:
+        return f'{mo}月{day}日'
+    return ''
+
+
+def _tencent_search_release_date(info):
+    candidates = []
+    for key in ('subTitle', 'highlightSubTitle', 'descrip', 'imgTag'):
+        candidates.append(info.get(key))
+    for site_key in ('episodeSites', 'playSites'):
+        for site in info.get(site_key) or []:
+            if not isinstance(site, dict):
+                continue
+            for episode in site.get('episodeInfoList') or []:
+                if not isinstance(episode, dict):
+                    continue
+                for key in ('title', 'fullTitle', 'episodeTitle', 'markLabel'):
+                    candidates.append(episode.get(key))
+    for text in candidates:
+        date = _tencent_release_date_from_text(text)
+        if date and _tencent_date_is_future(date):
+            return date
+    return ''
+
+
+def _tencent_search_fallback_items_sync(titles=None):
+    items = []
+    for title in titles or TENCENT_SEARCH_FALLBACK_TITLES:
+        title = _normalize_tencent_title(title)
+        if not title:
+            continue
+        try:
+            payload = _tencent_search_payload(title)
+        except Exception as err:
+            logger.debug(f'腾讯视频搜索补漏失败：{title}，原因：{err!r}')
+            continue
+        for info in _iter_tencent_video_infos(payload):
+            found_title = re.sub(r'<[^>]+>', '', html_unescape(info.get('title') or '')).strip()
+            if _normalize_tencent_title(found_title) != title:
+                continue
+            reserve = _tencent_reserve_from_search_info(info)
+            if not reserve or '预约' not in json.dumps(info, ensure_ascii=False):
+                continue
+            date = _tencent_search_release_date(info)
+            if not date:
+                continue
+            item = f'{date}｜{title}（{reserve}）'
+            category = normalize_category(info.get('typeName'))
+            items.append(with_category(item, category) if category else item)
+            break
+    return _sort_tencent_items(_dedupe_tencent_items(items, 50))
+
+
 def _tencent_item_title(item):
     clean = strip_item_category(item)
     _left, sep, right = str(clean).partition('｜')
@@ -269,16 +434,18 @@ def _fill_tencent_missing_reserves(items):
 async def tencent_page_html_text(url, include_short_drama=False):
     # 按用户偏好：腾讯只抓各频道页里的“即将上线”模块，不合并首页或其它推荐流。
     try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
         from playwright.async_api import async_playwright
         channels = [channel for channel, _page_id in _tencent_enabled_pageservice_channels(include_short_drama)]
         out = []
         page_jsons = []
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            browser = await p.chromium.launch(**playwright_launch_kwargs())
             page = await browser.new_page(user_agent=UA, viewport={'width': 1366, 'height': 900})
             async def _capture_response(resp):
                 # 腾讯频道新版页面把更完整的频道模块放在 PageService JSON 中；记录下来供解析函数兜底使用。
-                if 'PageService/getPage' in resp.url:
+                if 'PageService/getPage' in resp.url or 'PageService/getCard' in resp.url:
                     try:
                         page_jsons.append(await resp.json())
                     except Exception:
@@ -329,7 +496,13 @@ async def tencent_page_html_text(url, include_short_drama=False):
             await browser.close()
         return out
     except Exception as err:
-        logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
+        elif str(err) != "Playwright browser disabled":
+            logger.warning(f'腾讯视频动态页面抓取失败，尝试 PageService 兜底，原因：{err!r}')
+        pages = await _tencent_cloakbrowser_pages(include_short_drama)
+        if pages:
+            return pages
         pages = await asyncio.to_thread(_tencent_pageservice_pages, include_short_drama)
         if pages:
             return pages
@@ -587,6 +760,16 @@ def _tencent_extract_json_items(html):
             values.append(str(params.get(key) or ''))
         return ' '.join(x for x in values if x)
 
+    def _online_time_date(params):
+        online_time = str(params.get('online_time') or '').strip()
+        m = re.fullmatch(r'\d{4}[-/](\d{1,2})[-/](\d{1,2})(?:\s+(\d{1,2}):(\d{2})(?::\d{2})?)?', online_time)
+        if not m:
+            return ''
+        date = f'{int(m.group(1))}月{int(m.group(2))}日'
+        if m.group(3) and m.group(4):
+            date += f' {int(m.group(3))}:{m.group(4)}'
+        return date
+
     def walk(o):
         if isinstance(o, dict):
             params = o.get('params') if isinstance(o.get('params'), dict) else o
@@ -594,17 +777,17 @@ def _tencent_extract_json_items(html):
             publish = str(params.get('publish_date') or '')
             blob = ' '.join([title, _params_text_blob(params)])
             # 只抓“预约”态，避免把每日更新、全集上线、已开播内容混入即将上线预告。
-            if '预约' in blob and '敬请期待' not in blob and title:
-                date = ''
+            if (('预约' in blob or str(params.get('is_coming_soon') or '') == '1') and '敬请期待' not in blob and title):
+                date = _online_time_date(params)
                 m1 = re.search(r'(\d{1,2})月(\d{1,2})日\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?(?:上线|开播|首播)?', blob)
-                if m1:
+                if not date and m1:
                     # 输出统一为“M月D日｜标题”，避免“6月25日首播｜斩神2”和“6月25日｜斩神2”重复。
                     date = f'{m1.group(1)}月{m1.group(2)}日'
                     if m1.group(3) and m1.group(4):
                         date += f' {int(m1.group(3))}:{m1.group(4)}'
                     elif m1.group(5):
                         date += f' {int(m1.group(5))}:00'
-                else:
+                elif not date:
                     m_rel = re.search(r'(今日|明日|后日|今天|明天|后天)\s*(?:(\d{1,2}):(\d{2})|(\d{1,2})点)?(?:上线|开播|首播)?', blob)
                     if m_rel:
                         date = m_rel.group(1)
@@ -625,6 +808,11 @@ def _tencent_extract_json_items(html):
                     rm = re.search(r'[\d.]+(?:万)?人(?:已)?预约', blob)
                     if rm:
                         reserve = rm.group(0)
+                    if not reserve:
+                        for key in ('order_person_count', 'reservation_cnt', 'reserve_cnt'):
+                            reserve = _tencent_format_reserve_count(params.get(key))
+                            if reserve:
+                                break
                     if title and 2 <= len(title) <= 45:
                         yield f'{date}｜{title}' + (f'（{reserve}）' if reserve else '')
             for v in o.values():
