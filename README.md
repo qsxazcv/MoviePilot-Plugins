@@ -17,7 +17,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 四大平台节目预告 | `programpreview` | 预告 | `1.0.60` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
+| 四大平台节目预告 | `programpreview` | 预告 | `1.0.61` | 聚合爱奇艺、腾讯视频、芒果TV、优酷新片预告，按上线日期排序，带类型标签推送即将上线/预约节目。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.37` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
@@ -99,6 +99,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `programpreview`
 
+- `1.0.61`：补齐腾讯视频“即将上线”Tab 数据；通过 PageService/getCard 抓取 coming_soon 模块，并解析 `online_time` 与 `order_person_count`，修复《小芳》等频道初始接口漏项。
 - `1.0.60`：恢复通知详情入口；四大平台节目预告通知改回插件消息类型，并显式携带 `programpreview` 插件详情页链接，便于从消息卡片直接查看完整详情。
 - `1.0.59`：优化 Playwright 浏览器缺失时的日志策略；本轮可由 MP CloakBrowser 或公开 API 成功兜底时不再提前输出 WARNING，避免误以为抓取失败。
 - `1.0.58`：补齐腾讯视频频道接口漏出的已预约定档节目；当频道 PageService 未返回《百花杀》等条目时，按精确片名查询腾讯搜索结果，从预告标题中的定档日期和 `coverDoc.chaseNum` 补回未来预约条目。
