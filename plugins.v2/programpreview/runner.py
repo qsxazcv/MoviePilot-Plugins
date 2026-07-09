@@ -9,7 +9,7 @@ from datetime import datetime
 from .cache import apply_platform_cache
 from .categories import category_summary, ensure_category_many, filter_short_drama_items, short_category_label, source_category, with_category
 from .constants import OUT_FILE, SITES, STATE_FILE
-from .date_utils import format_preview_item, sort_platform_items
+from .date_utils import drop_past_items, format_preview_item, sort_platform_items
 from .fetcher import page_text
 from .notify import notify
 from .platforms.iqiyi import (
@@ -182,6 +182,7 @@ async def main(force_notify=False, include_short_drama=False):
     result = apply_platform_cache(dict(pairs))
     for name, items in list(result.items()):
         filtered = filter_short_drama_items(items, include_short_drama)
+        filtered = drop_past_items(filtered)
         result[name] = filtered or _placeholder_items()
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
     md = [f'四大平台即将上线节目预告（{now}）']

@@ -99,6 +99,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `programpreview`
 
+- `1.0.62`：修复过期节目残留问题；输出前统一剔除已过上线日期（今年已过且距今 60 天以内）的过期条目，避免平台残留旧“即将上线”项被展示或被伪装成明年日期，过线超 60 天的早月份日期仍按次年新片保留。
 - `1.0.61`：补齐腾讯视频“即将上线”Tab 数据；通过 PageService/getCard 抓取 coming_soon 模块，并解析 `online_time` 与 `order_person_count`，修复《小芳》等频道初始接口漏项。
 - `1.0.60`：恢复通知详情入口；四大平台节目预告通知改回插件消息类型，并显式携带 `programpreview` 插件详情页链接，便于从消息卡片直接查看完整详情。
 - `1.0.59`：优化 Playwright 浏览器缺失时的日志策略；本轮可由 MP CloakBrowser 或公开 API 成功兜底时不再提前输出 WARNING，避免误以为抓取失败。

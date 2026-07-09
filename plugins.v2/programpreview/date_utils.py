@@ -88,6 +88,43 @@ def schedule_calendar_key(item, now=None):
 
     return (9, now.year, 99, 99, 1, 23 * 60 + 59, raw)
 
+def preview_target_date(text, now=None):
+    """解析预告条目的目标上线月日，返回 date；无法解析返回 None。"""
+    now = now or datetime.now()
+    raw = str(text or '')
+    date_text = calendar_date_text(raw.split('｜', 1)[0], now=now)
+    m = re.search(r'(?:\d{4}[./-])?(\d{1,2})[./-](\d{1,2})', date_text)
+    if not m:
+        m = re.search(r'(\d{1,2})月(\d{1,2})日', date_text)
+    if not m:
+        return None
+    try:
+        return datetime(now.year, int(m.group(1)), int(m.group(2))).date()
+    except ValueError:
+        return None
+
+
+def is_past_preview_item(item, now=None):
+    """判断预告条目是否为已过上线日期的过期残留。
+
+    仅剔除“今年已过且距今 60 天以内”的近期残留项。无法解析日期时保留；
+    过线超过 60 天的早月份日期（如 7 月出现的 1月2日）视为次年新片而保留，
+    与排序键里 year += 1 的跨年处理保持一致，避免误删年底的次年年初新片。
+    """
+    now = now or datetime.now()
+    today = now.date()
+    target = preview_target_date(item, now=now)
+    if target is None or target >= today:
+        return False
+    gap = (today - target).days
+    return 0 < gap <= 60
+
+
+def drop_past_items(items, now=None):
+    """剔除已过上线日期的过期预告条目。"""
+    return [it for it in (items or []) if not is_past_preview_item(it, now=now)]
+
+
 def sort_platform_items(items):
     """按统一上线时间轴排序平台预告条目。"""
     return sorted(items or [], key=schedule_calendar_key)
@@ -123,3 +160,6 @@ _schedule_calendar_key = schedule_calendar_key
 _sort_platform_items = sort_platform_items
 _format_preview_item = format_preview_item
 _calendar_date_text = calendar_date_text
+_preview_target_date = preview_target_date
+_is_past_preview_item = is_past_preview_item
+_drop_past_items = drop_past_items
