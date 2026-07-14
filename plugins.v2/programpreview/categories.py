@@ -18,6 +18,7 @@ CATEGORY_ALIASES = {
     "漫": "动漫",
     "动漫": "动漫",
     "动画": "动漫",
+    "漫剧": "动漫",
     "纪": "纪录片",
     "纪录片": "纪录片",
     "纪录": "纪录片",
@@ -117,12 +118,12 @@ def category_from_iqiyi_obj(obj):
             if category:
                 return category
     fields = []
-    for key in ("channel_name", "channelName", "category", "categoryName", "type", "typeName", "albumType"):
+    for key in ("channel", "channel_name", "channelName", "category", "categoryName", "type", "typeName", "albumType"):
         val = obj.get(key)
         if isinstance(val, str):
             fields.append(val)
     blob = " ".join(fields)
-    for key in ("电影", "电视剧", "剧集", "综艺", "动漫", "动画", "纪录片", "纪录", "纪实", "短剧", "少儿"):
+    for key in ("电影", "电视剧", "剧集", "综艺", "动漫", "动画", "漫剧", "纪录片", "纪录", "纪实", "短剧", "少儿"):
         if key in blob:
             return normalize_category(key)
     return ""

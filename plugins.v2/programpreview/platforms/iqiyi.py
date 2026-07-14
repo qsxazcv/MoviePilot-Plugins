@@ -24,6 +24,7 @@ from ..text_utils import clean_lines, dedupe, html_unescape
 
 
 _IQIYI_SEARCH_RESERVE_CACHE = {}
+_IQIYI_SEARCH_CATEGORY_CACHE = {}
 
 
 IQIYI_CHANNELS = [
@@ -55,6 +56,7 @@ IQIYI_RANK_CHANNELS = [
 
 def _iqiyi_reset_run_caches():
     _IQIYI_SEARCH_RESERVE_CACHE.clear()
+    _IQIYI_SEARCH_CATEGORY_CACHE.clear()
 
 def _iqiyi_is_program_preview_date(date):
     date = re.sub(r'\s+', '', str(date or '')).strip('：:')
@@ -339,6 +341,147 @@ def _iqiyi_search_page_reserve_sync(title, retries=3):
             return reserve
     _IQIYI_SEARCH_RESERVE_CACHE[title] = ''
     return ''
+
+
+def _iqiyi_category_from_search_window(win):
+    win = html_unescape(str(win or ''))
+    for pat in (
+        r'"(?:channel_id|channelId|cid|channel)"\s*:\s*"?(\d{1,3})"?',
+        r'(?:channel_id|channelId|cid|channel)[=:]"?(\d{1,3})"?',
+    ):
+        m = re.search(pat, win, re.I)
+        if m:
+            category = category_from_iqiyi_obj({'cid': m.group(1)})
+            if category:
+                return category
+    for pat in (
+        r'"(?:channel_name|channelName|category|categoryName|type|typeName|albumType)"\s*:\s*"([^"]{1,20})"',
+        r'(?:channel_name|channelName|category|categoryName|type|typeName|albumType)[=:]"?([^",\s<>{}]{1,20})"?',
+    ):
+        m = re.search(pat, win, re.I)
+        if m:
+            category = category_from_iqiyi_obj({'typeName': m.group(1)})
+            if category:
+                return category
+    for marker in ('电影', '电视剧', '剧集', '综艺', '动漫', '动画', '漫剧', '纪录片', '纪录', '纪实', '短剧', '少儿', '儿童'):
+        category = category_from_iqiyi_obj({'typeName': marker})
+        if category and marker in win:
+            return category
+    return ''
+
+
+def _iqiyi_search_api_category_sync(title):
+    title = re.sub(r'\s+', ' ', str(title or '')).strip()
+    if not title:
+        return ''
+    params = urllib.parse.urlencode({
+        'key': title,
+        'pageNum': 1,
+        'pageSize': 20,
+        'version': '17.072.25808',
+        'pcv': '17.072.25808',
+        'deviceId': 'moviepilot',
+        'u': 'moviepilot',
+    })
+    url = f'https://mesh.if.iqiyi.com/portal/lw/search/homePageV3?{params}'
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': UA,
+            'Referer': 'https://www.iqiyi.com/search/' + urllib.parse.quote(title) + '.html',
+            'Accept': 'application/json, text/plain, */*',
+        })
+        text = urllib.request.urlopen(req, timeout=12).read().decode('utf-8', 'ignore')
+        data = json.loads(text)
+    except Exception:
+        return ''
+    title_key = re.sub(r'\s+', '', title)
+    for obj in _iqiyi_walk(data):
+        if not isinstance(obj, dict):
+            continue
+        candidate = re.sub(r'\s+', '', str(
+            obj.get('title') or obj.get('name') or obj.get('albumName') or obj.get('album_name') or ''
+        ))
+        if candidate != title_key:
+            continue
+        category = category_from_iqiyi_obj(obj)
+        if category:
+            return category
+    return ''
+
+
+def _iqiyi_search_category_once_sync(title):
+    title = re.sub(r'\s+', ' ', str(title or '')).strip()
+    if not title:
+        return ''
+    category = _iqiyi_search_api_category_sync(title)
+    if category:
+        return category
+    url = 'https://www.iqiyi.com/search/' + urllib.parse.quote(title) + '.html'
+    texts = []
+    try:
+        if not playwright_browser_available():
+            raise RuntimeError("Playwright browser disabled")
+        from playwright.sync_api import sync_playwright
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=['--no-sandbox', '--disable-dev-shm-usage'])
+            page = browser.new_page(user_agent=UA)
+            page.goto(url, wait_until='domcontentloaded', timeout=20000)
+            try:
+                page.wait_for_timeout(1800)
+            except Exception:
+                pass
+            texts.append(page.locator('body').inner_text(timeout=8000))
+            html = page.content()
+            if html:
+                texts.append(html)
+            browser.close()
+    except Exception as err:
+        if is_playwright_browser_missing_error(err):
+            mark_playwright_browser_unavailable(err)
+        pass
+    result = cloakbrowser_page_html_text_sync(url, wait=2000)
+    if result:
+        html, text = result
+        texts.extend([html, text])
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': UA,
+            'Referer': 'https://www.iqiyi.com/',
+        })
+        texts.append(urllib.request.urlopen(req, timeout=12).read().decode('utf-8', 'ignore'))
+    except Exception:
+        pass
+    for text in texts:
+        text = html_unescape(text or '')
+        if not text:
+            continue
+        positions = [m.start() for m in re.finditer(re.escape(title), text)]
+        for pos in positions[:8]:
+            win = text[max(0, pos - 1200):pos + 2200]
+            category = _iqiyi_category_from_search_window(win)
+            if category:
+                return category
+    return ''
+
+
+def _iqiyi_search_category_sync(title, retries=2):
+    title = re.sub(r'\s+', ' ', str(title or '')).strip()
+    if not title:
+        return ''
+    if title in _IQIYI_SEARCH_CATEGORY_CACHE:
+        return _IQIYI_SEARCH_CATEGORY_CACHE[title]
+    try:
+        retries = max(1, int(retries or 1))
+    except Exception:
+        retries = 2
+    category = ''
+    for _ in range(min(retries, 2)):
+        category = _iqiyi_search_category_once_sync(title)
+        if category:
+            break
+    _IQIYI_SEARCH_CATEGORY_CACHE[title] = category
+    return category
+
 
 def _iqiyi_search_page_items_sync(titles):
     """从爱奇艺搜索页补齐频道/prelw 漏出的已定档预约节目。
@@ -914,23 +1057,36 @@ def _iqiyi_build_item(date, title, reserve=''):
 def _iqiyi_attach_search_reserve(item):
     """对单条爱奇艺预告强制执行搜索页补数；失败时原样返回，保留后续重试空间。"""
     left, sep, right = str(item or '').partition('｜')
-    if not sep or _iqiyi_item_has_reserve(item):
+    if not sep:
         return item
     category, clean_right = split_category_prefix(right)
     title, reserve = _iqiyi_split_title_reserve(clean_right)
-    if reserve or not title or _iqiyi_is_short_drama_title(title):
+    if not title or _iqiyi_is_short_drama_title(title):
         return item
+    query_titles = list(dict.fromkeys([
+        title,
+        re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期)$', '', title).strip(),
+    ]))
+    category_desc = category
+    if not category_desc or category_desc == '未分类':
+        for query_title in query_titles:
+            if query_title:
+                category_desc = _iqiyi_search_category_sync(query_title)
+            if category_desc:
+                break
     reserve_desc = ''
-    known_reserve = _iqiyi_subscribe_count_sync(_iqiyi_known_title_qids(title))
-    if known_reserve:
-        reserve_desc = next(iter(known_reserve.values()), '')
-    for query_title in dict.fromkeys([title, re.sub(r'\s*(?:第[一二三四五六七八九十百千万\d]+季|第[一二三四五六七八九十百千万\d]+期)$', '', title).strip()]):
-        if not reserve_desc and query_title:
-            reserve_desc = _iqiyi_search_page_reserve_sync(query_title)
+    if not reserve:
+        known_reserve = _iqiyi_subscribe_count_sync(_iqiyi_known_title_qids(title))
+        if known_reserve:
+            reserve_desc = next(iter(known_reserve.values()), '')
+        for query_title in query_titles:
+            if not reserve_desc and query_title:
+                reserve_desc = _iqiyi_search_page_reserve_sync(query_title)
     # 搜索页偶发空结果时不写入“0”或占位文案，保持无预约数条目，下一次定时任务会再次尝试补齐。
-    if not reserve_desc:
+    if not reserve and not reserve_desc and not category_desc:
         return item
-    return with_category(f'{_iqiyi_normalize_date(left)}｜{title}（{reserve_desc}）', category)
+    suffix = reserve or (f'（{reserve_desc}）' if reserve_desc else '')
+    return with_category(f'{_iqiyi_normalize_date(left)}｜{title}{suffix}', category_desc or category)
 
 def _iqiyi_force_search_reserve_items(items):
     """对已识别到的爱奇艺条目逐条补预约数，保证 HTML/文本兜底条目也会重试。
