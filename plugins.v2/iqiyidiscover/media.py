@@ -70,6 +70,7 @@ def to_media(item: dict, mtype: str) -> schemas.MediaInfo:
         or ""
     )
     return schemas.MediaInfo(
+        source="iqiyi",
         type=MOVIEPILOT_MEDIA_TYPES.get(mtype, "电视剧"),
         title=title,
         year=year,

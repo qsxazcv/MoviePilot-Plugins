@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "1.0.43"
+    plugin_version = "1.0.45"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -255,10 +255,8 @@ class IqiyiDiscover(_PluginBase):
                 continue
             seen.add(key)
             mediainfo = to_media(item, mtype)
-            try:
-                self._fill_tmdb_info_sync(mediainfo, MediaType.TV if mtype == "tv" else MediaType.MOVIE)
-            except Exception as err:
-                logger.warning(f"爱奇艺探索补全列表 TMDB 信息失败: {err}")
+            # Keep discover list fast: do not run per-item synchronous TMDB recognition here.
+            # Detail recognition remains lazy via the plugin recognize module.
             self._remember_media(media_id, mediainfo)
             medias.append(mediainfo)
             if len(medias) >= max(int(count or 10), 1):
@@ -402,6 +400,7 @@ class IqiyiDiscover(_PluginBase):
         year = str(kwargs.get("year") or getattr(meta, "year", None) or "").strip()
         media_type = mtype or getattr(meta, "type", None) or MediaType.TV
         return schemas.MediaInfo(
+            source="iqiyi",
             type=media_type,
             title=title,
             year=year,
@@ -452,6 +451,7 @@ class IqiyiDiscover(_PluginBase):
         if not info or not info.tmdb_id:
             return
         mediainfo.tmdb_id = info.tmdb_id
+        mediainfo.source = "themoviedb"
         mediainfo.mediaid_prefix = "tmdb"
         mediainfo.media_id = str(info.tmdb_id)
         mediainfo.vote_average = info.vote_average or mediainfo.vote_average
