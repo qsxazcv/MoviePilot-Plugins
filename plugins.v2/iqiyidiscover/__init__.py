@@ -26,7 +26,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "1.0.37"
+    plugin_version = "1.0.38"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -120,15 +120,10 @@ class IqiyiDiscover(_PluginBase):
     @staticmethod
     def __ensure_image_domains() -> None:
         """
-        将爱奇艺图片域名加入 MoviePilot 安全图片域名。
+        将爱奇艺图片主域名加入 MoviePilot 安全图片域名，子域由非严格匹配自动覆盖。
         """
-        domains = (
-            ["iqiyipic.com", "www.iqiyipic.com", "m.iqiyipic.com", "u0.iqiyipic.com"]
-            + [f"pic{i}.iqiyipic.com" for i in range(10)]
-        )
-        for domain in domains:
-            if domain not in settings.SECURITY_IMAGE_DOMAINS:
-                settings.SECURITY_IMAGE_DOMAINS.append(domain)
+        if "iqiyipic.com" not in settings.SECURITY_IMAGE_DOMAINS:
+            settings.SECURITY_IMAGE_DOMAINS.append("iqiyipic.com")
 
     def iqiyi_discover(
         self,
