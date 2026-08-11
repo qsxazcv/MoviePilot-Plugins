@@ -74,6 +74,10 @@ def to_media(item: dict, mtype: str) -> schemas.MediaInfo:
         title=title,
         year=year,
         title_year=f"{title} ({year})" if year else title,
+        # source 用于 resolve_media_identity 解析媒体身份，缺省会导致
+        # /mediaserver/notexists 无法识别该来源，订阅弹窗媒体库状态为空
+        # 而兜底默认「全集洗版」；补上后订阅默认恢复「普通订阅」。
+        source="iqiyi",
         mediaid_prefix="iqiyi",
         media_id=pick_media_id(item),
         poster_path=image_url,
