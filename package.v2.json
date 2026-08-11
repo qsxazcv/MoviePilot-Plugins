@@ -20,16 +20,15 @@
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
     "description": "让探索支持爱奇艺视频的数据浏览。",
-    "labels": "探索",
-    "version": "1.0.39",
+    "version": "1.0.40",
+    "icon": "https://www.iqiyi.com/logo.png",
     "author": "qsxazcv",
-    "level": 1,
+    "level": 2,
     "history": {
       "v1.0.38": "上游版本：支持爱奇艺视频的数据浏览。",
-      "v1.0.39": "本地维护版（合并 v1.0.39~v1.0.44 全部修复）：新增 iqiyi/iqiyidiscover 识别模块并接入 MediaChain 分发（get_module 返回方法名->函数 dict）；vlist 接口失效时按探索页缓存或推荐接口兜底找回剧名；识别改 search_meta.year 传参修复 TypeError；探索页缓存按 7 天自动清理。"
-    },
-    "v2": true,
-    "icon": "https://www.iqiyi.com/logo.png"
+      "v1.0.39": "本地维护版（合并 v1.0.39~v1.0.44 全部修复）：新增 iqiyi/iqiyidiscover 识别模块并接入 MediaChain 分发（get_module 返回方法名->函数 dict）；vlist 接口失效时按探索页缓存或推荐接口兜底找回剧名；识别改 search_meta.year 传参修复 TypeError；探索页缓存按 7 天自动清理。",
+      "v1.0.40": "本地维护版：to_media 补 source=iqiyi 身份字段，修复爱奇艺探索卡片订阅弹窗因媒体库状态查询（/mediaserver/notexists）无法识别来源而默认「全集洗版」，恢复默认普通订阅。"
+    }
   },
   "MediaWarp": {
     "name": "MediaWarp",
