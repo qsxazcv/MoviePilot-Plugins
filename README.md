@@ -17,7 +17,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.38` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.40` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
@@ -81,6 +81,8 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `1.0.40`：`to_media` 补 `source=iqiyi` 身份字段，修复爱奇艺探索卡片订阅弹窗因媒体库状态查询（`/mediaserver/notexists`）无法识别来源而默认「全集洗版」，恢复默认普通订阅。
+- `1.0.39`：本地维护版（合并 v1.0.39~v1.0.44 全部修复）：新增 `iqiyi` / `iqiyidiscover` 识别模块并接入 MediaChain 分发（`get_module` 返回方法名 → 函数 dict）；爱奇艺 vlist 接口失效时按探索页缓存或推荐接口兜底找回剧名；识别改为 `search_meta.year` 传参修复 TypeError；探索页缓存按 7 天自动清理。
 - `1.0.38`：优化安全图片域名配置：仅保留 `iqiyipic.com` 主域名，子域由非严格匹配自动覆盖，减少安全域名配置项。
 - `1.0.37`：按功能区拆分爱奇艺探索源码，分离常量、筛选、请求、媒体转换和探索页 UI 生成逻辑，便于后续维护官方分类和接口适配。
 - `1.0.36`：修复短剧、综艺、动漫、少儿、漫剧、纪录片和知识频道返回非标准媒体类型导致的类型标签和详情展示问题。
