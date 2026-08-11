@@ -29,7 +29,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "1.0.40"
+    plugin_version = "1.0.41"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -311,14 +311,14 @@ class IqiyiDiscover(_PluginBase):
 
     def __prune_album_cache(self, cache: Dict[str, Any]) -> Dict[str, Any]:
         """
-        清理超过 7 天的专辑缓存条目，避免缓存无限增长。
+        清理超过 3 天的专辑缓存条目，避免缓存无限增长。
 
         无时间戳的历史条目保留并补齐时间戳，兼容旧数据。
         """
         if not isinstance(cache, dict) or not cache:
             return cache
         now = time.time()
-        keep_after = now - 7 * 86400
+        keep_after = now - 3 * 86400
         kept: Dict[str, Any] = {}
         for key, item in cache.items():
             if not isinstance(item, dict):
@@ -340,14 +340,14 @@ class IqiyiDiscover(_PluginBase):
     def __cache_albums(self, rows: List[dict]) -> None:
         """
         把探索页返回的爱奇艺专辑条目写入本地缓存（albumId -> title/year），
-        供识别兜底使用。缓存按 7 天自然过期，由 __prune_album_cache 清理。
+        供识别兜底使用。缓存按 3 天自然过期，由 __prune_album_cache 清理。
         """
         if not rows:
             return
         cache = self.get_data(self._ALBUM_CACHE_KEY) or {}
         if not isinstance(cache, dict):
             cache = {}
-        # 写入前先清理超过 7 天的旧条目，避免缓存无限增长
+        # 写入前先清理超过 3 天的旧条目，避免缓存无限增长
         cache = self.__prune_album_cache(cache)
         changed = False
         for item in rows:
@@ -359,17 +359,18 @@ class IqiyiDiscover(_PluginBase):
                 continue
             key = self.__cache_key_for(media_id)
             existing = cache.get(key) or {}
-            if not existing.get("title"):
+            if not isinstance(existing, dict):
+                existing = {}
+            year = pick_year(item)
+            # 内容变更时覆盖更新（非空保护），老剧改名/改年份能及时生效
+            if existing.get("title") != title:
                 existing = dict(existing)
                 existing["title"] = title
                 changed = True
-            # 探索数据里多数没有干净年份，仅当已有值时保留
-            if not existing.get("year"):
-                year = pick_year(item)
-                if year:
-                    existing = dict(existing)
-                    existing["year"] = year
-                    changed = True
+            if year and existing.get("year") != year:
+                existing = dict(existing)
+                existing["year"] = year
+                changed = True
             if existing is not cache.get(key):
                 existing["updated_at"] = int(time.time())
                 cache[key] = existing
