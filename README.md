@@ -17,7 +17,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.41` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.42` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
@@ -81,6 +81,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `1.0.42`：本地维护版（方案A 新鲜优先 + 缓存兜底）：识别时缓存 1 小时内新鲜直接复用；缓存缺失或不新鲜时先实时反查爱奇艺推荐接口拿最新剧名并刷新缓存；实时反查不到时回退使用 3 天 TTL 内旧缓存兜底，保证识别用的剧名/年份尽量最新。
 - `1.0.41`：本地维护版：探索页缓存策略调整——识别兜底缓存（`albumId` → 标题/年份）TTL 从 7 天改为 3 天，支持内容变更时覆盖更新（老剧改名/改年份能及时生效），空值保护避免覆盖已有数据。
 - `1.0.40`：`to_media` 补 `source=iqiyi` 身份字段，修复爱奇艺探索卡片订阅弹窗因媒体库状态查询（`/mediaserver/notexists`）无法识别来源而默认「全集洗版」，恢复默认普通订阅。
 - `1.0.39`：本地维护版（合并 v1.0.39~v1.0.44 全部修复）：新增 `iqiyi` / `iqiyidiscover` 识别模块并接入 MediaChain 分发（`get_module` 返回方法名 → 函数 dict）；爱奇艺 vlist 接口失效时按探索页缓存或推荐接口兜底找回剧名；识别改为 `search_meta.year` 传参修复 TypeError；探索页缓存按 7 天自动清理。
