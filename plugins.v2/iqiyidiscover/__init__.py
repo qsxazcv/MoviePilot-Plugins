@@ -8,7 +8,6 @@ from app.log import logger
 from app.plugins import _PluginBase
 from app.schemas import DiscoverSourceEventData
 from app.schemas.types import ChainEventType, MediaType
-from app.utils.http import RequestUtils
 
 from .client import request_videolib
 from .constants import (
@@ -30,7 +29,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "1.0.43"
+    plugin_version = "1.0.44"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -224,25 +223,11 @@ class IqiyiDiscover(_PluginBase):
                     return self.__finalize_iqiyi_mediainfo(
                         mediainfo, mediaid, search_type, avlist
                     )
-        # 方案A（新鲜优先 + 缓存兜底）：
-        # 1. 先查本地缓存；缓存新鲜（1 小时内）直接复用，避免每次订阅都等待反查。
-        # 2. 缓存缺失或不新鲜时，先实时反查探索推荐接口拿最新剧名并刷新缓存，
-        #    保证识别用的剧名/年份尽量是最新的。
-        # 3. 实时反查不到时，回退使用缓存里的旧剧名兜底（3 天 TTL 内仍有效）。
+        # 缓存优先（cache or fetch）：
+        # 先查本地缓存，未命中时实时反查探索推荐接口拿最新剧名并补缓存。
         cached = self.__get_cached_album(mediaid)
-        fresh = bool(cached and cached[2] and (time.time() - cached[2]) < 3600)
-        item = None
-        if not fresh:
-            # 回退1.5：按媒体类型扫对应频道反查（电视剧/电影各前 2 页），
-            # 命中后补缓存并携带 overview 供识别结果补全。
-            item = self.__fetch_videolib_item(mediaid, mtype="tv")
-            if not item:
-                item = self.__fetch_videolib_item(mediaid, mtype="movie")
-            if item:
-                self.__cache_albums([item], force_refresh=True)
-                cached = (pick_title(item), pick_year(item) or None, time.time())
         if cached:
-            cached_title, cached_year = cached[0], cached[1]
+            cached_title, cached_year = cached
             if cached_title:
                 from app.core.metainfo import MetaInfo
 
@@ -250,59 +235,43 @@ class IqiyiDiscover(_PluginBase):
                 search_meta.type = MediaType.TV
                 if cached_year:
                     search_meta.year = cached_year
-                media_chain = MediaChain()
-                mediainfo = media_chain.recognize_media(
+                mediainfo = MediaChain().recognize_media(
                     meta=search_meta,
                     mtype=MediaType.TV,
                     source="themoviedb",
                 )
                 if mediainfo:
                     return self.__finalize_iqiyi_mediainfo(
-                        mediainfo,
-                        mediaid,
-                        MediaType.TV,
-                        None,
-                        overview=self.__item_overview(item),
+                        mediainfo, mediaid, MediaType.TV, None
                     )
-        # 回退1.6：videolib 反查失败且缓存未命中时，用 suggest 接口按标题反查
-        # （标题来源：meta.title），aid 与目标 albumId 一致则用 suggest 返回的
-        # name/year 识别，救回电影/冷门剧等 videolib 频道覆盖不到的场景。
-        if not cached and meta and getattr(meta, "title", None):
-            suggest_item = self.__fetch_suggest_item(mediaid, getattr(meta, "title", ""))
-            if suggest_item:
-                self.__cache_albums([suggest_item], force_refresh=True)
-                from app.core.metainfo import MetaInfo
+        # 反查：扫视频道/电影前 2 页按 albumId 匹配，命中后补缓存
+        item = self.__fetch_videolib_item(mediaid, mtype="tv")
+        if not item:
+            item = self.__fetch_videolib_item(mediaid, mtype="movie")
+        if item:
+            self.__cache_albums([item])
+            from app.core.metainfo import MetaInfo
 
-                suggest_title = str(suggest_item.get("name") or "").strip()
-                if suggest_title:
-                    search_meta = MetaInfo(title=suggest_title)
-                    search_meta.type = MediaType.TV
-                    s_year = str(suggest_item.get("year") or "").strip() or None
-                    if s_year:
-                        search_meta.year = s_year
-                    # 电影类型按 suggest 分类判断，其他统一按剧集识别
-                    if str(suggest_item.get("cname") or "").strip() == "电影":
-                        search_meta.type = MediaType.MOVIE
-                    media_chain = MediaChain()
-                    mediainfo = media_chain.recognize_media(
-                        meta=search_meta,
-                        mtype=search_meta.type,
-                        source="themoviedb",
-                    )
-                    if mediainfo:
-                        return self.__finalize_iqiyi_mediainfo(
-                            mediainfo,
-                            mediaid,
-                            search_meta.type,
-                            None,
-                            overview=str(suggest_item.get("description") or "") or "",
-                        )
-        # 回退2：按原始请求标题识别（电影等无 avlist 的场景）
+            search_meta = MetaInfo(title=pick_title(item))
+            search_meta.type = MediaType.TV
+            year = pick_year(item)
+            if year:
+                search_meta.year = year
+            mediainfo = MediaChain().recognize_media(
+                meta=search_meta,
+                mtype=MediaType.TV,
+                source="themoviedb",
+            )
+            if mediainfo:
+                return self.__finalize_iqiyi_mediainfo(
+                    mediainfo, mediaid, MediaType.TV, None,
+                    overview=self.__item_overview(item),
+                )
+        # 回退：按原始请求标题识别
         if meta and getattr(meta, "title", None):
-            from app.chain.media import MediaChain
-
-            media_chain = MediaChain()
-            mediainfo = media_chain.recognize_media(meta=meta, source="themoviedb")
+            mediainfo = MediaChain().recognize_media(meta=meta, source="themoviedb")
+            if mediainfo:
+                return mediainfo
 
     @staticmethod
     def __cache_key_for(media_id: str) -> str:
@@ -311,12 +280,12 @@ class IqiyiDiscover(_PluginBase):
         """
         return str(media_id or "").strip()
 
-    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str], Optional[float]]]:
+    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str]]]:
         """
-        从插件数据缓存中读取专辑 ID 对应的剧名、年份与写入时间。
+        从插件数据缓存中读取专辑 ID 对应的剧名与年份。
 
         :param media_id: 爱奇艺专辑 ID
-        :return: (title, year, updated_at) 或 None
+        :return: (title, year) 或 None
         """
         if not media_id:
             return None
@@ -330,11 +299,7 @@ class IqiyiDiscover(_PluginBase):
         if not title:
             return None
         year = str(item.get("year") or "").strip() or None
-        try:
-            updated_at = float(item.get("updated_at") or 0) or None
-        except (TypeError, ValueError):
-            updated_at = None
-        return title, year, updated_at
+        return title, year
 
     def __fetch_videolib_item(
         self, media_id: str, mtype: str = "tv"
@@ -357,51 +322,10 @@ class IqiyiDiscover(_PluginBase):
                     return item
         return None
 
-    def __fetch_suggest_item(
-        self, media_id: str, title: str
-    ) -> Optional[Dict[str, Any]]:
-        """
-        通过爱奇艺 suggest 接口按标题反查专辑信息（标题 -> albumId 方向）。
-
-        用于 videolib 反查失败时的最后兜底：按标题搜索，若返回条目中的
-        aid 与目标 albumId 一致，则用 suggest 返回的 name/year 走 TMDB 识别，
-        救回电影/冷门剧等 videolib 频道覆盖不到的场景。
-
-        :param media_id: 目标爱奇艺专辑 ID
-        :param title: 用于搜索的标题（通常来自请求 meta）
-        :return: suggest 条目 dict（含 aid/name/year/cname）或 None
-        """
-        media_id = str(media_id or "").strip()
-        title = str(title or "").strip()
-        if not media_id or not title:
-            return None
-        try:
-            res = RequestUtils(
-                proxies=settings.PROXY,
-                headers={"User-Agent": settings.USER_AGENT},
-                timeout=8,
-            ).get_res(
-                url="https://suggest.video.iqiyi.com/suggest",
-                params={"key": title, "format": "json"},
-            )
-            if not res or res.status_code != 200:
-                return None
-            data = res.json()
-            if not data or data.get("code") not in ("A00000", 0, "0"):
-                return None
-            for item in data.get("data") or []:
-                if not isinstance(item, dict):
-                    continue
-                if str(item.get("aid") or "").strip() == media_id:
-                    return item
-        except Exception as err:
-            logger.warning(f"爱奇艺 suggest 反查失败: {err}")
-        return None
-
     @staticmethod
     def __item_overview(item: Optional[Dict[str, Any]]) -> str:
         """
-        从 videolib/suggest 条目中提取简介文本，供识别结果补全 overview。
+        从 videolib 条目中提取简介文本，供识别结果补全 overview。
         """
         if not item or not isinstance(item, dict):
             return ""
@@ -449,13 +373,10 @@ class IqiyiDiscover(_PluginBase):
             kept = dict(ordered[:5000])
         return kept
 
-    def __cache_albums(self, rows: List[dict], force_refresh: bool = False) -> None:
+    def __cache_albums(self, rows: List[dict]) -> None:
         """
         把探索页返回的爱奇艺专辑条目写入本地缓存（albumId -> title/year），
         供识别兜底使用。缓存按 3 天自然过期，由 __prune_album_cache 清理。
-
-        :param force_refresh: 为 True 时即使内容未变更也刷新 updated_at，
-            用于方案A实时反查命中后让缓存重新进入新鲜窗口。
         """
         if not rows:
             return
@@ -486,7 +407,7 @@ class IqiyiDiscover(_PluginBase):
                 existing = dict(existing)
                 existing["year"] = year
                 changed = True
-            if force_refresh or existing is not cache.get(key):
+            if existing is not cache.get(key):
                 existing = dict(existing)
                 existing["updated_at"] = int(time.time())
                 cache[key] = existing
