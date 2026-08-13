@@ -105,6 +105,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `MediaServerHelper` 签名 v3 兼容；版本按官方规则跃迁 `1.0.8 → 2.0.0`。
 - `1.0.8`：适配 [AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp) `v0.2.4`，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 `config.yaml` 手动维护；感谢原作者 `DDSRem` 及 [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。
 
 ### `weiyuncookie`
