@@ -27,5 +27,20 @@
       "v2.0.0": "V3 代际迁移版：get_api() 全部端点加 x-moviepilot-raw-response 标记，绕过 v3 ResponseAPIRoute 统一 envelope 自动包装，保持 {ok: ...} 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 1.0.0 → 2.0.0，system_version >=3.0.0。",
       "v1.0.0": "通过本地插件安装同步到 Localplugins 本地插件库。"
     }
+  },
+  "weiyuncookie": {
+    "name": "微云Cookie助手",
+    "description": "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。",
+    "labels": "工具,Cookie,微云,OpenList,Telegram",
+    "version": "1.0.0",
+    "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png",
+    "author": "qsxazcv",
+    "level": 1,
+    "system_version": ">=3.0.0",
+    "release": true,
+    "history": {
+      "v1.0.0": "V3 代际迁移版：纯工具插件代码零改动——API 端点本身已返回 {success, ...} 格式（业务字段平铺），Vue 前端 unwrapResponse 已按 v3 envelope 兼容（'data' in data 解包），qrcode_image 原生响应由 _wrap_result 自动透传；版本按官方规则跃迁 0.1.47 → 1.0.0，system_version >=3.0.0。",
+      "v0.1.47": "显式复用 MoviePilot 容器内已有浏览器内核：Playwright 优先直接调用 /moviepilot/.cache/ms-playwright 或 /moviepilot/.cloakbrowser 中存在的可执行文件，MP CloakBrowser 同步设置 CLOAKBROWSER_BINARY_PATH，避免路径存在但启动仍误报缺失。"
+    }
   }
 }

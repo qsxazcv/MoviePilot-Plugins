@@ -105,6 +105,7 @@
       "v0.1.27": "优化微云 Cookie 助手 UI 排序与信息层级：配置页改为常用设置、登录环境、自动检测与通知、OpenList、运行档案的分区表单，详情页移除冗余功能卡片并改为状态概览、操作区和近期结果。"
     },
     "v2": true,
+    "v3": false,
     "release": true,
     "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
   },
