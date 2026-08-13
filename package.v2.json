@@ -45,7 +45,8 @@
     "level": 1,
     "history": {
       "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 config.yaml 手动维护；感谢原作者 DDSRem"
-    }
+    },
+    "v3": false
   },
   "weiyuncookie": {
     "name": "微云Cookie助手",

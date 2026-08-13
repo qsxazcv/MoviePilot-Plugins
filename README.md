@@ -18,7 +18,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.0.0` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
+| MediaWarp | `MediaWarp` | 云盘 | `2.0.0` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.0.0` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.0.0` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
