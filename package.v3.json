@@ -12,5 +12,20 @@
     "history": {
       "v2.0.0": "V3 代际迁移版：官方 v3 分支已收编爱奇艺来源（MediaSource.Iqiyi='iqiyidiscover'，issue #6288 已修复）；识别签名改为 media_source/media_id（resolve_media_identity 归一化 + 非爱奇艺来源拒绝，旧 source/mediaid 参数由 kwargs 兜底兼容）；MediaInfo 身份统一为 MediaSource.Iqiyi 枚举 + albumId；DiscoverSource 显式注册 MediaSource.Iqiyi；新增 MediaRecognizeConvert 事件将爱奇艺身份转换为 TMDB 主身份，订阅搜索可跨源搜站点资源；版本按官方规则跃迁 1.0.45 → 2.0.0，system_version >=3.0.0。"
     }
+  },
+  "IkuaiAssistant": {
+    "name": "ikuai-cli助手",
+    "description": "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。",
+    "labels": "网络,诊断,爱快",
+    "version": "2.0.0",
+    "icon": "https://www.ikuai8.com/favicon.ico",
+    "author": "qsxazcv",
+    "level": 1,
+    "system_version": ">=3.0.0",
+    "release": true,
+    "history": {
+      "v2.0.0": "V3 代际迁移版：get_api() 全部端点加 x-moviepilot-raw-response 标记，绕过 v3 ResponseAPIRoute 统一 envelope 自动包装，保持 {ok: ...} 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 1.0.0 → 2.0.0，system_version >=3.0.0。",
+      "v1.0.0": "通过本地插件安装同步到 Localplugins 本地插件库。"
+    }
   }
 }

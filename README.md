@@ -20,6 +20,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.0.0` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
+| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.0.0` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
 ## 插件详情
 
@@ -60,6 +61,15 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 主页面与配置页默认隐藏 Cookie 明文，降低误泄露风险。
 - 支持 Telegram / MoviePilot 通知辅助重新登录。
 - 浏览器启动优先复用 MoviePilot 容器内 `/moviepilot` 已存在的 Playwright 或 CloakBrowser 内核。
+
+### ikuai-cli助手
+
+适合希望通过命令行方式管理爱快路由器网络、用户、VPN、防火墙等设备的用户。
+
+- 封装 `ikuai-cli`（Go 二进制，随插件打包）管理 iKuai 路由器。
+- 提供 8 个斜杠命令（`/ikuai_system`、`/ikuai_online`、`/ikuai_dns`、`/ikuai_logs` 等）和 2 个 AI 工具（`ikuai_cli` / `ikuai_skill`）。
+- 默认按只读方式排查问题；修改路由、规则、用户和系统配置等写操作需在插件配置开启并二次确认。
+- 自带 17 个领域技能文档（monitor / network / routing / security / vpn / users 等）。
 
 ## 安全提醒
 
@@ -102,3 +112,8 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - `0.1.47`：显式复用 MoviePilot 容器内已有浏览器内核；Playwright 启动时优先直接调用 `/moviepilot/.cache/ms-playwright` 或 `/moviepilot/.cloakbrowser` 中存在的可执行文件，并为 MP CloakBrowser 设置 `CLOAKBROWSER_BINARY_PATH`，避免路径存在但启动仍误报缺失。
 - `0.1.46`：按功能区拆分微云 Cookie 助手源码，分离 Cookie 工具、二维码图片处理、OpenList 客户端和浏览器环境辅助逻辑，主插件类保留生命周期、API 与登录编排。
 - `0.1.45`：优化状态轮询安全性，状态接口不再反复返回完整 Cookie，复制时才按需读取，并加锁避免重复启动扫码线程。
+
+### `IkuaiAssistant`
+
+- `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 `1.0.0 → 2.0.0`。
+- `1.0.0`：通过本地插件安装同步到 Localplugins 本地插件库；v3 环境兼容：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式。

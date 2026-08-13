@@ -107,5 +107,20 @@
     "v2": true,
     "release": true,
     "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
+  },
+  "IkuaiAssistant": {
+    "name": "ikuai-cli助手",
+    "description": "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。",
+    "labels": "网络,诊断,爱快",
+    "version": "1.0.0",
+    "author": "qsxazcv",
+    "level": 1,
+    "release": true,
+    "history": {
+      "v1.0.0": "通过本地插件安装同步到 Localplugins 本地插件库；v3 环境兼容：get_api() 全部端点加 x-moviepilot-raw-response 标记，绕过 v3 ResponseAPIRoute 统一 envelope 自动包装，保持 {ok: ...} 自定义响应格式。"
+    },
+    "v2": true,
+    "v3": false,
+    "icon": "https://www.ikuai8.com/favicon.ico"
   }
 }
