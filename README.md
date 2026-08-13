@@ -17,7 +17,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | 版本 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.0.0` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 
@@ -81,6 +81,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：官方 v3 分支已收编爱奇艺来源（`MediaSource.Iqiyi='iqiyidiscover'`，issue #6288 已修复）；识别签名改为 `media_source` / `media_id`（`resolve_media_identity` 归一化 + 非爱奇艺来源拒绝，旧 `source` / `mediaid` 参数由 kwargs 兜底兼容）；MediaInfo 身份统一为 `MediaSource.Iqiyi` 枚举 + `albumId`；`DiscoverSource` 显式注册 `MediaSource.Iqiyi`；新增 `MediaRecognizeConvert` 事件将爱奇艺身份转换为 TMDB 主身份，订阅搜索可跨源搜站点资源；版本按官方规则跃迁 `1.0.45 → 2.0.0`。
 - `1.0.45`：v3 兼容改造：识别方法 `recognize_media` / `async_recognize_media` 签名双参数兼容——新增 `media_source` / `media_id`（v3 分支 MediaChain 传参）并保留 `source` / `mediaid`（当前中间态传参），内部归一化后统一识别；配合官方 v3 分支收编 `iqiyi` / `iqiyidiscover`（`MediaSource.Iqiyi`），同一份代码跨中间态与 v3 分支可用。
 - `1.0.44`：删除方案A新鲜窗口（fresh window + force_refresh）和 suggest 反查接口，识别链路改为官方 cache or fetch 模式（缓存命中优先 → 未命中反查 videolib → 回退 meta.title），与 DDSRem a3511747 官方模式对齐。
 - `1.0.43`：本地维护版（官方模式优化）：videolib 反查按媒体类型扩展电视剧/电影频道；新增 suggest 接口按标题反查兜底（救回电影/冷门剧场景）；识别显式指定 `themoviedb` 源避免跨源歧义；反查命中时补全 `overview` 简介；新增 mtype 字符串防御转换；识别兜底缓存增加 5000 条上限裁剪。
