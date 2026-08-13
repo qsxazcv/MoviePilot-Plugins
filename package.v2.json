@@ -15,7 +15,8 @@
       "v2.0.4": "基于原作者 thsrite 版本继续维护，原插件仓库：https://github.com/thsrite/MoviePilot-Plugins，感谢原作者贡献；优化 MoviePilot 版本不兼容场景：自动更新时暂缓安装并说明当前版本、目标版本和最低要求；支持官方 >=/> 版本约束、安全读取主程序版本、持久化通知去重，等待 MoviePilot 升级兼容后自动继续更新并发送恢复成功提醒；同时增加定时任务唯一ID、replace_existing、max_instances=1、coalesce 和进程内锁，避免重复调度导致重复更新和重复通知。"
     },
     "v2": true,
-    "icon": "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
+    "icon": "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png",
+    "v3": false
   },
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
