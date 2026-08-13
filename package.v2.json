@@ -20,11 +20,12 @@
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
     "description": "让探索支持爱奇艺视频的数据浏览。",
-    "version": "1.0.44",
+    "version": "1.0.45",
     "icon": "https://www.iqiyi.com/logo.png",
     "author": "qsxazcv",
     "level": 2,
     "history": {
+      "v1.0.45": "本地维护版（v3 兼容改造）：识别方法 recognize_media/async_recognize_media 签名双参数兼容——新增 media_source/media_id（v3 分支 MediaChain 传参）并保留 source/mediaid（当前中间态传参），内部归一化后统一识别；配合官方 v3 分支收编 iqiyi/iqiyidiscover（MediaSource.Iqiyi），同一份代码跨中间态与 v3 分支可用。",
       "v1.0.44": "本地维护版：删除方案A新鲜窗口（fresh window + force_refresh）和 suggest 反查接口，识别链路改为官方 cache or fetch 模式（缓存命中优先 → 未命中反查 videolib → 回退 meta.title），与 DDSRem a3511747 官方模式对齐。",
       "v1.0.42": "本地维护版（方案A 新鲜优先+缓存兜底）：识别时缓存 1 小时内新鲜直接复用；缓存缺失或不新鲜时先实时反查爱奇艺推荐接口拿最新剧名并刷新缓存；实时反查不到时回退使用 3 天 TTL 内旧缓存兜底，保证识别用的剧名/年份尽量最新。",
       "v1.0.41": "本地维护版：探索页缓存策略调整——识别兜底缓存（albumId→标题/年份）TTL 从 7 天改为 3 天，支持内容变更时覆盖更新（老剧改名/改年份能及时生效），空值保护避免覆盖已有数据。",

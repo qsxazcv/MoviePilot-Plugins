@@ -29,7 +29,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "1.0.44"
+    plugin_version = "1.0.45"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -154,15 +154,23 @@ class IqiyiDiscover(_PluginBase):
         doubanid: str = None,
         bangumiid: int = None,
         anilistid: int = None,
+        media_source: str = None,
+        media_id: str = None,
         source: str = None,
         mediaid: str = None,
         **kwargs,
     ) -> Optional[schemas.MediaInfo]:
         """
         同步识别：按爱奇艺 albumId 拉取剧集信息，转 TMDB 搜索后回填 iqiyi 身份。
+
+        v3 兼容：v3 分支 MediaChain 传 media_source/media_id，当前中间态传
+        source/mediaid，双参数归一化后统一走 __recognize_iqiyi。
         """
         if not self._enabled:
             return None
+        # 双参数兼容归一化：v3 分支新参数优先，中间态旧参数兜底
+        source = media_source if media_source is not None else source
+        mediaid = media_id if media_id is not None else mediaid
         if source not in ("iqiyi", "iqiyidiscover") or not mediaid:
             return None
         try:
@@ -179,15 +187,23 @@ class IqiyiDiscover(_PluginBase):
         doubanid: str = None,
         bangumiid: int = None,
         anilistid: int = None,
+        media_source: str = None,
+        media_id: str = None,
         source: str = None,
         mediaid: str = None,
         **kwargs,
     ) -> Optional[schemas.MediaInfo]:
         """
         异步识别：订阅弹窗季集查询走此入口。
+
+        v3 兼容：v3 分支 MediaChain 传 media_source/media_id，当前中间态传
+        source/mediaid，双参数归一化后统一走 __recognize_iqiyi。
         """
         if not self._enabled:
             return None
+        # 双参数兼容归一化：v3 分支新参数优先，中间态旧参数兜底
+        source = media_source if media_source is not None else source
+        mediaid = media_id if media_id is not None else mediaid
         if source not in ("iqiyi", "iqiyidiscover") or not mediaid:
             return None
         try:
