@@ -30,7 +30,8 @@ class IkuaiAssistant(_PluginBase):
     plugin_version = "2.0.0"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
-    plugin_config_prefix = "https://github.com/qsxazcv/MoviePilot-Plugins"
+    author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
+    plugin_config_prefix = "ikuaiassistant_"
     plugin_order = 96
     auth_level = 1
 
