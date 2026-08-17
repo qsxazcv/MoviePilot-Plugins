@@ -18,13 +18,14 @@
     "name": "ikuai-cli助手",
     "description": "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。",
     "labels": "网络,诊断,爱快",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "icon": "https://www.ikuai8.com/favicon.ico",
     "author": "qsxazcv",
     "level": 1,
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "2.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v2.0.0": "V3 代际迁移版：get_api() 全部端点加 x-moviepilot-raw-response 标记，绕过 v3 ResponseAPIRoute 统一 envelope 自动包装，保持 {ok: ...} 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 1.0.0 → 2.0.0，system_version >=3.0.0。",
       "v1.0.0": "通过本地插件安装同步到 Localplugins 本地插件库。"
     }
@@ -33,13 +34,14 @@
     "name": "微云Cookie助手",
     "description": "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。",
     "labels": "工具,Cookie,微云,OpenList,Telegram",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "icon": "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png",
     "author": "qsxazcv",
     "level": 1,
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "1.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v1.0.0": "V3 代际迁移版：纯工具插件代码零改动——API 端点本身已返回 {success, ...} 格式（业务字段平铺），Vue 前端 unwrapResponse 已按 v3 envelope 兼容（'data' in data 解包），qrcode_image 原生响应由 _wrap_result 自动透传；版本按官方规则跃迁 0.1.47 → 1.0.0，system_version >=3.0.0。",
       "v0.1.47": "显式复用 MoviePilot 容器内已有浏览器内核：Playwright 优先直接调用 /moviepilot/.cache/ms-playwright 或 /moviepilot/.cloakbrowser 中存在的可执行文件，MP CloakBrowser 同步设置 CLOAKBROWSER_BINARY_PATH，避免路径存在但启动仍误报缺失。"
     }
@@ -48,12 +50,13 @@
     "name": "MediaWarp",
     "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。",
     "labels": "云盘",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
     "author": "DDSRem",
     "level": 1,
     "system_version": ">=3.0.0",
     "history": {
+      "2.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v2.0.0": "V3 代际迁移：纯工具插件（无 API 端点/无媒体身份/无 Vue 联邦），代码零改动；plugins.v3 布局 + 版本按官方规则跃迁 1.0.8 → 2.0.0，system_version >=3.0.0。",
       "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 config.yaml 手动维护；感谢原作者 DDSRem"
     }
@@ -62,13 +65,14 @@
     "name": "插件更新管理",
     "description": "监测已安装插件，推送更新提醒，可配置自动更新",
     "labels": "插件,更新,自动更新,兼容性",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "icon": "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png",
     "author": "thsrite",
     "level": 1,
     "release": true,
     "system_version": ">=3.0.0",
     "history": {
+      "3.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v3.0.0": "V3 代际迁移版（plugins.v3 + package.v3.json，system_version >=3.0.0）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 PluginManager/PluginHelper/Scheduler/SystemConfigOper/register_plugin_api 签名 v3 兼容；版本按官方规则跃迁 2.0.8 → 3.0.0。",
       "v2.0.8": "修复配置页“立即运行”和 /plugin_update 的结果通知不一致：一次性立即运行会识别为人工触发，遇到已通知过的暂缓项时同样返回“插件更新状态未变化”短摘要，同时保留更新成功通知。",
       "v2.0.7": "优化手动触发 /plugin_update 的重复回执体验：移除即时开始通知，同一会话 5 分钟内相同暂缓结果只返回“插件更新状态未变化”短摘要，并在任务已运行时返回检查中提示。",

@@ -13,18 +13,18 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter
 
-from app.core.config import settings
-from app.core.plugin import PluginManager
-from app.db.systemconfig_oper import SystemConfigOper
-from app.helper.plugin import PluginHelper
+from app.sdk.config import settings
+from app.sdk.plugins import PluginManager
+from app.db.oper.systemconfig import SystemConfigOper
+from app.adapters.external.market import PluginHelper
 from app.plugins import _PluginBase
 from typing import Any, List, Dict, Tuple, Optional
-from app.log import logger
+from app.sdk.logging import logger
 from app.schemas.types import SystemConfigKey
 from app.schemas import NotificationType
 from app.scheduler import Scheduler
 from app.schemas.types import EventType
-from app.core.event import eventmanager, Event
+from app.sdk.events import eventmanager, Event
 
 router = APIRouter()
 
@@ -37,7 +37,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "3.0.0"
+    plugin_version = "3.1.0"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页

@@ -12,9 +12,9 @@ from pydantic import BaseModel, Field
 
 from app.agent.tools.base import MoviePilotTool
 from app.agent.tools.tags import ToolTag
-from app.core.event import Event, eventmanager
-from app.core.plugin import PluginManager
-from app.log import logger
+from app.sdk.events import Event, eventmanager
+from app.sdk.plugins import PluginManager
+from app.sdk.logging import logger
 from app.plugins import _PluginBase
 from app.schemas.types import EventType
 
@@ -27,7 +27,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.0.0"
+    plugin_version = "2.1.0"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"

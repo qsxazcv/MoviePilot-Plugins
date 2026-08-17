@@ -14,9 +14,9 @@ from ruamel.yaml import YAML
 from ruamel.yaml.representer import RoundTripRepresenter
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from app.core.config import settings
-from app.helper.mediaserver import MediaServerHelper
-from app.log import logger
+from app.sdk.config import settings
+from app.sdk.services import MediaServerHelper
+from app.sdk.logging import logger
 from app.plugins import _PluginBase
 
 
@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.0"
+    plugin_version = "2.1.0"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页

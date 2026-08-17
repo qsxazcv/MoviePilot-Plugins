@@ -20,9 +20,9 @@ from urllib.request import Request, urlopen
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import Response
 
-from app.core.config import settings
-from app.core.event import Event, eventmanager
-from app.log import logger
+from app.sdk.config import settings
+from app.sdk.events import Event, eventmanager
+from app.sdk.logging import logger
 from app.plugins import _PluginBase
 from app.schemas.types import EventType, NotificationType
 
@@ -52,7 +52,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.0.0"
+    plugin_version = "1.1.0"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
