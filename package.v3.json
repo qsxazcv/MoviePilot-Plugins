@@ -2,7 +2,7 @@
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
     "description": "让探索支持爱奇艺视频的数据浏览。",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "icon": "https://www.iqiyi.com/logo.png",
     "author": "qsxazcv",
     "level": 2,
@@ -10,6 +10,7 @@
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "2.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v2.0.0": "V3 代际迁移版：官方 v3 分支已收编爱奇艺来源（MediaSource.Iqiyi='iqiyidiscover'，issue #6288 已修复）；识别签名改为 media_source/media_id（resolve_media_identity 归一化 + 非爱奇艺来源拒绝，旧 source/mediaid 参数由 kwargs 兜底兼容）；MediaInfo 身份统一为 MediaSource.Iqiyi 枚举 + albumId；DiscoverSource 显式注册 MediaSource.Iqiyi；新增 MediaRecognizeConvert 事件将爱奇艺身份转换为 TMDB 主身份，订阅搜索可跨源搜站点资源；版本按官方规则跃迁 1.0.45 → 2.0.0，system_version >=3.0.0。"
     }
   },

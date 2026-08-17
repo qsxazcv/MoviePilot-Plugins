@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Dict, List
 
-from app.log import logger
+from app.sdk.logging import logger
 
 from .constants import (
     FILTER_GROUPS as FALLBACK_FILTER_GROUPS,

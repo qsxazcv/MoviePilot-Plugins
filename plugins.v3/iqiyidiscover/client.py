@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 import requests
 
-from app.log import logger
+from app.sdk.logging import logger
 
 from .constants import CHANNEL_PARAMS, IQIYI_HEADERS
 from .filters import normalize_mode

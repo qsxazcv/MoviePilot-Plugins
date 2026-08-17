@@ -11,8 +11,8 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from app.core.config import settings
-from app.utils.http import RequestUtils
+from app.sdk.config import settings
+from app.sdk.network import RequestUtils
 
 # 分集/期数噪声：第N集 / 第N期 / 第N话 / 第N回 / 更新至N集 等
 _EPISODE_NOISE = re.compile(

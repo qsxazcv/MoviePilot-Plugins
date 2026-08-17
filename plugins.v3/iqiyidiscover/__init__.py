@@ -2,13 +2,13 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from app import schemas
-from app.core.config import settings
-from app.core.event import Event, eventmanager
-from app.log import logger
+from app.sdk.config import settings
+from app.sdk.events import Event, eventmanager
+from app.sdk.logging import logger
 from app.plugins import _PluginBase
 from app.schemas import DiscoverSourceEventData, MediaRecognizeConvertEventData
 from app.schemas.types import ChainEventType, MediaSource, MediaType
-from app.utils.media import resolve_media_identity
+from app.sdk.media import resolve_media_identity
 
 from .client import request_videolib
 from .constants import (
@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "2.0.0"
+    plugin_version = "2.1.0"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -246,7 +246,7 @@ class IqiyiDiscover(_PluginBase):
         if cached:
             cached_title, cached_year = cached
             if cached_title:
-                from app.core.metainfo import MetaInfo
+                from app.sdk.media import MetaInfo
 
                 search_meta = MetaInfo(title=cached_title)
                 search_meta.type = MediaType.TV
@@ -266,7 +266,7 @@ class IqiyiDiscover(_PluginBase):
             item = self.__fetch_videolib_item(mediaid, mtype="movie")
         if item:
             self.__cache_albums([item])
-            from app.core.metainfo import MetaInfo
+            from app.sdk.media import MetaInfo
 
             search_meta = MetaInfo(title=pick_title(item))
             search_meta.type = MediaType.TV
@@ -440,7 +440,7 @@ class IqiyiDiscover(_PluginBase):
 
         :return: (search_meta, media_type, year)
         """
-        from app.core.metainfo import MetaInfo
+        from app.sdk.media import MetaInfo
 
         vlist = avlist.get("vlist") or []
         if not vlist:
