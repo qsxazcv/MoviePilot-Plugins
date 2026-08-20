@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "2.1.0"
+    plugin_version = "2.1.1"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -76,6 +76,7 @@ class IqiyiDiscover(_PluginBase):
                 "auth": "apikey",
                 "summary": "爱奇艺探索数据源",
                 "description": "获取爱奇艺片库探索数据",
+                "response_model": schemas.Response[List[schemas.MediaInfo]],
             }
         ]
 
@@ -540,7 +541,7 @@ class IqiyiDiscover(_PluginBase):
         is_purchase: str = None,
         page: int = 1,
         count: int = 10,
-    ) -> List[schemas.MediaInfo]:
+    ) -> schemas.Response:
         """
         获取爱奇艺探索数据。
         """
@@ -618,7 +619,7 @@ class IqiyiDiscover(_PluginBase):
                 break
         # 把当前页专辑信息写入缓存，供识别兜底
         self.__cache_albums(rows)
-        return medias
+        return schemas.Response(success=True, data=medias)
 
     @eventmanager.register(ChainEventType.DiscoverSource)
     def discover_source(self, event: Event) -> None:
