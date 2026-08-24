@@ -1,0 +1,9 @@
+[project]
+name = "moviepilot-plugin-pluginautoupdate"
+dynamic = ["version"]
+requires-python = ">=3.12"
+dependencies = [
+    "pytz",
+    "apscheduler",
+    "fastapi",
+]
