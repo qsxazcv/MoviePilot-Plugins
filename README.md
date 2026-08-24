@@ -21,7 +21,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | --- | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | `3.1.0` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | `2.1.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | `2.1.0` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
+| MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | `1.1.0` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `1.0.0` | `2.1.0` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
@@ -104,6 +104,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.1.1`：适配 V3 插件开发文档 7.5：依赖清单由 `requirements.txt` 迁移至 `pyproject.toml`（PEP 621）。
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `MediaServerHelper` 签名 v3 兼容；版本按官方规则跃迁 `1.0.8 → 2.0.0`。
 - `1.0.8`：适配 [AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp) `v0.2.4`，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 `config.yaml` 手动维护；感谢原作者 `DDSRem` 及 [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。

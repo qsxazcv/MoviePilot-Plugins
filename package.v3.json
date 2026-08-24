@@ -51,12 +51,13 @@
     "name": "MediaWarp",
     "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。",
     "labels": "云盘",
-    "version": "2.1.0",
+    "version": "2.1.1",
     "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
     "author": "DDSRem",
     "level": 1,
     "system_version": ">=3.0.0",
     "history": {
+      "2.1.1": "适配 V3 插件开发文档 7.5：依赖清单由 requirements.txt 迁移至 pyproject.toml（PEP 621）。",
       "2.1.0": "适配 V3 SDK 导入规范：插件内部导入全面迁移至 app.sdk 体系，去除对旧版兼容层的依赖。",
       "v2.0.0": "V3 代际迁移：纯工具插件（无 API 端点/无媒体身份/无 Vue 联邦），代码零改动；plugins.v3 布局 + 版本按官方规则跃迁 1.0.8 → 2.0.0，system_version >=3.0.0。",
       "v1.0.8": "适配 AkimioJR/MediaWarp v0.2.4，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 config.yaml 手动维护；感谢原作者 DDSRem"
