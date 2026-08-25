@@ -20,10 +20,10 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | V2 | V3 | 简介 |
 | --- | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | `3.1.0` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | `2.1.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | `2.1.3` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | `1.1.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
-| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `1.0.0` | `2.1.0` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
+| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `1.0.0` | `2.1.2` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
 ## 插件详情
 
@@ -97,6 +97,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `2.1.3`：修复爱奇艺识别回退路径未限定 TMDB 导致的递归调用。
 - `2.1.1`：适配 V3 探索数据源 envelope 响应：`iqiyi_discover` 端点改为返回 `schemas.Response`（success/message/data 三段式），`get_api` 声明 `response_model`，修复探索页「服务器返回了无效响应」。
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.events` / `app.sdk.logging` / `app.sdk.media` / `app.sdk.network`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：官方 v3 分支已收编爱奇艺来源（`MediaSource.Iqiyi='iqiyidiscover'`，issue #6288 已修复）；识别签名改为 `media_source` / `media_id`（`resolve_media_identity` 归一化 + 非爱奇艺来源拒绝，旧 `source` / `mediaid` 参数由 kwargs 兜底兼容）；MediaInfo 身份统一为 `MediaSource.Iqiyi` 枚举 + `albumId`；`DiscoverSource` 显式注册 `MediaSource.Iqiyi`；新增 `MediaRecognizeConvert` 事件将爱奇艺身份转换为 TMDB 主身份，订阅搜索可跨源搜站点资源；版本按官方规则跃迁 `1.0.45 → 2.0.0`。
@@ -118,6 +119,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IkuaiAssistant`
 
+- `2.1.2`：修复内置 `ikuai-cli` 二进制损坏并恢复可执行权限，升级至官方 `v1.0.18`。
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.events` / `app.sdk.plugins` / `app.sdk.logging`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 `1.0.0 → 2.0.0`。
 - `1.0.0`：通过本地插件安装同步到 Localplugins 本地插件库；v3 环境兼容：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式。

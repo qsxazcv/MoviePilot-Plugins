@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "2.1.2"
+    plugin_version = "2.1.3"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -234,8 +234,12 @@ class IqiyiDiscover(_PluginBase):
                 if search_year:
                     search_meta.year = search_year
                 media_chain = MediaChain()
+                # 限定为 TMDB 标题识别，避免再次进入包括本插件在内的全局识别模块，
+                # 从而触发爱奇艺识别递归。
                 mediainfo = media_chain.recognize_media(
-                    meta=search_meta, mtype=search_type
+                    meta=search_meta,
+                    mtype=search_type,
+                    media_source=MediaSource.TMDB,
                 )
                 if mediainfo:
                     return self.__finalize_iqiyi_mediainfo(
@@ -256,6 +260,7 @@ class IqiyiDiscover(_PluginBase):
                 mediainfo = MediaChain().recognize_media(
                     meta=search_meta,
                     mtype=MediaType.TV,
+                    media_source=MediaSource.TMDB,
                 )
                 if mediainfo:
                     return self.__finalize_iqiyi_mediainfo(
@@ -277,6 +282,7 @@ class IqiyiDiscover(_PluginBase):
             mediainfo = MediaChain().recognize_media(
                 meta=search_meta,
                 mtype=MediaType.TV,
+                media_source=MediaSource.TMDB,
             )
             if mediainfo:
                 return self.__finalize_iqiyi_mediainfo(
@@ -285,7 +291,10 @@ class IqiyiDiscover(_PluginBase):
                 )
         # 回退：按原始请求标题识别
         if meta and getattr(meta, "title", None):
-            mediainfo = MediaChain().recognize_media(meta=meta)
+            mediainfo = MediaChain().recognize_media(
+                meta=meta,
+                media_source=MediaSource.TMDB,
+            )
             if mediainfo:
                 return mediainfo
 

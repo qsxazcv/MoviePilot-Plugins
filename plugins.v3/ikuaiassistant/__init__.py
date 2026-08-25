@@ -27,7 +27,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.1.1"
+    plugin_version = "2.1.2"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
