@@ -46,3 +46,11 @@ def test_ikuai_bundled_cli_is_nonempty_elf() -> None:
 def test_ikuai_v3_manifest_exists() -> None:
     assert (PLUGIN_DIR / "pyproject.toml").is_file()
     assert (ROOT / "package.v3.json").is_file()
+
+
+def test_ikuai_page_uses_runtime_cli_version_probe() -> None:
+    source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
+    assert "def __cli_status_card" in source
+    assert "ikuai-cli v1.0.16" not in source
+    assert 'error_type = "invalid_executable"' in source
+    assert 'error_type": "timeout"' in source

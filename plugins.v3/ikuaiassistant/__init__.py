@@ -1,4 +1,5 @@
 import builtins
+import errno
 import json
 import os
 import shlex
@@ -27,7 +28,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.1.2"
+    plugin_version = "2.1.3"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -414,7 +415,7 @@ class IkuaiAssistant(_PluginBase):
                 "props": {"class": "mb-3"},
                 "content": [
                     self.__status_card("连接状态", "已配置", self._base_url or "未配置爱快地址", "success"),
-                    self.__status_card("CLI 状态", "内置可用", "ikuai-cli v1.0.16", "success"),
+                    self.__status_card(*self.__cli_status_card()),
                     self.__status_card("Agent Skill", "17 个领域", "monitor / network / routing / security", "info"),
                     self.__status_card("写操作保护", write_status, "默认拦截修改类命令", write_color),
                 ],
@@ -725,6 +726,65 @@ class IkuaiAssistant(_PluginBase):
                 env={**os.environ, **env},
                 check=False,
             )
+        except subprocess.TimeoutExpired:
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            logger.warning(
+                "ikuai-cli助手 CLI 执行超时: "
+                f"command={self.__safe_cli_command(args)}, elapsed_ms={elapsed_ms}"
+            )
+            return {
+                "ok": False,
+                "error": f"CLI 执行超时（超过 {self._timeout} 秒）",
+                "error_type": "timeout",
+                "command": args,
+                "executable": run_args[0],
+            }
+        except FileNotFoundError:
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            logger.error(
+                "ikuai-cli助手 CLI 文件不存在: "
+                f"command={self.__safe_cli_command(args)}, executable={run_args[0]}"
+            )
+            return {
+                "ok": False,
+                "error": "找不到 ikuai-cli 可执行文件，请检查插件文件或 cli_path 配置",
+                "error_type": "executable_not_found",
+                "command": args,
+                "executable": run_args[0],
+            }
+        except PermissionError:
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            logger.error(
+                "ikuai-cli助手 CLI 无执行权限: "
+                f"command={self.__safe_cli_command(args)}, executable={run_args[0]}"
+            )
+            return {
+                "ok": False,
+                "error": "ikuai-cli 没有执行权限，请检查二进制文件权限",
+                "error_type": "permission_denied",
+                "command": args,
+                "executable": run_args[0],
+            }
+        except OSError as err:
+            elapsed_ms = int((time.monotonic() - started) * 1000)
+            if err.errno == errno.ENOEXEC:
+                error = "ikuai-cli 二进制格式无效或文件已损坏，请重新安装插件"
+                error_type = "invalid_executable"
+            else:
+                error = f"CLI 启动失败：{err}"
+                error_type = "os_error"
+            logger.error(
+                "ikuai-cli助手 CLI 启动失败: "
+                f"command={self.__safe_cli_command(args)}, elapsed_ms={elapsed_ms}, error={err}",
+                exc_info=True,
+            )
+            return {
+                "ok": False,
+                "error": error,
+                "error_type": error_type,
+                "command": args,
+                "executable": run_args[0],
+            }
         except Exception as err:
             elapsed_ms = int((time.monotonic() - started) * 1000)
             logger.error(
@@ -732,7 +792,13 @@ class IkuaiAssistant(_PluginBase):
                 f"command={self.__safe_cli_command(args)}, elapsed_ms={elapsed_ms}, error={err}",
                 exc_info=True,
             )
-            return {"ok": False, "error": str(err), "command": args, "executable": run_args[0]}
+            return {
+                "ok": False,
+                "error": f"CLI 执行异常：{err}",
+                "error_type": type(err).__name__,
+                "command": args,
+                "executable": run_args[0],
+            }
         stdout = completed.stdout.strip()
         stderr = completed.stderr.strip()
         parsed: Any = None
@@ -756,6 +822,28 @@ class IkuaiAssistant(_PluginBase):
             "stderr": stderr,
             "data": parsed,
         }
+
+    def __cli_status_card(self) -> Tuple[str, str, str, str]:
+        """读取内置 CLI 版本并生成详情页状态卡片数据。"""
+        executable = self.__cli_executable()
+        try:
+            completed = subprocess.run(
+                [executable, "version", "--format", "json"],
+                capture_output=True,
+                text=True,
+                timeout=min(max(self._timeout, 1), 5),
+                env=os.environ.copy(),
+                check=False,
+            )
+            if completed.returncode != 0:
+                return "CLI 状态", "异常", f"版本探测失败（退出码 {completed.returncode}）", "warning"
+            payload = json.loads(completed.stdout or "{}")
+            version = str(payload.get("version") or "未知")
+            return "CLI 状态", "内置可用", f"ikuai-cli {version}", "success"
+        except subprocess.TimeoutExpired:
+            return "CLI 状态", "超时", "版本探测超过 5 秒", "warning"
+        except (FileNotFoundError, PermissionError, OSError, json.JSONDecodeError) as err:
+            return "CLI 状态", "不可用", f"版本探测失败：{type(err).__name__}", "error"
 
     def read_agent_skill(self, name: str = "") -> Dict[str, Any]:
         """读取 ikuai-cli 官方 Agent Skill 或领域技能文档。"""
