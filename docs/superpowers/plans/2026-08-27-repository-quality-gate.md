@@ -2,7 +2,7 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 为 `qsxazcv/MoviePilot-Plugins` 建立轻量、可持续的 V2/V3 仓库质量门禁，优先防止版本索引、目录结构、Python 语法、V3 依赖声明和发布包结构回归。
+**目标：** 为 `qsxazcv/MoviePilot-Plugins` 建立轻量、可持续的 V3 仓库质量门禁，优先防止版本索引、目录结构、Python 语法、V3 依赖声明和发布包结构回归。
 
 **架构：** 保留现有手工发布流程作为高风险/二进制插件的备用路径，新增独立的静态校验和 GitHub Actions 门禁。测试先覆盖仓库合同与纯逻辑，不依赖公网、下载器、媒体服务器或站点账号；覆盖率门禁暂不默认启用。
 

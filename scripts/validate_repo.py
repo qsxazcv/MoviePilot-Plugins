@@ -18,11 +18,11 @@ except ModuleNotFoundError:  # Support direct execution: python scripts/validate
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PACKAGE_V2 = REPO_ROOT / "package.v2.json"
 PACKAGE_V3 = REPO_ROOT / "package.v3.json"
 README = REPO_ROOT / "README.md"
-PLUGINS_V2 = REPO_ROOT / "plugins.v2"
 PLUGINS_V3 = REPO_ROOT / "plugins.v3"
+V2_PACKAGE = REPO_ROOT / "package.v2.json"
+V2_PLUGINS = REPO_ROOT / "plugins.v2"
 LEGACY_PACKAGE = REPO_ROOT / "package.json"
 LEGACY_PLUGINS = REPO_ROOT / "plugins"
 
@@ -232,29 +232,32 @@ def validate_v3_manifest(plugin_name: str, plugin_dir: Path, errors: list[str]) 
                     errors.append(f"{plugin_name}: invalid dependency expression {dependency!r}: {exc}")
 
 
-def validate_repository(errors: list[str]) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Validate both supported generations and shared repository safeguards."""
+def validate_repository(errors: list[str]) -> dict[str, Any]:
+    """Validate the V3-only repository and shared safeguards."""
     validate_no_legacy_layout(errors)
-    package_v2 = validate_package(PACKAGE_V2, PLUGINS_V2, errors)
     package_v3 = validate_package(PACKAGE_V3, PLUGINS_V3, errors)
     for plugin_name in package_v3:
         plugin_dir = PLUGINS_V3 / plugin_name.lower()
         validate_v3_manifest(plugin_name, plugin_dir, errors)
-    validate_readme({**package_v2, **package_v3}, errors)
+    validate_readme(package_v3, errors)
     validate_sensitive_paths(errors)
-    return package_v2, package_v3
+    return package_v3
 
 
 def validate_no_legacy_layout(errors: list[str]) -> None:
-    """Reject legacy V1 package files and plugin directories."""
+    """Reject V1 and removed V2 package files and plugin directories."""
     if LEGACY_PACKAGE.exists():
         errors.append("legacy V1 package index is not allowed: package.json")
     if LEGACY_PLUGINS.exists():
         errors.append("legacy V1 plugin directory is not allowed: plugins/")
+    if V2_PACKAGE.exists():
+        errors.append("V2 package index is not allowed: package.v2.json")
+    if V2_PLUGINS.exists():
+        errors.append("V2 plugin directory is not allowed: plugins.v2/")
 
 
 def validate_readme(package: dict[str, Any], errors: list[str]) -> None:
-    """Ensure README documents every V2 package entry."""
+    """Ensure README documents every V3 package entry."""
     try:
         text = README.read_text(encoding="utf-8")
     except FileNotFoundError:
@@ -297,7 +300,7 @@ def validate_sensitive_paths(errors: list[str]) -> None:
 def main() -> int:
     """Run all repository checks."""
     errors: list[str] = []
-    package_v2, package_v3 = validate_repository(errors)
+    package_v3 = validate_repository(errors)
 
     if errors:
         print("Repository validation failed:")
@@ -306,7 +309,7 @@ def main() -> int:
         return 1
 
     print("Repository validation passed.")
-    print(f"Validated {len(package_v2)} V2 and {len(package_v3)} V3 package entries.")
+    print(f"Validated {len(package_v3)} V3 package entries.")
     return 0
 
 

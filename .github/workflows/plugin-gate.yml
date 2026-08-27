@@ -18,13 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install test tooling
-        run: python -m pip install --disable-pip-version-check pytest
+        run: python -m pip install --disable-pip-version-check pytest packaging
 
       - name: Validate repository metadata
         run: python scripts/validate_repo.py
@@ -32,11 +27,11 @@ jobs:
       - name: Validate V3 dependency manifests
         run: python scripts/check_v3_dependency_install.py --static-only
 
-      - name: Compile V2 and V3 plugins
+      - name: Compile V3 plugins
         shell: bash
         run: |
           set -euo pipefail
-          find plugins.v2 plugins.v3 -name '*.py' -print0 | xargs -0 -r -n1 python -m py_compile
+          find plugins.v3 -name '*.py' -print0 | xargs -0 -r -n1 python -m py_compile
 
       - name: Run repository tests
         env:

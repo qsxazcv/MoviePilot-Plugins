@@ -1,9 +1,8 @@
 # MoviePilot-Plugins
 
-MoviePilot 个人维护插件仓库，所有插件均提供 **V2 / V3 双代版本**，覆盖探索扩展和实用工具。
+MoviePilot 个人维护插件仓库，所有插件均面向 **MoviePilot V3**，覆盖探索扩展和实用工具。
 
-- **V3（推荐）**：MoviePilot `>=3.0.0` 环境自动安装 `plugins.v3` 版本（`system_version >=3.0.0`），使用官方媒体身份合同。
-- **V2**：MoviePilot V2 环境自动安装 `plugins.v2` 版本，代际相互独立、互不影响。
+- **V3**：MoviePilot `>=3.0.0` 环境安装 `plugins.v3` 版本（`system_version >=3.0.0`），使用官方媒体身份合同。
 
 ## 安装
 
@@ -13,17 +12,17 @@ MoviePilot 个人维护插件仓库，所有插件均提供 **V2 / V3 双代版�
 https://github.com/qsxazcv/MoviePilot-Plugins
 ```
 
-添加后刷新插件市场，选择需要的插件安装即可。V2 / V3 宿主会自动匹配对应代际版本，无需手动区分。
+添加后刷新插件市场，选择需要的插件安装即可。当前仓库仅支持 MoviePilot V3 环境。
 
 ## 插件一览
 
-| 插件 | 插件 ID | 类型 | V2 | V3 | 简介 |
-| --- | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | `3.1.1` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | `2.1.3` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
-| 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | `1.1.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
-| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `1.0.0` | `2.1.2` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
+| 插件 | 插件 ID | 类型 | V3 | 简介 |
+| --- | --- | --- | --- | --- |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.1` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.1.3` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| MediaWarp | `MediaWarp` | 云盘 | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
+| 微云Cookie助手 | `weiyuncookie` | 工具 | `1.1.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
+| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.2` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
 ## 插件详情
 
@@ -87,7 +86,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ## 更新记录
 
-这里只保留每个插件最近的主要更新，完整历史以 `package.v2.json` / `package.v3.json` 为准。
+这里只保留每个插件最近的主要更新，完整历史以 `package.v3.json` 为准。
 
 ### `PluginAutoUpdate`
 

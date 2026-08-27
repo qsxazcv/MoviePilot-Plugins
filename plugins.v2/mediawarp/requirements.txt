@@ -1,8 +1,0 @@
-# Runtime dependencies for MediaWarp.
-# MoviePilot commonly bundles some of these, but keeping them here lets the
-# plugin installer complete missing packages in lean environments.
-apscheduler
-psutil
-pytz
-requests
-ruamel.yaml

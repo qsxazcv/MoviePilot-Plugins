@@ -8,9 +8,7 @@ def _plugin_source(version: str = "1.0.0") -> str:
 
 
 def _write_fixture(root: Path, *, version: str = "1.0.0", bad_manifest: bool = False) -> None:
-    (root / "plugins.v2/demo").mkdir(parents=True)
     (root / "plugins.v3/demo").mkdir(parents=True)
-    (root / "plugins.v2/demo/__init__.py").write_text(_plugin_source(version), encoding="utf-8")
     (root / "plugins.v3/demo/__init__.py").write_text(_plugin_source(version), encoding="utf-8")
     (root / "plugins.v3/demo/pyproject.toml").write_text(
         '[project]\nname = "moviepilot-plugin-demo"\ndynamic = ["version"]\n'
@@ -22,25 +20,21 @@ def _write_fixture(root: Path, *, version: str = "1.0.0", bad_manifest: bool = F
             '[project]\nname = "moviepilot-plugin-demo"\ndependencies = ["not a valid requirement !!!"]\n',
             encoding="utf-8",
         )
-    for generation in ("v2", "v3"):
-        (root / f"package.{generation}.json").write_text(
-            '{"Demo": {"name": "Demo", "description": "Demo", "labels": "test", '
-            f'"version": "{version}", "icon": "demo.png", "author": "tester", '
-            f'"level": 1, "history": {{"{version}": "test"}}'
-            + (', "system_version": ">=3.0.0"' if generation == "v3" else "")
-            + '}}',
-            encoding="utf-8",
-        )
+    (root / "package.v3.json").write_text(
+        '{"Demo": {"name": "Demo", "description": "Demo", "labels": "test", '
+        f'"version": "{version}", "icon": "demo.png", "author": "tester", '
+        f'"level": 1, "history": {{"{version}": "test"}}, '
+        '"system_version": ">=3.0.0"}}',
+        encoding="utf-8",
+    )
     (root / "README.md").write_text(f"`Demo` `{version}`\n", encoding="utf-8")
 
 
-def test_validator_checks_v2_and_v3_indexes(tmp_path, monkeypatch):
+def test_validator_checks_v3_index(tmp_path, monkeypatch):
     _write_fixture(tmp_path)
     monkeypatch.setattr(validator, "REPO_ROOT", tmp_path)
-    monkeypatch.setattr(validator, "PACKAGE_V2", tmp_path / "package.v2.json")
     monkeypatch.setattr(validator, "PACKAGE_V3", tmp_path / "package.v3.json")
     monkeypatch.setattr(validator, "README", tmp_path / "README.md")
-    monkeypatch.setattr(validator, "PLUGINS_V2", tmp_path / "plugins.v2")
     monkeypatch.setattr(validator, "PLUGINS_V3", tmp_path / "plugins.v3")
     monkeypatch.setattr(validator, "LEGACY_PACKAGE", tmp_path / "package.json")
     monkeypatch.setattr(validator, "LEGACY_PLUGINS", tmp_path / "plugins")
@@ -55,10 +49,8 @@ def test_validator_rejects_v3_version_mismatch(tmp_path, monkeypatch):
     package = (tmp_path / "package.v3.json").read_text(encoding="utf-8").replace('"1.0.0"', '"2.0.0"', 1)
     (tmp_path / "package.v3.json").write_text(package, encoding="utf-8")
     monkeypatch.setattr(validator, "REPO_ROOT", tmp_path)
-    monkeypatch.setattr(validator, "PACKAGE_V2", tmp_path / "package.v2.json")
     monkeypatch.setattr(validator, "PACKAGE_V3", tmp_path / "package.v3.json")
     monkeypatch.setattr(validator, "README", tmp_path / "README.md")
-    monkeypatch.setattr(validator, "PLUGINS_V2", tmp_path / "plugins.v2")
     monkeypatch.setattr(validator, "PLUGINS_V3", tmp_path / "plugins.v3")
     monkeypatch.setattr(validator, "LEGACY_PACKAGE", tmp_path / "package.json")
     monkeypatch.setattr(validator, "LEGACY_PLUGINS", tmp_path / "plugins")
@@ -71,10 +63,8 @@ def test_validator_rejects_v3_version_mismatch(tmp_path, monkeypatch):
 def test_validator_rejects_invalid_v3_dependency_manifest(tmp_path, monkeypatch):
     _write_fixture(tmp_path, bad_manifest=True)
     monkeypatch.setattr(validator, "REPO_ROOT", tmp_path)
-    monkeypatch.setattr(validator, "PACKAGE_V2", tmp_path / "package.v2.json")
     monkeypatch.setattr(validator, "PACKAGE_V3", tmp_path / "package.v3.json")
     monkeypatch.setattr(validator, "README", tmp_path / "README.md")
-    monkeypatch.setattr(validator, "PLUGINS_V2", tmp_path / "plugins.v2")
     monkeypatch.setattr(validator, "PLUGINS_V3", tmp_path / "plugins.v3")
     monkeypatch.setattr(validator, "LEGACY_PACKAGE", tmp_path / "package.json")
     monkeypatch.setattr(validator, "LEGACY_PLUGINS", tmp_path / "plugins")
@@ -82,3 +72,22 @@ def test_validator_rejects_invalid_v3_dependency_manifest(tmp_path, monkeypatch)
     errors = []
     validator.validate_repository(errors)
     assert any("dependency" in error.lower() for error in errors)
+
+
+def test_validator_rejects_removed_v2_layout(tmp_path, monkeypatch):
+    _write_fixture(tmp_path)
+    (tmp_path / "package.v2.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "plugins.v2").mkdir()
+    monkeypatch.setattr(validator, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(validator, "PACKAGE_V3", tmp_path / "package.v3.json")
+    monkeypatch.setattr(validator, "README", tmp_path / "README.md")
+    monkeypatch.setattr(validator, "PLUGINS_V3", tmp_path / "plugins.v3")
+    monkeypatch.setattr(validator, "V2_PACKAGE", tmp_path / "package.v2.json")
+    monkeypatch.setattr(validator, "V2_PLUGINS", tmp_path / "plugins.v2")
+    monkeypatch.setattr(validator, "LEGACY_PACKAGE", tmp_path / "package.json")
+    monkeypatch.setattr(validator, "LEGACY_PLUGINS", tmp_path / "plugins")
+    monkeypatch.setattr(validator, "tracked_or_publishable_paths", lambda: [])
+    errors = []
+    validator.validate_repository(errors)
+    assert any("package.v2.json" in error for error in errors)
+    assert any("plugins.v2" in error for error in errors)
