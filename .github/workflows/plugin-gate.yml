@@ -57,4 +57,7 @@ jobs:
           version: "0.8.15"
 
       - name: Resolve V3 dependencies without modifying the runner environment
-        run: uv run --no-project --python 3.14 python scripts/check_v3_dependency_install.py --python 3.14
+        run: |
+          uv venv --python 3.14 .venv-ci
+          uv pip install --python .venv-ci/bin/python packaging
+          .venv-ci/bin/python scripts/check_v3_dependency_install.py --python .venv-ci/bin/python
