@@ -1,4 +1,4 @@
-"""Check V3 plugin dependency manifests and optionally resolve them with uv."""
+"""Check V3 plugin dependency manifests and optionally install them with uv."""
 
 from __future__ import annotations
 
@@ -50,8 +50,22 @@ def validate_manifest(path: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--static-only", action="store_true")
-    parser.add_argument("--python", dest="python_version", default=None)
-    parser.add_argument("--check", action="store_true", help="resolve each manifest in a temporary uv environment")
+    parser.add_argument(
+        "--python",
+        dest="python_version",
+        default="3.14",
+        help="Python executable or version passed to uv (default: 3.14)",
+    )
+    parser.add_argument(
+        "--install",
+        action="store_true",
+        help="install dependencies into the selected environment instead of dry-run resolution",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="run uv pip check after dependency installation",
+    )
     args = parser.parse_args()
     paths = manifests()
     errors = [error for path in paths for error in validate_manifest(path)]
@@ -61,11 +75,22 @@ def main() -> int:
         print("V3 dependency manifest check failed:")
         print("\n".join(f"- {error}" for error in errors))
         return 1
-    if args.python_version and not args.static_only:
-        python_version = args.python_version or "3.14"
+    if not args.static_only:
+        python_version = args.python_version
         for path in paths:
-            command = ["uv", "pip", "install", "--dry-run", "--python", python_version, "-r", str(path)]
+            command = ["uv", "pip", "install"]
+            if not args.install:
+                command.append("--dry-run")
+            command.extend(["--python", python_version, "-r", str(path)])
             result = subprocess.run(command, cwd=ROOT, check=False)
+            if result.returncode:
+                return result.returncode
+        if args.install and args.check:
+            result = subprocess.run(
+                ["uv", "pip", "check", "--python", python_version],
+                cwd=ROOT,
+                check=False,
+            )
             if result.returncode:
                 return result.returncode
     print(f"V3 dependency manifests valid: {len(paths)}")

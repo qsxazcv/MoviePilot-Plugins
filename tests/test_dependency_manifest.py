@@ -48,3 +48,40 @@ def test_python_flag_runs_uv_dry_run(tmp_path, monkeypatch):
     monkeypatch.setattr(checker.sys, "argv", ["check", "--python", "3.14"])
     assert checker.main() == 0
     assert calls == [["uv", "pip", "install", "--dry-run", "--python", "3.14", "-r", str(plugin_dir / "pyproject.toml")]]
+
+
+def test_install_and_check_run_real_uv_commands(tmp_path, monkeypatch):
+    plugin_dir = tmp_path / "plugins.v3/demo"
+    plugin_dir.mkdir(parents=True)
+    (plugin_dir / "pyproject.toml").write_text(
+        "[project]\nname = 'demo'\ndependencies = []\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(checker, "ROOT", tmp_path)
+    calls = []
+
+    class Result:
+        returncode = 0
+
+    def fake_run(command, **kwargs):
+        calls.append(command)
+        return Result()
+
+    monkeypatch.setattr(checker.subprocess, "run", fake_run)
+    monkeypatch.setattr(
+        checker.sys,
+        "argv",
+        ["check", "--python", "/tmp/venv/bin/python", "--install", "--check"],
+    )
+    assert checker.main() == 0
+    assert calls == [
+        [
+            "uv",
+            "pip",
+            "install",
+            "--python",
+            "/tmp/venv/bin/python",
+            "-r",
+            str(plugin_dir / "pyproject.toml"),
+        ],
+        ["uv", "pip", "check", "--python", "/tmp/venv/bin/python"],
+    ]

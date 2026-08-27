@@ -50,8 +50,18 @@ jobs:
 
   dependency-install-gate:
     name: V3 dependency resolution
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: 3.14
+          - os: windows-latest
+            python: 3.14
+          - os: macos-14
+            python: 3.14
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,7 +72,14 @@ jobs:
           version: "0.8.15"
 
       - name: Resolve V3 dependencies without modifying the runner environment
+        shell: bash
         run: |
-          uv venv --python 3.14 .venv-ci
-          uv pip install --python .venv-ci/bin/python packaging
-          .venv-ci/bin/python scripts/check_v3_dependency_install.py --python .venv-ci/bin/python
+          set -euo pipefail
+          uv venv --python "${{ matrix.python }}" .venv-ci
+          if [[ "${RUNNER_OS}" == "Windows" ]]; then
+            python_bin=".venv-ci/Scripts/python.exe"
+          else
+            python_bin=".venv-ci/bin/python"
+          fi
+          uv pip install --python "${python_bin}" packaging
+          "${python_bin}" scripts/check_v3_dependency_install.py --python "${python_bin}" --install --check
