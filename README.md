@@ -18,10 +18,10 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | V3 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.1` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.1.3` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| MediaWarp | `MediaWarp` | 云盘 | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
-| 微云Cookie助手 | `weiyuncookie` | 工具 | `1.1.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.2` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.1.4` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| MediaWarp | `MediaWarp` | 云盘 | `2.1.2` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
+| 微云Cookie助手 | `weiyuncookie` | 工具 | `1.1.2` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.2` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
 ## 插件详情
@@ -90,6 +90,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `3.1.2`：将运行态可变字段改为实例级状态，补充生命周期文档并记录停止调度器异常。
 - `3.1.1`：适配 V3 插件开发文档 7.5：补充 `pyproject.toml` 依赖清单（pytz/apscheduler/fastapi）。
 - `3.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.plugins` / `app.sdk.events` / `app.sdk.logging` + `app.db.oper.systemconfig` / `app.adapters.external.market`），去除对旧版兼容层的依赖。
 - `3.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `PluginManager` / `PluginHelper` / `Scheduler` / `SystemConfigOper` / `register_plugin_api` 签名 v3 兼容；版本按官方规则跃迁 `2.0.8 → 3.0.0`。
@@ -97,6 +98,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `2.1.4`：将爱奇艺探索请求迁移至 MoviePilot 宿主 `RequestUtils`，统一代理与网络配置。
 - `2.1.3`：修复爱奇艺识别回退路径未限定 TMDB 导致的递归调用。
 - `2.1.1`：适配 V3 探索数据源 envelope 响应：`iqiyi_discover` 端点改为返回 `schemas.Response`（success/message/data 三段式），`get_api` 声明 `response_model`，修复探索页「服务器返回了无效响应」。
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.events` / `app.sdk.logging` / `app.sdk.media` / `app.sdk.network`），去除对旧版兼容层的依赖。
@@ -105,6 +107,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.1.2`：增加下载超时、压缩包路径穿越防护、异常日志和 MediaWarp 子进程优雅退出兜底。
 - `2.1.1`：适配 V3 插件开发文档 7.5：依赖清单由 `requirements.txt` 迁移至 `pyproject.toml`（PEP 621）。
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `MediaServerHelper` 签名 v3 兼容；版本按官方规则跃迁 `1.0.8 → 2.0.0`。
@@ -112,6 +115,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `weiyuncookie`
 
+- `1.1.2`：加强登录线程、浏览器和 Playwright 资源的停止清理与生命周期管理。
 - `1.1.1`：适配 V3 插件开发文档 7.5：补充 `pyproject.toml` 依赖清单（`apscheduler` / `fastapi`）。
 - `1.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.events` / `app.sdk.logging`），去除对旧版兼容层的依赖。
 - `1.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——API 端点本身已返回 `{success, ...}` 格式（业务字段平铺），Vue 前端 `unwrapResponse` 已按 v3 envelope 兼容（`'data' in data` 解包），`qrcode_image` 原生响应由 `_wrap_result` 自动透传；版本按官方规则跃迁 `0.1.47 → 1.0.0`。

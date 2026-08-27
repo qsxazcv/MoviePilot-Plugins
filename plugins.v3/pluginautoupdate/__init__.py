@@ -30,6 +30,7 @@ router = APIRouter()
 
 
 class PluginAutoUpdate(_PluginBase):
+    """插件更新管理器，负责检查、通知和执行插件更新。"""
     # 插件名称
     plugin_name = "插件更新管理"
     # 插件描述
@@ -37,7 +38,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "3.1.1"
+    plugin_version = "3.1.2"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -57,19 +58,30 @@ class PluginAutoUpdate(_PluginBase):
     _update = False
     _notify = False
     _msgtype = None
-    _update_ids = []
-    _exclude_ids = []
+    _update_ids = None
+    _exclude_ids = None
 
     # 定时器
     _scheduler: Optional[BackgroundScheduler] = None
-    _plugin_version = {}
-    _update_lock = Lock()
-    _waiting_notified = set()
+    _plugin_version = None
+    _update_lock = None
+    _waiting_notified = None
     _waiting_updates_data_key = "waiting_updates"
     _manual_update_results_data_key = "manual_update_results"
     _manual_update_dedupe_seconds = 300
 
+    def __init__(self):
+        """初始化插件实例级运行状态，避免虚拟分身共享可变对象。"""
+        super().__init__()
+        self._update_ids = []
+        self._exclude_ids = []
+        self._plugin_version = {}
+        self._update_lock = Lock()
+        self._waiting_notified = set()
+        self._scheduler = None
+
     def init_plugin(self, config: dict = None):
+        """读取配置并启动插件更新检查任务。"""
         # 停止现有任务
         self.stop_service()
 
@@ -681,10 +693,12 @@ class PluginAutoUpdate(_PluginBase):
             self._plugin_version[plugin.id] = plugin.plugin_version
 
     def get_state(self) -> bool:
+        """返回插件更新管理器是否启用。"""
         return self._enabled
 
     @staticmethod
     def get_command() -> List[Dict[str, Any]]:
+        """返回插件更新管理器的远程命令列表。"""
         return [{
             "cmd": "/plugin_update",
             "event": EventType.PluginAction,
@@ -696,7 +710,8 @@ class PluginAutoUpdate(_PluginBase):
         }]
 
     def get_api(self) -> List[Dict[str, Any]]:
-        pass
+        """返回插件更新管理器的 API 路由列表；本插件没有自定义 API。"""
+        return []
 
     @staticmethod
     def register_plugin_api(plugin_id: str = None):
@@ -962,7 +977,8 @@ class PluginAutoUpdate(_PluginBase):
         }
 
     def get_page(self) -> List[dict]:
-        pass
+        """返回插件详情页面；配置页已包含全部管理信息。"""
+        return []
 
     def stop_service(self):
         """
@@ -975,5 +991,4 @@ class PluginAutoUpdate(_PluginBase):
                     self._scheduler.shutdown()
                 self._scheduler = None
         except Exception as e:
-            pass
-            # logger.error("退出插件失败：%s" % str(e))
+            logger.error("插件更新管理器退出失败：%s", e, exc_info=True)

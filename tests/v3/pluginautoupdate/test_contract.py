@@ -32,4 +32,18 @@ def test_plugin_update_command_and_empty_api_contract():
     source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
     assert '"cmd": "/plugin_update"' in source
     get_api = next(node for node in ast.walk(_class()) if isinstance(node, ast.FunctionDef) and node.name == "get_api")
-    assert any(isinstance(node, ast.Pass) for node in ast.walk(get_api))
+    assert any(
+        isinstance(node, ast.Return)
+        and isinstance(node.value, ast.List)
+        and not node.value.elts
+        for node in ast.walk(get_api)
+    )
+
+
+def test_runtime_mutable_state_is_initialized_per_instance():
+    source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
+    assert "self._update_ids = []" in source
+    assert "self._exclude_ids = []" in source
+    assert "self._plugin_version = {}" in source
+    assert "self._waiting_notified = set()" in source
+    assert "self._update_lock = Lock()" in source

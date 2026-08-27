@@ -49,10 +49,11 @@ except Exception:  # pragma: no cover
 
 
 class weiyuncookie(_PluginBase):
+    """微云 Cookie 助手，负责扫码登录、Cookie 检测和 OpenList 同步。"""
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.1.1"
+    plugin_version = "1.1.2"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -92,8 +93,14 @@ class weiyuncookie(_PluginBase):
     _login_running: bool = False
     _login_thread: Optional[threading.Thread] = None
     _login_lock: Optional[threading.Lock] = None
+    _stop_event: Optional[threading.Event] = None
+    _browser_context = None
+    _browser = None
+    _playwright = None
 
     def init_plugin(self, config: dict = None):
+        """读取配置并初始化登录、检测和同步任务。"""
+        self.stop_service()
         config = config or {}
         if self._login_lock is None:
             self._login_lock = threading.Lock()
@@ -155,10 +162,12 @@ class weiyuncookie(_PluginBase):
             threading.Thread(target=self.sync_cookie_to_openlist, name="WeiyunCookieOpenListSyncOnce", daemon=True).start()
 
     def get_state(self) -> bool:
+        """返回插件当前是否启用。"""
         return self._enabled
 
     @staticmethod
     def get_command() -> List[Dict[str, Any]]:
+        """返回微云 Cookie 助手支持的远程命令。"""
         return [
             {
                 "cmd": "/weiyun_login",
@@ -184,6 +193,7 @@ class weiyuncookie(_PluginBase):
         ]
 
     def get_service(self) -> List[Dict[str, Any]]:
+        """返回微云 Cookie 有效性检测服务定义。"""
         if self._enabled and self._check_enabled and self._check_cron:
             try:
                 return [{
@@ -200,6 +210,7 @@ class weiyuncookie(_PluginBase):
         return []
 
     def get_api(self) -> List[Dict[str, Any]]:
+        """返回微云 Cookie 助手的 API 路由定义。"""
         return [
             {
                 "path": "/start_login",
@@ -317,6 +328,7 @@ class weiyuncookie(_PluginBase):
 
     @eventmanager.register(EventType.PluginAction)
     def plugin_action(self, event: Event):
+        """处理微云登录、状态查询和 Cookie 检测远程命令。"""
         if not self._enabled:
             return
         event_data = event.event_data if event else None
@@ -643,6 +655,9 @@ class weiyuncookie(_PluginBase):
                 return False
             logger.info("微云 Cookie 助手准备启动扫码登录线程：source=%s, login_type=%s", source, self._login_type)
             self._login_running = True
+            if self._stop_event is None:
+                self._stop_event = threading.Event()
+            self._stop_event.clear()
             self._login_thread = threading.Thread(
                 target=self.__run_login_flow,
                 kwargs={"source": source, "login_type": self._login_type},
@@ -683,6 +698,9 @@ class weiyuncookie(_PluginBase):
                 browser = playwright.chromium.launch(**launch_kwargs)
                 context = browser.new_context(locale="zh-CN", viewport={"width": 1280, "height": 900})
             page = context.new_page()
+            self._browser_context = context
+            self._browser = browser
+            self._playwright = playwright
             logger.info("微云 Cookie 助手打开登录页：%s", self._login_url)
             page.goto(self._login_url, wait_until="domcontentloaded", timeout=60000)
             logger.info("微云 Cookie 助手登录页加载完成：url=%s", page.url)
@@ -699,6 +717,8 @@ class weiyuncookie(_PluginBase):
             extracted: List[Dict[str, Any]] = []
             last_url = page.url
             while datetime.now() < deadline:
+                if self._stop_event and self._stop_event.is_set():
+                    raise RuntimeError("登录任务已停止")
                 cookies = context.cookies()
                 extracted = filter_relevant_cookies(cookies, self._include_qq_domain)
                 cookie_names = {c.get("name") for c in extracted}
@@ -941,4 +961,30 @@ class weiyuncookie(_PluginBase):
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def stop_service(self) -> None:
-        pass
+        """停止后台登录任务并关闭浏览器资源。"""
+        stop_event = getattr(self, "_stop_event", None)
+        if stop_event is None:
+            stop_event = threading.Event()
+            self._stop_event = stop_event
+        stop_event.set()
+        for resource_name in ("_browser_context", "_browser"):
+            resource = getattr(self, resource_name, None)
+            if resource is not None:
+                try:
+                    resource.close()
+                except Exception as err:
+                    logger.debug("微云 Cookie 助手关闭浏览器资源失败：%s", err)
+        playwright = getattr(self, "_playwright", None)
+        if playwright is not None:
+            try:
+                playwright.stop()
+            except Exception as err:
+                logger.debug("微云 Cookie 助手停止 Playwright 失败：%s", err)
+        thread = getattr(self, "_login_thread", None)
+        if thread and thread is not threading.current_thread() and thread.is_alive():
+            thread.join(timeout=2)
+        self._browser_context = None
+        self._browser = None
+        self._playwright = None
+        self._login_thread = None
+        self._login_running = False

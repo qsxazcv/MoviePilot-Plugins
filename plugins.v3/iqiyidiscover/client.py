@@ -4,9 +4,9 @@ import random
 import string
 from typing import List, Tuple
 
-import requests
-
+from app.sdk.config import settings
 from app.sdk.logging import logger
+from app.sdk.network import RequestUtils
 
 from .constants import CHANNEL_PARAMS, IQIYI_HEADERS
 from .filters import normalize_mode
@@ -64,8 +64,13 @@ def request_videolib(
         if key and value:
             params[str(key)] = str(value)
     try:
-        response = requests.get(url, params=params, headers=IQIYI_HEADERS, timeout=15)
-        response.raise_for_status()
+        response = RequestUtils(
+            proxies=settings.PROXY,
+            headers=IQIYI_HEADERS,
+            timeout=15,
+        ).get_res(url=url, params=params)
+        if not response or response.status_code != 200:
+            return []
         data = response.json()
     except Exception as err:
         logger.warning(f"请求爱奇艺探索数据失败: {err}")

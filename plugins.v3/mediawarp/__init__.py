@@ -3,6 +3,7 @@ import platform
 import tarfile
 import tempfile
 import shutil
+import posixpath
 from typing import Any, List, Dict, Tuple
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -32,7 +33,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.1.1"
+    plugin_version = "2.1.2"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -727,7 +728,7 @@ class MediaWarp(_PluginBase):
             Path(self.__config_path).mkdir(parents=True, exist_ok=True)
 
             logger.info(f"正在下载: {url}")
-            response = requests.get(url, stream=True, proxies=settings.PROXY)
+            response = requests.get(url, stream=True, proxies=settings.PROXY, timeout=30)
             response.raise_for_status()
 
             with open(temp_file, "wb") as f:
@@ -737,7 +738,8 @@ class MediaWarp(_PluginBase):
             logger.info("正在解压文件...")
             with tarfile.open(temp_file, "r:gz") as tar:
                 mediawarp_member = [
-                    m for m in tar.getmembers() if m.name.endswith("MediaWarp")
+                    m for m in tar.getmembers()
+                    if m.name.endswith("MediaWarp") and self.__safe_tar_member(m)
                 ]
                 if mediawarp_member:
                     tar.extract(member=mediawarp_member[0], path=temp_dir)
@@ -750,8 +752,9 @@ class MediaWarp(_PluginBase):
                     config_example_member = [
                         m
                         for m in tar.getmembers()
-                        if m.name.endswith("config.yaml")
-                        or m.name.endswith("config.yaml.example")
+                        if (m.name.endswith("config.yaml")
+                            or m.name.endswith("config.yaml.example"))
+                        and self.__safe_tar_member(m)
                     ]
                     if config_example_member:
                         tar.extract(member=config_example_member[0], path=temp_dir)
@@ -765,9 +768,22 @@ class MediaWarp(_PluginBase):
                 f.write(self.__mediawarp_version)
             logger.info(f"安装完成！MediaWarp 已安装到 {self.__mediawarp_path}")
         except Exception as e:
-            logger.info(f"发生错误: {e}")
+            logger.error(f"MediaWarp 下载或解压失败: {e}", exc_info=True)
         finally:
-            shutil.rmtree(temp_dir)
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+    @staticmethod
+    def __safe_tar_member(member):
+        """检查压缩包成员，拒绝绝对路径、路径穿越和非普通文件。"""
+        name = str(member.name or "")
+        normalized = posixpath.normpath(name)
+        return (
+            member.isfile()
+            and not posixpath.isabs(name)
+            and ".." not in name.split("/")
+            and normalized not in {"", ".", ".."}
+            and not normalized.startswith("../")
+        )
 
     def stop_service(self):
         """
@@ -782,5 +798,12 @@ class MediaWarp(_PluginBase):
             if self.process:
                 if self.process.is_running():
                     self.process.terminate()
+                    try:
+                        self.process.wait(timeout=5)
+                    except psutil.TimeoutExpired:
+                        logger.warning("MediaWarp 进程未在 5 秒内退出，执行强制终止")
+                        self.process.kill()
+                        self.process.wait(timeout=5)
+                self.process = None
         except Exception as e:
             logger.error(f"退出插件失败：{e}")

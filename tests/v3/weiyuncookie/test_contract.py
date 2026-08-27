@@ -34,3 +34,11 @@ def test_commands_api_service_and_render_mode_contracts():
     assert source.count('"path": "/') == 7
     assert '"id": "weiyuncookie_check"' in source
     assert 'return "vue", "dist/assets"' in source
+
+
+def test_lifecycle_stop_contract():
+    source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
+    assert "_stop_event" in source
+    assert "stop_event.set()" in source
+    assert "thread.join(timeout=2)" in source
+    assert "self._login_running = False" in source
