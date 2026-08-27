@@ -33,7 +33,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.1.2"
+    plugin_version = "2.1.3"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -786,24 +786,29 @@ class MediaWarp(_PluginBase):
         )
 
     def stop_service(self):
-        """
-        退出插件
-        """
+        """停止调度器和 MediaWarp 子进程，并尽力释放全部运行资源。"""
+        scheduler = self._scheduler
+        self._scheduler = None
+        if scheduler:
+            try:
+                scheduler.remove_all_jobs()
+                if scheduler.running:
+                    scheduler.shutdown()
+            except Exception as err:
+                logger.error("停止 MediaWarp 调度器失败：%s", err, exc_info=True)
+
+        process = self.process
+        self.process = None
+        if not process:
+            return
         try:
-            if self._scheduler:
-                self._scheduler.remove_all_jobs()
-                if self._scheduler.running:
-                    self._scheduler.shutdown()
-                self._scheduler = None
-            if self.process:
-                if self.process.is_running():
-                    self.process.terminate()
-                    try:
-                        self.process.wait(timeout=5)
-                    except psutil.TimeoutExpired:
-                        logger.warning("MediaWarp 进程未在 5 秒内退出，执行强制终止")
-                        self.process.kill()
-                        self.process.wait(timeout=5)
-                self.process = None
-        except Exception as e:
-            logger.error(f"退出插件失败：{e}")
+            if process.is_running():
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except psutil.TimeoutExpired:
+                    logger.warning("MediaWarp 进程未在 5 秒内退出，执行强制终止")
+                    process.kill()
+                    process.wait(timeout=5)
+        except Exception as err:
+            logger.error("退出 MediaWarp 子进程失败：%s", err, exc_info=True)

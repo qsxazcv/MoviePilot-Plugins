@@ -37,8 +37,8 @@ def test_mediawarp_has_port_configuration_and_no_federation_requirement():
 
 def test_process_and_tar_cleanup_contracts():
     source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
-    assert "self.process.wait(timeout=5)" in source
-    assert "self.process.kill()" in source
+    assert "process.wait(timeout=5)" in source
+    assert "process.kill()" in source
     assert "self.process = None" in source
     assert "__safe_tar_member" in source
     assert "posixpath.isabs" in source

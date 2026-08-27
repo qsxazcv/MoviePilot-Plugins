@@ -41,6 +41,17 @@ jobs:
       - name: Build and validate V3 Release archives
         run: python scripts/build_release.py --output dist/releases
 
+      - name: Re-validate every generated Release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r archive; do
+            file_name="$(basename "$archive" .zip)"
+            plugin_id="${file_name%_v*}"
+            version="${file_name##*_v}"
+            python scripts/validate_release.py "$archive" "$plugin_id" --version "$version"
+          done < <(find dist/releases -maxdepth 1 -type f -name '*.zip' -print | sort)
+
       - name: Upload validated Release archives
         uses: actions/upload-artifact@v4
         with:

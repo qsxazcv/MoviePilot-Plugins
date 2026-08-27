@@ -24,6 +24,9 @@ def release_zip_errors(zip_path: Path, plugin_id: str, expected_version: str | N
             names = archive.namelist()
             if not names:
                 return ["release ZIP is empty"]
+            file_names = [name for name in names if not name.endswith("/")]
+            if not file_names:
+                errors.append("release ZIP contains no files")
             for name in names:
                 if "\\" in name:
                     errors.append(f"backslash path is not allowed: {name}")

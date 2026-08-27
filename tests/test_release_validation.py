@@ -26,6 +26,13 @@ def test_release_zip_rejects_repository_prefix_and_nested_directory(tmp_path):
     assert any("nested" in error for error in errors)
 
 
+def test_release_zip_rejects_directory_only_archive(tmp_path):
+    archive = tmp_path / "empty.zip"
+    _write_zip(archive, {"demo/": ""})
+    errors = release_zip_errors(archive, "Demo", "1.0.0")
+    assert "release ZIP contains no files" in errors
+
+
 def test_federation_references_must_exist(tmp_path):
     assets = tmp_path / "demo" / "dist" / "assets"
     assets.mkdir(parents=True)

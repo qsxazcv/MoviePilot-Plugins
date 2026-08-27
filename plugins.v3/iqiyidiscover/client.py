@@ -1,4 +1,4 @@
-"""?????????????"""
+"""爱奇艺探索接口客户端。"""
 
 import random
 import string
@@ -12,9 +12,7 @@ from .constants import CHANNEL_PARAMS, IQIYI_HEADERS
 from .filters import normalize_mode
 
 def build_device_id() -> str:
-    """
-    生成爱奇艺列表接口使用的临时设备 ID。
-    """
+    """生成爱奇艺列表接口使用的临时设备 ID。"""
     return "".join(random.choice(string.hexdigits.lower()) for _ in range(32))
 
 
@@ -29,9 +27,7 @@ def request_videolib(
         count: int = 24,
         extra_params: Tuple[Tuple[str, str], ...] = (),
 ) -> List[dict]:
-    """
-    请求爱奇艺推荐列表接口。
-    """
+    """请求爱奇艺推荐列表接口，并将异常响应降级为空列表。"""
     channel = CHANNEL_PARAMS.get(mtype, CHANNEL_PARAMS["tv"])
     mode = normalize_mode(
         mtype,
@@ -74,6 +70,9 @@ def request_videolib(
         data = response.json()
     except Exception as err:
         logger.warning(f"请求爱奇艺探索数据失败: {err}")
+        return []
+    if not isinstance(data, dict):
+        logger.warning("爱奇艺探索接口返回了非对象 JSON：%s", type(data).__name__)
         return []
     if data.get("code") not in ("A00000", 0, "0"):
         logger.warning(f"爱奇艺探索接口返回异常: {data.get('code')} {data.get('msg')}")

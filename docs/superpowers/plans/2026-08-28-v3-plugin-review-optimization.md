@@ -66,3 +66,22 @@ python3 scripts/check_v3_dependency_install.py --python 3.14
 ```
 
 预期：全部命令退出码为 0；现有测试与新增契约测试全部通过；仓库工作区只包含本次预期修改。
+
+### 任务 5：持续安全与发布门禁优化
+
+**文件：**
+- 修改：`plugins.v3/iqiyidiscover/client.py`
+- 修改：`plugins.v3/mediawarp/__init__.py`
+- 修改：`plugins.v3/weiyuncookie/__init__.py`
+- 修改：`scripts/validate_release.py`
+- 修改：`.github/workflows/plugin-gate.yml`
+- 测试：`tests/test_release_validation.py`、`tests/v3/mediawarp/test_contract.py`
+
+- [x] 爱奇艺探索接口拒绝非对象 JSON，避免异常响应触发后续字段访问。
+- [x] MediaWarp 将调度器和子进程清理隔离，调度器异常时仍继续释放子进程。
+- [x] 微云登录流程结束后清空浏览器资源引用，并记录关闭异常。
+- [x] Release 校验拒绝只有目录没有文件的空压缩包。
+- [x] CI 对生成的每个 Release ZIP 再执行一次独立校验。
+- [x] 运行测试、编译、仓库、依赖、联邦与 Release ZIP 门禁。
+
+验证结果：30 项 pytest 通过，5 个 V3 Release ZIP 均通过结构与版本校验，仓库/依赖/联邦校验通过。

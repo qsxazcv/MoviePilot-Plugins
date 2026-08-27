@@ -53,7 +53,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.1.2"
+    plugin_version = "1.1.3"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -783,7 +783,13 @@ class weiyuncookie(_PluginBase):
                 if playwright:
                     playwright.stop()
             except Exception:
-                pass
+                logger.debug("微云 Cookie 助手登录资源关闭时出现异常", exc_info=True)
+            if self._browser_context is context:
+                self._browser_context = None
+            if self._browser is browser:
+                self._browser = None
+            if self._playwright is playwright:
+                self._playwright = None
             self._login_running = False
             logger.info("微云 Cookie 助手扫码登录流程结束：status=%s", self._last_status)
             self.__update_config()
