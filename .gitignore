@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
 .coverage
 htmlcov/
 
@@ -25,9 +26,6 @@ tmp/
 *.db
 *.sqlite
 *.sqlite3
-
-# Local-only validation assets
-tests/
 
 # Archives and release artifacts are built outside the source tree
 *.zip

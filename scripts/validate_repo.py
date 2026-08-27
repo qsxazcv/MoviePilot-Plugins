@@ -6,6 +6,7 @@ import ast
 import json
 import subprocess
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -13,8 +14,10 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_V2 = REPO_ROOT / "package.v2.json"
+PACKAGE_V3 = REPO_ROOT / "package.v3.json"
 README = REPO_ROOT / "README.md"
 PLUGINS_V2 = REPO_ROOT / "plugins.v2"
+PLUGINS_V3 = REPO_ROOT / "plugins.v3"
 LEGACY_PACKAGE = REPO_ROOT / "package.json"
 LEGACY_PLUGINS = REPO_ROOT / "plugins"
 
@@ -156,11 +159,13 @@ def assert_package_entry(package_name: str, entry: Any, plugins_root: Path, erro
         return
 
     attrs = plugin_class.attrs
+    # `level` is a market visibility field; `auth_level` is a runtime
+    # permission field.  They have different semantics and must not be
+    # compared.  Keep the checks limited to fields with the same contract.
     expected_pairs = {
         "version": "plugin_version",
         "author": "plugin_author",
         "icon": "plugin_icon",
-        "level": "auth_level",
     }
     for package_field, attr_name in expected_pairs.items():
         package_value = entry.get(package_field)
@@ -183,6 +188,55 @@ def validate_package(package_path: Path, plugins_root: Path, errors: list[str]) 
     for package_name, entry in package.items():
         assert_package_entry(package_name, entry, plugins_root, errors)
     return package
+
+
+def validate_v3_manifest(plugin_name: str, plugin_dir: Path, errors: list[str]) -> None:
+    """Validate the V3 PEP 621 dependency manifest without importing MoviePilot."""
+    manifest = plugin_dir / "pyproject.toml"
+    if not manifest.is_file():
+        errors.append(f"{plugin_name}: missing {manifest.relative_to(REPO_ROOT)}")
+        return
+    try:
+        data = tomllib.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        errors.append(f"{plugin_name}: invalid pyproject.toml: {exc}")
+        return
+    project = data.get("project")
+    if not isinstance(project, dict) or not isinstance(project.get("name"), str) or not project["name"].strip():
+        errors.append(f"{plugin_name}: pyproject.toml project.name must be non-empty")
+    dynamic = project.get("dynamic", [])
+    if "dependencies" in dynamic:
+        errors.append(f"{plugin_name}: dynamic dependencies are not supported")
+    dependencies = project.get("dependencies", [])
+    if not isinstance(dependencies, list) or not all(isinstance(item, str) and item.strip() for item in dependencies):
+        errors.append(f"{plugin_name}: project.dependencies must be a string array")
+    else:
+        # Lightweight requirement sanity check; the full resolver runs in CI via uv.
+        try:
+            from packaging.requirements import Requirement
+        except ImportError:  # pragma: no cover - CI installs packaging with uv
+            Requirement = None
+        for dependency in dependencies:
+            if dependency.count("[") != dependency.count("]") or "\n" in dependency:
+                errors.append(f"{plugin_name}: invalid dependency expression: {dependency!r}")
+            elif Requirement is not None:
+                try:
+                    Requirement(dependency)
+                except Exception as exc:
+                    errors.append(f"{plugin_name}: invalid dependency expression {dependency!r}: {exc}")
+
+
+def validate_repository(errors: list[str]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Validate both supported generations and shared repository safeguards."""
+    validate_no_legacy_layout(errors)
+    package_v2 = validate_package(PACKAGE_V2, PLUGINS_V2, errors)
+    package_v3 = validate_package(PACKAGE_V3, PLUGINS_V3, errors)
+    for plugin_name in package_v3:
+        plugin_dir = PLUGINS_V3 / plugin_name.lower()
+        validate_v3_manifest(plugin_name, plugin_dir, errors)
+    validate_readme({**package_v2, **package_v3}, errors)
+    validate_sensitive_paths(errors)
+    return package_v2, package_v3
 
 
 def validate_no_legacy_layout(errors: list[str]) -> None:
@@ -237,10 +291,7 @@ def validate_sensitive_paths(errors: list[str]) -> None:
 def main() -> int:
     """Run all repository checks."""
     errors: list[str] = []
-    validate_no_legacy_layout(errors)
-    package_v2 = validate_package(PACKAGE_V2, PLUGINS_V2, errors)
-    validate_readme(package_v2, errors)
-    validate_sensitive_paths(errors)
+    package_v2, package_v3 = validate_repository(errors)
 
     if errors:
         print("Repository validation failed:")
@@ -249,7 +300,7 @@ def main() -> int:
         return 1
 
     print("Repository validation passed.")
-    print(f"Validated {len(package_v2)} V2 package entries.")
+    print(f"Validated {len(package_v2)} V2 and {len(package_v3)} V3 package entries.")
     return 0
 
 

@@ -19,7 +19,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | V2 | V3 | 简介 |
 | --- | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | `3.1.0` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `2.0.8` | `3.1.1` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `1.0.45` | `2.1.3` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | MediaWarp | `MediaWarp` | 云盘 | `1.0.8` | `2.1.1` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `0.1.47` | `1.1.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
@@ -91,6 +91,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `3.1.1`：适配 V3 插件开发文档 7.5：补充 `pyproject.toml` 依赖清单（pytz/apscheduler/fastapi）。
 - `3.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.plugins` / `app.sdk.events` / `app.sdk.logging` + `app.db.oper.systemconfig` / `app.adapters.external.market`），去除对旧版兼容层的依赖。
 - `3.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `PluginManager` / `PluginHelper` / `Scheduler` / `SystemConfigOper` / `register_plugin_api` 签名 v3 兼容；版本按官方规则跃迁 `2.0.8 → 3.0.0`。
 - `2.0.8`：修复配置页“立即运行”和 `/plugin_update` 的结果通知不一致：一次性立即运行会识别为人工触发，遇到已通知过的暂缓项时同样返回“插件更新状态未变化”短摘要，同时保留更新成功通知。
