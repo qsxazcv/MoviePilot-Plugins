@@ -43,6 +43,16 @@ jobs:
           PYTHONPATH: .
         run: python -m pytest tests -q
 
+      - name: Build and validate V3 Release archives
+        run: python scripts/build_release.py --output dist/releases
+
+      - name: Upload validated Release archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: moviepilot-v3-releases-${{ github.sha }}
+          path: dist/releases/*.zip
+          if-no-files-found: error
+
   dependency-install-gate:
     name: V3 dependency resolution
     runs-on: ubuntu-latest
