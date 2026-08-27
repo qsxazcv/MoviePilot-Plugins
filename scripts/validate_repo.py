@@ -11,6 +11,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.validate_federation import federation_asset_errors
+except ModuleNotFoundError:  # Support direct execution: python scripts/validate_repo.py
+    from validate_federation import federation_asset_errors
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_V2 = REPO_ROOT / "package.v2.json"
@@ -180,6 +185,7 @@ def assert_package_entry(package_name: str, entry: Any, plugins_root: Path, erro
         remote_entry = plugin_dir / "dist" / "assets" / "remoteEntry.js"
         if not remote_entry.is_file():
             errors.append(f"{package_name}: Vue render mode requires {remote_entry.relative_to(REPO_ROOT)}")
+        errors.extend(federation_asset_errors(plugin_dir))
 
 
 def validate_package(package_path: Path, plugins_root: Path, errors: list[str]) -> dict[str, Any]:
