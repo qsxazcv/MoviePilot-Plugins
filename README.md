@@ -20,7 +20,6 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.2` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.1.5` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| MediaWarp | `MediaWarp` | 云盘 | `2.1.3` | EmbyServer/Jellyfin 中间件，优化 STRM 播放、前端样式、客户端访问和脚本嵌入。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.1.3` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.3` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
@@ -46,16 +45,6 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 适配爱奇艺官方片库筛选与媒体转换逻辑。
 - 修复部分频道返回非标准媒体类型导致的类型标签和详情展示问题。
 - V3 适配：`plugins.v3` + `package.v3.json`，识别身份走官方 `MediaSource.Iqiyi`（`media_source` / `media_id`），并支持订阅跨源转换（`MediaRecognizeConvert`）。
-
-### MediaWarp
-
-适合需要在 EmbyServer/Jellyfin 前面增强 STRM 播放、样式和客户端访问控制的用户。
-
-- 原作者：`DDSRem`，原插件仓库：[DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。感谢原作者提供 MoviePilot 插件适配基础。
-- 上游服务：[AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp)，当前适配 `v0.2.4`。
-- 支持自动下载 MediaWarp 二进制并生成新版小写配置结构。
-- 配置页保持 1.0.7 风格的简洁结构；缓存、HTTPStrm、AlistStrm 等高级参数如需调整，请直接修改 `config.yaml`。
-- V3 适配：`plugins.v3` + `package.v3.json`，纯工具插件代码零改动代际迁移。
 
 ### 微云Cookie助手
 
@@ -105,15 +94,6 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.events` / `app.sdk.logging` / `app.sdk.media` / `app.sdk.network`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：官方 v3 分支已收编爱奇艺来源（`MediaSource.Iqiyi='iqiyidiscover'`，issue #6288 已修复）；识别签名改为 `media_source` / `media_id`（`resolve_media_identity` 归一化 + 非爱奇艺来源拒绝，旧 `source` / `mediaid` 参数由 kwargs 兜底兼容）；MediaInfo 身份统一为 `MediaSource.Iqiyi` 枚举 + `albumId`；`DiscoverSource` 显式注册 `MediaSource.Iqiyi`；新增 `MediaRecognizeConvert` 事件将爱奇艺身份转换为 TMDB 主身份，订阅搜索可跨源搜站点资源；版本按官方规则跃迁 `1.0.45 → 2.0.0`。
 - `1.0.45`：v3 兼容改造：识别方法 `recognize_media` / `async_recognize_media` 签名双参数兼容——新增 `media_source` / `media_id`（v3 分支 MediaChain 传参）并保留 `source` / `mediaid`（当前中间态传参），内部归一化后统一识别；配合官方 v3 分支收编 `iqiyi` / `iqiyidiscover`（`MediaSource.Iqiyi`），同一份代码跨中间态与 v3 分支可用。
-
-### `MediaWarp`
-
-- `2.1.3`：隔离调度器与子进程清理异常，确保停止流程继续释放 MediaWarp 资源。
-- `2.1.2`：增加下载超时、压缩包路径穿越防护、异常日志和 MediaWarp 子进程优雅退出兜底。
-- `2.1.1`：适配 V3 插件开发文档 7.5：依赖清单由 `requirements.txt` 迁移至 `pyproject.toml`（PEP 621）。
-- `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`），去除对旧版兼容层的依赖。
-- `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：纯工具插件代码零改动——无 API 端点、无媒体身份引用、无 Vue 联邦，宿主依赖 `MediaServerHelper` 签名 v3 兼容；版本按官方规则跃迁 `1.0.8 → 2.0.0`。
-- `1.0.8`：适配 [AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp) `v0.2.4`，保留 1.0.7 风格简洁配置页，修复启动工作目录并包含运行依赖；高级参数改由 `config.yaml` 手动维护；感谢原作者 `DDSRem` 及 [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)。
 
 ### `weiyuncookie`
 
