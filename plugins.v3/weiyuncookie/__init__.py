@@ -54,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.1.4"
+    plugin_version = "1.2.0"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -97,6 +97,7 @@ class weiyuncookie(_PluginBase):
     _stop_event: Optional[threading.Event] = None
     _cookie_reveal_lock: Optional[threading.Lock] = None
     _cookie_reveal_tokens: Dict[str, Tuple[float, str]] = {}
+    _openlist_sync_lock: Optional[threading.Lock] = None
     _browser_context = None
     _browser = None
     _playwright = None
@@ -496,6 +497,13 @@ class weiyuncookie(_PluginBase):
 
     def sync_cookie_to_openlist(self, source: str = "manual") -> Dict[str, Any]:
         """将插件保存的完整 Cookie 写入 OpenList 指定存储。"""
+        if self._openlist_sync_lock is None:
+            self._openlist_sync_lock = threading.Lock()
+        with self._openlist_sync_lock:
+            return self.__sync_cookie_to_openlist_locked(source)
+
+    def __sync_cookie_to_openlist_locked(self, source: str) -> Dict[str, Any]:
+        """在 OpenList 同步锁内执行完整的读取、修改和写回流程。"""
         self._last_openlist_sync = self.__now()
         cookie = self.get_data("cookie") or ""
         if not self._openlist_enabled:
@@ -540,38 +548,36 @@ class weiyuncookie(_PluginBase):
             return {"success": False, "message": self._last_openlist_sync_status}
 
     def check_cookie_validity(self, source: str = "scheduler") -> Dict[str, Any]:
-        """检测已保存 Cookie 是否仍然有效，失效时只通知一次。"""
+        """检测 Cookie 并返回稳定状态分类，同时兼容旧 valid/message 字段。"""
         cookie = self.get_data("cookie") or ""
         self._last_check = self.__now()
-        logger.info("微云 Cookie 助手开始检测 Cookie 有效性：source=%s, has_cookie=%s", source, bool(cookie))
         if not cookie:
-            self._last_check_status = "未保存 Cookie，请先扫码登录"
-            self.__update_config()
-            return {"valid": False, "message": self._last_check_status}
-        try:
-            valid, message = self.__probe_cookie(cookie)
-            self._last_check_status = message
-            if valid:
-                self.del_data("cookie_invalid_notified")
-                logger.info("微云 Cookie 助手检测通过：%s", message)
-            else:
-                logger.warning("微云 Cookie 助手检测到 Cookie 失效：%s", message)
-                self._last_status = "Cookie 已失效，请重新登录"
-                if self._openlist_enabled and self._openlist_sync_after_relogin:
-                    self.save_data("openlist_sync_after_relogin_pending", True)
-                self.__notify_cookie_invalid(message)
-            self.__update_config()
-            return {"valid": valid, "message": message}
-        except Exception as err:
-            self._last_check_status = f"检测失败：{err}"
-            logger.error("微云 Cookie 助手检测失败：%s\n%s", err, traceback.format_exc())
-            self.__update_config()
-            return {"valid": False, "message": self._last_check_status}
+            status, message = "missing", "未保存 Cookie，请先扫码登录"
+        else:
+            try:
+                status, message = self.__probe_cookie(cookie)
+            except TimeoutError:
+                status, message = "network_error", "检测微云 Cookie 超时，请稍后重试"
+            except OSError:
+                status, message = "network_error", "检测微云 Cookie 网络连接失败，请稍后重试"
+            except Exception as err:
+                logger.error("微云 Cookie 助手检测失败：%s", err, exc_info=True)
+                status, message = "unknown", "检测微云 Cookie 时发生未知错误，请稍后重试"
+        valid = status == "valid"
+        self._last_check_status = message
+        if valid:
+            self.del_data("cookie_invalid_notified")
+        elif status in {"invalid", "blocked"}:
+            self._last_status = "Cookie 已失效，请重新登录"
+            self.__notify_cookie_invalid(message)
+        self.__update_config()
+        return {"valid": valid, "status": status, "message": message}
 
-    def __probe_cookie(self, cookie: str) -> Tuple[bool, str]:
+    def __probe_cookie(self, cookie: str) -> Tuple[str, str]:
+        """按登录证据区分有效、失效、拦截与无法确定的响应。"""
         names = cookie_names(cookie)
         if not names.intersection({"TOK", "wyctoken", "p_skey", "pt4_token", "skey", "uin", "uid", "weiyun_wx_access_token"}):
-            return False, "Cookie 缺少微云登录关键字段"
+            return "invalid", "Cookie 缺少微云登录关键字段"
         request = Request(
             "https://www.weiyun.com/disk",
             headers={
@@ -587,13 +593,13 @@ class weiyuncookie(_PluginBase):
         low_url = final_url.lower()
         low_body = body.lower()
         if status in {401, 403}:
-            return False, f"微云返回未授权状态：HTTP {status}"
+            return "blocked", f"微云返回未授权状态：HTTP {status}"
         if "ptlogin" in low_url or "login" in low_url and "weiyun.com/disk" not in low_url:
-            return False, f"访问微云时被跳转到登录页：{final_url}"
+            return "invalid", f"访问微云时被跳转到登录页：{final_url}"
         invalid_markers = ["请登录", "登录微云", "扫码登录", "账号密码登录", "login_frame", "ptlogin"]
         if any(marker.lower() in low_body for marker in invalid_markers) and not ({"TOK", "wyctoken", "uid"}.intersection(names)):
-            return False, "微云页面提示需要重新登录"
-        return True, f"Cookie 有效，微云页面响应正常（HTTP {status}）"
+            return "invalid", "微云页面提示需要重新登录"
+        return "valid", f"Cookie 有效，微云页面响应正常（HTTP {status}）"
 
     def __post_mp_notification(
             self,
@@ -782,7 +788,8 @@ class weiyuncookie(_PluginBase):
                         break
                 except Exception:
                     pass
-                time.sleep(2)
+                if self._stop_event and self._stop_event.wait(2):
+                    raise RuntimeError("登录任务已停止")
             else:
                 raise TimeoutError("等待扫码登录超时，未检测到有效微云登录 Cookie")
 
@@ -875,7 +882,8 @@ class weiyuncookie(_PluginBase):
                 if locator.count():
                     locator.click(timeout=3000)
                     logger.info("微云 Cookie 助手已点击登录入口：%s", text)
-                    time.sleep(1)
+                    if self._stop_event and self._stop_event.wait(1):
+                        raise RuntimeError("登录任务已停止")
                     return
             except Exception as err:
                 logger.debug("微云 Cookie 助手点击登录入口失败：%s, err=%s", text, err)
@@ -895,18 +903,22 @@ class weiyuncookie(_PluginBase):
                     locator = page.locator(selector).first
                     if locator.count() and locator.bounding_box():
                         logger.info("微云 Cookie 助手二维码元素已就绪：selector=%s", selector)
-                        time.sleep(0.5)
+                        if self._stop_event and self._stop_event.wait(0.5):
+                            raise RuntimeError("登录任务已停止")
                         return
                 iframe_selectors = ["iframe[src*='ptlogin']", "iframe"]
                 for selector in iframe_selectors:
                     locator = page.locator(selector).first
                     if locator.count() and locator.bounding_box():
                         logger.info("微云 Cookie 助手 iframe 登录框已就绪：selector=%s", selector)
-                        time.sleep(0.5)
+                        if self._stop_event and self._stop_event.wait(0.5):
+                            raise RuntimeError("登录任务已停止")
                         return
-                time.sleep(0.5)
+                if self._stop_event and self._stop_event.wait(0.5):
+                    raise RuntimeError("登录任务已停止")
             except Exception:
-                time.sleep(0.5)
+                if self._stop_event and self._stop_event.wait(0.5):
+                    raise RuntimeError("登录任务已停止")
         logger.warning("微云 Cookie 助手等待二维码就绪超时，将使用当前页面截图")
 
     def __capture_qrcode(self, page) -> str:
