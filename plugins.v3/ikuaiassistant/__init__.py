@@ -2,7 +2,6 @@ import builtins
 import errno
 import json
 import os
-import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -19,7 +18,12 @@ from app.sdk.logging import logger
 from app.plugins import _PluginBase
 from app.schemas.types import EventType
 
-from .ikuai_client import IkuaiClient, extract_items, find_client, mask_secret, summarize_rule
+from .ikuai_client import IkuaiClient, extract_items, find_client, mask_secret, normalize_page_limit, summarize_rule
+from .formatters import format_bytes, format_rate, format_kib, max_percent, pick_value, pick_number, find_first
+from .agent_handlers import list_guides, read_guide
+from .api_handlers import api_agent_skill, api_agent_skills, api_cli, api_disabled, api_page_limit, api_enabled, api_clients, api_rules, api_status, api_device, api_analyze, api_set_rule_interface, api_toggle_rule, require_write_confirmation
+from .cli_runner import execute_with_runner, parse_command
+from .agent_tool_handlers import resolve_plugin, run_cli_plugin, run_skill_plugin, run_cli_tool, run_skill_tool, serialize_result
 
 
 class IkuaiAssistant(_PluginBase):
@@ -28,7 +32,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.1.3"
+    plugin_version = "2.1.4"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -44,6 +48,7 @@ class IkuaiAssistant(_PluginBase):
     _cli_path = "ikuai-cli"
     _allow_cli_write = False
 
+
     def init_plugin(self, config: dict = None) -> None:
         """读取插件配置并初始化运行状态。"""
         config = config or {}
@@ -55,6 +60,7 @@ class IkuaiAssistant(_PluginBase):
         self._timeout = int(config.get("timeout") or 10)
         self._cli_path = str(config.get("cli_path") or "ikuai-cli").strip()
         self._allow_cli_write = bool(config.get("allow_cli_write"))
+        self._preview_store = PreviewStore()
         if was_enabled and not self._enabled:
             logger.info(
                 "ikuai-cli助手停止/关闭服务: "
@@ -686,29 +692,27 @@ class IkuaiAssistant(_PluginBase):
         """返回未启用错误。"""
         return {"ok": False, "error": "插件未启用"}
 
-    def run_cli_command(self, command: str, confirm: bool = False, raw: bool = False) -> Dict[str, Any]:
+    def run_cli_command(self, command: str, confirm: bool = False, raw: bool = False, dry_run: bool = False, preview_id: str = "") -> Dict[str, Any]:
         """执行受控 ikuai-cli 命令，供 API 和 AI 工具共用。"""
         if not self._enabled:
             logger.warning("ikuai-cli助手执行 CLI 被拒绝: 插件未启用")
             return self.__disabled()
-        args = shlex.split(str(command or ""), posix=True)
-        if not args:
-            logger.warning("ikuai-cli助手执行 CLI 被拒绝: command 为空")
-            return {"ok": False, "error": "请传入 command，例如 monitor system"}
+        args, parse_error = parse_command(command)
+        if parse_error:
+            return {"ok": False, "error_type": "invalid_command", "error": parse_error}
         safety = self.__check_cli_command(args)
         if not safety["ok"]:
             logger.warning(f"ikuai-cli助手执行 CLI 被拒绝: command={self.__safe_cli_command(args)}, reason={safety.get('error')}")
             return safety
-        if safety["write"] and (not self._allow_cli_write or not confirm):
-            logger.warning(
-                "ikuai-cli助手拦截 CLI 写操作: "
-                f"command={self.__safe_cli_command(args)}, allow_cli_write={self._allow_cli_write}, confirm={confirm}"
-            )
-            return {
-                "ok": False,
-                "error": "这是 CLI 写操作，请先在插件配置启用允许 CLI 写操作，并传 confirm=true",
-                "command": args,
-            }
+        if safety["write"]:
+            if dry_run:
+                preview_id = self._preview_store.create(args)
+                return {"ok": True, "decision": "preview", "write": True, "preview_id": preview_id, "command": args, "expires_in": 300}
+            if not self._allow_cli_write or not confirm:
+                return {"ok": False, "error_type": "confirmation_required", "error": "写操作必须先 dry_run 预览，再携带 preview_id 和 confirm=true 执行"}
+            valid, reason = self._preview_store.consume(preview_id, args)
+            if not valid:
+                return {"ok": False, "error_type": "preview_invalid", "error": reason}
         run_args = [self.__cli_executable(), *args]
         if "-f" not in args and "--format" not in args:
             run_args.extend(["-f", "json"])
@@ -718,13 +722,9 @@ class IkuaiAssistant(_PluginBase):
         }
         started = time.monotonic()
         try:
-            completed = subprocess.run(
-                run_args,
-                capture_output=True,
-                text=True,
-                timeout=self._timeout,
-                env={**os.environ, **env},
-                check=False,
+            completed = execute_with_runner(
+                args=run_args[1:], executable=run_args[0], timeout=self._timeout,
+                environment={**os.environ, **env}, run=subprocess.run,
             )
         except subprocess.TimeoutExpired:
             elapsed_ms = int((time.monotonic() - started) * 1000)
@@ -1370,62 +1370,27 @@ class IkuaiAssistant(_PluginBase):
     @staticmethod
     def __format_rate(value: Any) -> str:
         """把 B/s 数字转成可读速率。"""
-        try:
-            rate = float(value or 0)
-        except (TypeError, ValueError):
-            return str(value)
-        if rate >= 1024 * 1024:
-            return f"{rate / 1024 / 1024:.1f} MB/s"
-        if rate >= 1024:
-            return f"{rate / 1024:.1f} KB/s"
-        return f"{int(rate)} B/s"
+        return format_rate(value)
 
     @staticmethod
     def __format_bytes(value: Any) -> str:
         """把字节数转成可读容量。"""
-        try:
-            size = float(value or 0)
-        except (TypeError, ValueError):
-            return str(value)
-        if size >= 1024 * 1024 * 1024:
-            return f"{size / 1024 / 1024 / 1024:.2f} GB"
-        if size >= 1024 * 1024:
-            return f"{size / 1024 / 1024:.1f} MB"
-        if size >= 1024:
-            return f"{size / 1024:.1f} KB"
-        return f"{int(size)} B"
+        return format_bytes(value)
 
     @staticmethod
     def __max_percent(value: Any) -> float:
         """从字符串、列表或数字中提取最大百分比。"""
-        values = value if isinstance(value, list) else [value]
-        percents: List[float] = []
-        for item in values:
-            text = str(item or "").strip().replace("%", "")
-            try:
-                percents.append(float(text))
-            except (TypeError, ValueError):
-                continue
-        return max(percents) if percents else 0.0
+        return max_percent(value)
 
     @staticmethod
     def __pick_client_value(client: Dict[str, Any], keys: List[str]) -> str:
         """按候选字段名提取在线设备字段。"""
-        lowered = {str(key).lower(): value for key, value in client.items()}
-        for key in keys:
-            value = lowered.get(key.lower())
-            if value not in (None, ""):
-                return str(value)
-        return ""
+        return pick_value(client, keys)
 
     @classmethod
     def __pick_client_number(cls, client: Dict[str, Any], keys: List[str]) -> float:
         """按候选字段名提取数值字段。"""
-        raw = cls.__pick_client_value(client, keys)
-        try:
-            return float(raw or 0)
-        except (TypeError, ValueError):
-            return 0.0
+        return pick_number(client, keys)
 
     @staticmethod
     def __format_monitor_value(label: str, value: Any) -> str:
@@ -1466,34 +1431,12 @@ class IkuaiAssistant(_PluginBase):
     @staticmethod
     def __format_kib(value: Any) -> str:
         """把 KiB 数字格式化为 MiB/GiB。"""
-        try:
-            size = float(value)
-        except (TypeError, ValueError):
-            return str(value)
-        mib = size / 1024
-        if mib >= 1024:
-            return f"{mib / 1024:.2f} GiB"
-        return f"{mib:.2f} MiB"
+        return format_kib(value)
 
     @classmethod
     def __find_first_value(cls, payload: Any, keys: List[str]) -> Any:
         """从嵌套 JSON 里按候选字段名查找第一个非空值。"""
-        if isinstance(payload, dict):
-            lowered = {str(key).lower(): value for key, value in payload.items()}
-            for key in keys:
-                value = lowered.get(key.lower())
-                if value not in (None, ""):
-                    return value
-            for value in payload.values():
-                found = cls.__find_first_value(value, keys)
-                if found not in (None, ""):
-                    return found
-        elif isinstance(payload, list):
-            for item in payload:
-                found = cls.__find_first_value(item, keys)
-                if found not in (None, ""):
-                    return found
-        return None
+        return find_first(payload, keys)
 
     @staticmethod
     def __safe_cli_command(args: List[str]) -> str:
@@ -1566,11 +1509,11 @@ class IkuaiAssistant(_PluginBase):
 
     def __api_agent_skill(self) -> Dict[str, Any]:
         """读取 ikuai-cli 官方 Agent SKILL.md。"""
-        return self.read_agent_skill()
+        return api_agent_skill(self.read_agent_skill)
 
     def __api_agent_skills(self) -> Dict[str, Any]:
         """列出 ikuai-cli 领域技能文件。"""
-        return self.list_agent_skills()
+        return api_agent_skills(self.list_agent_skills)
 
     def __api_agent_skill_file(self, name: str) -> Dict[str, Any]:
         """读取指定 ikuai-cli 领域技能文件。"""
@@ -1581,22 +1524,21 @@ class IkuaiAssistant(_PluginBase):
     @staticmethod
     def __agent_guide_dir() -> Path:
         """返回打包在插件内的 ikuai-cli Agent 指南目录。"""
-        return Path(__file__).resolve().parent / "agent_guide"
+        return guide_dir(__file__)
 
     def __read_agent_guide(self, relative_path: str) -> Dict[str, Any]:
         """读取插件内置的 ikuai-cli Agent 指南文件。"""
-        root = self.__agent_guide_dir().resolve()
-        target = (root / relative_path).resolve()
-        if not str(target).startswith(str(root)) or not target.is_file():
-            return {"ok": False, "error": "指定技能文件不存在"}
-        return {"ok": True, "path": relative_path, "content": target.read_text(encoding="utf-8")}
+        return read_guide(__file__, relative_path)
 
-    def __api_cli(self, command: str, confirm: bool = False, raw: bool = False) -> Dict[str, Any]:
+    def __api_cli(self, command: str, confirm: bool = False, raw: bool = False, dry_run: bool = False, preview_id: str = "") -> Dict[str, Any]:
         """执行受控 ikuai-cli 命令。"""
-        return self.run_cli_command(command=command, confirm=confirm, raw=raw)
+        return api_cli(self.run_cli_command, command=command, confirm=confirm, raw=raw, dry_run=dry_run, preview_id=preview_id)
 
     def __api_refresh_agent_tools(self) -> Dict[str, Any]:
         """刷新 MoviePilot MCP/AI 工具管理器。"""
+        return self.__refresh_agent_tools_impl()
+
+    def __refresh_agent_tools_impl(self) -> Dict[str, Any]:
         try:
             from app.agent.tools.manager import moviepilot_tool_manager
 
@@ -1621,28 +1563,8 @@ class IkuaiAssistant(_PluginBase):
     @staticmethod
     def __check_cli_command(args: List[str]) -> Dict[str, Any]:
         """检查 ikuai-cli 命令是否允许执行。"""
-        blocked = {"repl", "completion", "help"}
-        write_words = {
-            "set",
-            "create",
-            "update",
-            "delete",
-            "remove",
-            "clear",
-            "kick",
-            "upgrade",
-            "backup",
-            "restore",
-            "ntp-sync",
-            "set-url",
-            "set-token",
-            "advanced-set",
-            "secondary-route-set",
-        }
-        if args[0] in blocked:
-            return {"ok": False, "error": f"不允许通过插件执行 {args[0]} 命令"}
-        is_write = any(part in write_words for part in args)
-        return {"ok": True, "write": is_write}
+        from .safety import check_command
+        return check_command(args)
 
     def __api_status(self) -> Dict[str, Any]:
         """返回爱快系统与接口状态。"""
@@ -1651,22 +1573,16 @@ class IkuaiAssistant(_PluginBase):
             return self.__disabled()
         client = self.__client()
         logger.info(f"ikuai-cli助手查询状态: base_url={client.base_url}")
-        return {
-            "ok": True,
-            "base_url": client.base_url,
-            "token": mask_secret(self._token),
-            "system": client.system(),
-            "interfaces": client.interfaces(),
-        }
+        return api_status(client.system, client.interfaces, client.base_url, mask_secret(self._token))
 
     def __api_clients(self, page: int = 1, limit: int = 100) -> Dict[str, Any]:
         """返回在线终端列表。"""
         if not self._enabled:
             logger.warning("ikuai-cli助手在线设备查询被拒绝: 插件未启用")
             return self.__disabled()
-        limit = min(max(int(limit or 100), 1), 500)
-        logger.info(f"ikuai-cli助手查询在线设备: page={int(page or 1)}, limit={limit}")
-        return {"ok": True, "clients": self.__client().clients_online(page=int(page or 1), limit=limit)}
+        page, limit = normalize_page_limit(page, limit)
+        logger.info(f"ikuai-cli助手查询在线设备: page={page}, limit={limit}")
+        return api_clients(self.__client().clients_online, page, limit)
 
     def __api_device(self, ip: str = "", mac: str = "") -> Dict[str, Any]:
         """返回指定终端的诊断信息。"""
@@ -1683,26 +1599,19 @@ class IkuaiAssistant(_PluginBase):
             "ikuai-cli助手查询设备: "
             f"ip={target_ip or '未传'}, mac={mask_secret(target_mac) if target_mac else '未传'}"
         )
-        clients = client.clients_online(limit=500)
-        device = find_client(clients, ip=target_ip, mac=target_mac)
-        if device and not target_ip:
-            target_ip = str(device.get("ip_addr") or "").strip()
-        if device and not target_mac:
-            target_mac = str(device.get("mac") or "").strip()
-        result: Dict[str, Any] = {"ok": True, "target_ip": target_ip, "target_mac": target_mac, "device": device}
-        if target_ip and target_mac:
-            result["traffic_load"] = client.traffic_load(target_ip, target_mac)
-            result["protocols"] = client.client_protocols(target_ip, target_mac)
-        return result
+        return api_device(
+            client.clients_online, client.traffic_load, client.client_protocols,
+            target_ip, target_mac, find_client,
+        )
 
     def __api_rules(self, page: int = 1, limit: int = 100) -> Dict[str, Any]:
         """返回五元组分流规则列表。"""
         if not self._enabled:
             logger.warning("ikuai-cli助手分流规则查询被拒绝: 插件未启用")
             return self.__disabled()
-        limit = min(max(int(limit or 100), 1), 500)
-        logger.info(f"ikuai-cli助手查询分流规则: page={int(page or 1)}, limit={limit}")
-        return {"ok": True, "rules": self.__client().five_tuple_rules(page=int(page or 1), limit=limit)}
+        page, limit = normalize_page_limit(page, limit)
+        logger.info(f"ikuai-cli助手查询分流规则: page={page}, limit={limit}")
+        return api_rules(self.__client().five_tuple_rules, page, limit)
 
     def __api_rule(self, rule_id: int) -> Dict[str, Any]:
         """返回指定五元组分流规则摘要。"""
@@ -1727,16 +1636,11 @@ class IkuaiAssistant(_PluginBase):
             "ikuai-cli助手执行综合分析: "
             f"ip={str(ip or '').strip() or '未传'}, mac={mask_secret(str(mac or '').strip()) if mac else '未传'}"
         )
-        result: Dict[str, Any] = {
-            "ok": True,
-            "base_url": client.base_url,
-            "system": client.system(),
-            "interfaces": client.interfaces(),
-            "clients": client.clients_online(limit=200),
-            "rules": client.five_tuple_rules(limit=200),
-        }
-        if ip or mac:
-            result["device"] = self.__api_device(ip=ip, mac=mac)
+        result = api_analyze(
+            client.system, client.interfaces, client.clients_online,
+            client.five_tuple_rules, self.__api_device, ip, mac,
+        )
+        result["base_url"] = client.base_url
         return result
 
     def __api_set_rule_interface(self, rule_id: int, interface: str, confirm: bool = False) -> Dict[str, Any]:
@@ -1764,8 +1668,7 @@ class IkuaiAssistant(_PluginBase):
                 "interface": target_interface,
             }
         logger.info(f"ikuai-cli助手切换规则 {target_rule_id} 出口为 {target_interface}")
-        payload = self.__client().set_five_tuple_interface(target_rule_id, target_interface)
-        return {"ok": bool(payload.get("ok", True)), "result": payload}
+        return api_set_rule_interface(self.__client().set_five_tuple_interface, target_rule_id, target_interface, confirm)
 
     def __api_toggle_rule(self, rule_id: int, enabled: bool, confirm: bool = False) -> Dict[str, Any]:
         """启用或停用指定五元组规则。"""
@@ -1788,8 +1691,7 @@ class IkuaiAssistant(_PluginBase):
                 "enabled": bool(enabled),
             }
         logger.info(f"ikuai-cli助手切换规则 {target_rule_id} 启用状态为 {enabled}")
-        payload = self.__client().toggle_five_tuple_rule(target_rule_id, bool(enabled))
-        return {"ok": bool(payload.get("ok", True)), "result": payload}
+        return api_toggle_rule(self.__client().toggle_five_tuple_rule, target_rule_id, enabled, confirm)
 
 
 class IkuaiCliInput(BaseModel):
@@ -1803,10 +1705,9 @@ class IkuaiCliInput(BaseModel):
         False,
         description="Set true only for confirmed write operations. Read commands should keep false.",
     )
-    raw: bool = Field(
-        False,
-        description="Return raw stdout instead of parsed JSON when needed.",
-    )
+    dry_run: bool = Field(False, description="写操作先生成预览，不执行")
+    preview_id: Optional[str] = Field(None, description="确认执行时必须携带同一命令的有效预览 ID")
+    raw: bool = Field(False, description="返回原始输出")
 
 
 class IkuaiCliTool(MoviePilotTool):
@@ -1817,7 +1718,8 @@ class IkuaiCliTool(MoviePilotTool):
     description: str = (
         "Run a controlled ikuai-cli command against the configured iKuai router. "
         "Use ikuai_skill first to read the official domain skill, then call this tool. "
-        "Write commands are blocked unless the plugin config allows CLI writes and confirm=true is provided."
+        "For writes first request dry_run=true, then obtain user approval and pass the same command, "
+        "preview_id and confirm=true. CLI writes must also be enabled in plugin config. Unknown commands are denied."
     )
     require_admin: bool = True
     args_schema: Type[BaseModel] = IkuaiCliInput
@@ -1826,13 +1728,9 @@ class IkuaiCliTool(MoviePilotTool):
         """生成工具调用提示。"""
         return f"执行 ikuai-cli: {kwargs.get('command', '')}"
 
-    async def run(self, command: str, confirm: bool = False, raw: bool = False, **kwargs) -> str:
+    async def run(self, command: str, confirm: bool = False, raw: bool = False, dry_run: bool = False, preview_id: Optional[str] = None, **kwargs) -> str:
         """执行 ikuai-cli 命令并返回结构化结果。"""
-        plugin = PluginManager().running_plugins.get("IkuaiAssistant")
-        if not plugin:
-            return json.dumps({"ok": False, "error": "IkuaiAssistant 插件未运行"}, ensure_ascii=False)
-        result = plugin.run_cli_command(command=command, confirm=confirm, raw=raw)
-        return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+        return run_cli_plugin(PluginManager(), command, confirm=confirm, raw=raw, dry_run=dry_run, preview_id=preview_id or "")
 
 
 class IkuaiSkillInput(BaseModel):
@@ -1868,8 +1766,4 @@ class IkuaiSkillTool(MoviePilotTool):
 
     async def run(self, name: str = "", list_only: bool = False, **kwargs) -> str:
         """读取官方 Agent Skill 文档。"""
-        plugin = PluginManager().running_plugins.get("IkuaiAssistant")
-        if not plugin:
-            return json.dumps({"ok": False, "error": "IkuaiAssistant 插件未运行"}, ensure_ascii=False)
-        result = plugin.list_agent_skills() if list_only else plugin.read_agent_skill(name)
-        return json.dumps(result, ensure_ascii=False, indent=2, default=str)
+        return run_skill_plugin(PluginManager(), name=name, list_only=list_only)

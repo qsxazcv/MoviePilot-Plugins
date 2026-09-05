@@ -58,6 +58,11 @@ def extract_items(payload: Dict[str, Any]) -> list:
     """从 CLI 展开响应或 REST results 信封中提取列表数据。"""
     if not isinstance(payload, dict):
         return []
+
+
+def normalize_page_limit(page: int = 1, limit: int = 50, maximum: int = 500) -> tuple[int, int]:
+    """归一化分页参数，限制页码和单页数量。"""
+    return max(int(page or 1), 1), min(max(int(limit or 50), 1), maximum)
     if isinstance(payload.get("data"), list):
         return payload.get("data") or []
     if isinstance(payload.get("data"), dict):
@@ -102,6 +107,7 @@ class IkuaiClient:
 
     def clients_online(self, page: int = 1, limit: int = 50) -> Dict[str, Any]:
         """获取在线终端列表。"""
+        page, limit = normalize_page_limit(page, limit)
         query = urlencode({"page": page, "limit": limit})
         return self.request("GET", f"/api/v4.0/monitoring/clients-online?{query}")
 
@@ -121,6 +127,7 @@ class IkuaiClient:
 
     def five_tuple_rules(self, page: int = 1, limit: int = 100) -> Dict[str, Any]:
         """获取五元组分流规则列表。"""
+        page, limit = normalize_page_limit(page, limit)
         query = urlencode({"page": page, "limit": limit})
         return self.request("GET", f"/api/v4.0/routing/five-tuple-rules?{query}")
 
@@ -161,18 +168,21 @@ class IkuaiClient:
         try:
             context = None if self.verify_ssl else ssl._create_unverified_context()
             with urlopen(request, timeout=self.timeout, context=context) as response:
-                text = response.read().decode("utf-8", errors="replace")
+                raw = response.read(4 * 1024 * 1024 + 1)
+                if len(raw) > 4 * 1024 * 1024:
+                    return {"ok": False, "error_type": "response_too_large", "retryable": False, "error": "爱快响应超过 4MB 限制"}
+                text = raw.decode("utf-8", errors="replace")
         except HTTPError as err:
             text = err.read().decode("utf-8", errors="replace")
-            return {"ok": False, "status": err.code, "error": text or err.reason}
+            return {"ok": False, "status": err.code, "error_type": "http_error", "retryable": err.code >= 500, "error": text or err.reason}
         except URLError as err:
-            return {"ok": False, "error": str(err.reason)}
+            return {"ok": False, "error_type": "network_error", "retryable": True, "error": str(err.reason)}
         except Exception as err:
-            return {"ok": False, "error": str(err)}
+            return {"ok": False, "error_type": type(err).__name__, "retryable": False, "error": str(err)}
         try:
             parsed = json.loads(text) if text else {}
         except json.JSONDecodeError:
-            return {"ok": False, "error": "爱快返回了非 JSON 响应", "raw": text[:200]}
+            return {"ok": False, "error_type": "invalid_json", "retryable": False, "error": "爱快返回了非 JSON 响应", "raw": text[:200]}
         if isinstance(parsed, dict):
             code = parsed.get("code")
             if code is not None:
