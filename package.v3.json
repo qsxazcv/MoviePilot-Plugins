@@ -2,7 +2,7 @@
   "IqiyiDiscover": {
     "name": "爱奇艺探索",
     "description": "让探索支持爱奇艺视频的数据浏览。",
-    "version": "2.1.6",
+    "version": "2.2.0",
     "icon": "https://www.iqiyi.com/logo.png",
     "author": "qsxazcv",
     "level": 2,
@@ -10,6 +10,7 @@
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "2.2.0": "采用策略B缓存：短期缓存直读，中期缓存定期反查，接口失败保留旧缓存并增加短期负缓存。",
       "2.1.6": "优化识别缓存类型注解，明确识别失败返回值，并限制探索分页参数范围。",
       "2.1.5": "增强异常 JSON 响应防护，避免爱奇艺接口返回非对象数据时触发解析错误。",
       "2.1.4": "将爱奇艺探索请求迁移至 MoviePilot 宿主 RequestUtils，统一代理与网络配置。",

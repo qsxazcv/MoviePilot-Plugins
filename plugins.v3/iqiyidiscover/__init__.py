@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "2.1.6"
+    plugin_version = "2.2.0"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -40,6 +40,10 @@ class IqiyiDiscover(_PluginBase):
 
     # 专辑 ID 到标题/年份的映射缓存键（用于识别兜底，vlist 接口失效时使用）
     _ALBUM_CACHE_KEY = "iqiyi_album_cache"
+    _CACHE_FRESH_SECONDS = 3600
+    _CACHE_REFRESH_SECONDS = 21600
+    _CACHE_EXPIRE_SECONDS = 3 * 86400
+    _NEGATIVE_CACHE_SECONDS = 900
 
     _enabled = False
 
@@ -249,23 +253,28 @@ class IqiyiDiscover(_PluginBase):
         # 先查本地缓存，未命中时实时反查探索推荐接口拿最新剧名并补缓存。
         cached = self.__get_cached_album(mediaid)
         if cached:
-            cached_title, cached_year = cached
+            cached_title, cached_year, last_checked_at, miss_until = cached
+            now = int(time.time())
+            cache_age = now - last_checked_at if last_checked_at else self._CACHE_EXPIRE_SECONDS
+            if miss_until and now < miss_until:
+                cache_age = 0
+            # 1 小时内直接使用缓存；1～6 小时仍允许旧缓存兜底，避免接口抖动影响识别。
+            if cached_title and cache_age < self._CACHE_REFRESH_SECONDS:
+                return self.__recognize_by_title(
+                    cached_title, cached_year, mediaid, MediaType.TV
+                ) or None
+            # 超过 6 小时主动反查，失败后仍回退到 3 天内的旧缓存。
+            if cached_title and cache_age < self._CACHE_EXPIRE_SECONDS:
+                refreshed = self.__refresh_cached_album(mediaid)
+                if refreshed:
+                    cached_title, cached_year = refreshed
+                    return self.__recognize_by_title(
+                        cached_title, cached_year, mediaid, MediaType.TV
+                    ) or None
             if cached_title:
-                from app.sdk.media import MetaInfo
-
-                search_meta = MetaInfo(title=cached_title)
-                search_meta.type = MediaType.TV
-                if cached_year:
-                    search_meta.year = cached_year
-                mediainfo = MediaChain().recognize_media(
-                    meta=search_meta,
-                    mtype=MediaType.TV,
-                    media_source=MediaSource.TMDB,
-                )
-                if mediainfo:
-                    return self.__finalize_iqiyi_mediainfo(
-                        mediainfo, mediaid, MediaType.TV, None
-                    )
+                return self.__recognize_by_title(
+                    cached_title, cached_year, mediaid, MediaType.TV
+                ) or None
         # 反查：扫视频道/电影前 2 页按 albumId 匹配，命中后补缓存
         item = self.__fetch_videolib_item(mediaid, mtype="tv")
         if not item:
@@ -299,6 +308,36 @@ class IqiyiDiscover(_PluginBase):
                 return mediainfo
         return None
 
+    def __recognize_by_title(
+        self, title: str, year: Optional[str], media_id: str, media_type: MediaType
+    ) -> Optional[schemas.MediaInfo]:
+        """使用缓存标题识别 TMDB，并回填爱奇艺身份。"""
+        from app.chain.media import MediaChain
+        from app.sdk.media import MetaInfo
+
+        search_meta = MetaInfo(title=title)
+        search_meta.type = media_type
+        if year:
+            search_meta.year = year
+        mediainfo = MediaChain().recognize_media(
+            meta=search_meta, mtype=media_type, media_source=MediaSource.TMDB
+        )
+        if mediainfo:
+            return self.__finalize_iqiyi_mediainfo(mediainfo, media_id, media_type, None)
+        return None
+
+    def __refresh_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str]]]:
+        """在缓存进入刷新窗口后反查最新标题，失败时记录短期负缓存。"""
+        now = int(time.time())
+        item = self.__fetch_videolib_item(media_id, mtype="tv")
+        if not item:
+            item = self.__fetch_videolib_item(media_id, mtype="movie")
+        if item:
+            self.__cache_albums([item], checked_at=now, force_refresh=True)
+            return pick_title(item), pick_year(item)
+        self.__mark_album_checked(media_id, now + self._NEGATIVE_CACHE_SECONDS)
+        return None
+
     @staticmethod
     def __cache_key_for(media_id: str) -> str:
         """
@@ -306,7 +345,7 @@ class IqiyiDiscover(_PluginBase):
         """
         return str(media_id or "").strip()
 
-    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str]]]:
+    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str], int, int]]:
         """
         从插件数据缓存中读取专辑 ID 对应的剧名与年份。
 
@@ -325,7 +364,7 @@ class IqiyiDiscover(_PluginBase):
         if not title:
             return None
         year = str(item.get("year") or "").strip() or None
-        return title, year
+        return title, year, int(item.get("last_checked_at") or item.get("updated_at") or 0), int(item.get("miss_until") or 0)
 
     def __fetch_videolib_item(
         self, media_id: str, mtype: str = "tv"
@@ -399,7 +438,7 @@ class IqiyiDiscover(_PluginBase):
             kept = dict(ordered[:5000])
         return kept
 
-    def __cache_albums(self, rows: List[dict]) -> None:
+    def __cache_albums(self, rows: List[dict], checked_at: Optional[int] = None, force_refresh: bool = False) -> None:
         """
         把探索页返回的爱奇艺专辑条目写入本地缓存（albumId -> title/year），
         供识别兜底使用。缓存按 3 天自然过期，由 __prune_album_cache 清理。
@@ -438,9 +477,29 @@ class IqiyiDiscover(_PluginBase):
                 existing["updated_at"] = int(time.time())
                 cache[key] = existing
                 changed = True
+            elif force_refresh:
+                existing = dict(existing)
+                existing["last_checked_at"] = int(checked_at or time.time())
+                existing["miss_until"] = 0
+                cache[key] = existing
+                changed = True
+            if key in cache and checked_at:
+                cache[key]["last_checked_at"] = int(checked_at)
+                cache[key]["miss_until"] = 0
         if changed:
             self.save_data(self._ALBUM_CACHE_KEY, cache)
             logger.debug(f"爱奇艺探索缓存已更新 {len(cache)} 条专辑映射")
+
+    def __mark_album_checked(self, media_id: str, miss_until: int) -> None:
+        """记录反查失败的短期负缓存，避免重复扫描候选页。"""
+        cache = self.get_data(self._ALBUM_CACHE_KEY) or {}
+        item = cache.get(self.__cache_key_for(media_id)) or {}
+        if isinstance(item, dict):
+            item = dict(item)
+            item["last_checked_at"] = int(time.time())
+            item["miss_until"] = miss_until
+            cache[self.__cache_key_for(media_id)] = item
+            self.save_data(self._ALBUM_CACHE_KEY, cache)
 
     @staticmethod
     def __prepare_iqiyi_meta(
