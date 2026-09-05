@@ -87,6 +87,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `2.1.6`：优化识别缓存类型注解，明确识别失败返回值，并限制探索分页参数范围。
 - `2.1.5`：增强异常 JSON 响应防护，避免爱奇艺接口返回非对象数据时触发解析错误。
 - `2.1.4`：将爱奇艺探索请求迁移至 MoviePilot 宿主 `RequestUtils`，统一代理与网络配置。
 - `2.1.3`：修复爱奇艺识别回退路径未限定 TMDB 导致的递归调用。

@@ -30,7 +30,7 @@ class IqiyiDiscover(_PluginBase):
     plugin_name = "爱奇艺探索"
     plugin_desc = "让探索支持爱奇艺视频的数据浏览。"
     plugin_icon = "https://www.iqiyi.com/logo.png"
-    plugin_version = "2.1.5"
+    plugin_version = "2.1.6"
     plugin_label = "探索"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -297,6 +297,7 @@ class IqiyiDiscover(_PluginBase):
             )
             if mediainfo:
                 return mediainfo
+        return None
 
     @staticmethod
     def __cache_key_for(media_id: str) -> str:
@@ -305,7 +306,7 @@ class IqiyiDiscover(_PluginBase):
         """
         return str(media_id or "").strip()
 
-    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str], Optional[int]]]:
+    def __get_cached_album(self, media_id: str) -> Optional[Tuple[str, Optional[str]]]:
         """
         从插件数据缓存中读取专辑 ID 对应的剧名与年份。
 
@@ -554,6 +555,8 @@ class IqiyiDiscover(_PluginBase):
         """
         获取爱奇艺探索数据。
         """
+        page = max(int(page or 1), 1)
+        count = min(max(int(count or 10), 1), 48)
         mode = normalize_mode(mtype, mode)
         query_params = filter_query_params(
             mtype=mtype,
