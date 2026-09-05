@@ -24,7 +24,7 @@ from .agent_handlers import list_guides, read_guide
 from .api_handlers import api_agent_skill, api_agent_skills, api_cli, api_disabled, api_page_limit, api_enabled, api_clients, api_rules, api_status, api_device, api_analyze, api_set_rule_interface, api_toggle_rule, require_write_confirmation
 from .cli_runner import execute_with_runner, parse_command
 from .agent_tool_handlers import resolve_plugin, run_cli_plugin, run_skill_plugin, run_cli_tool, run_skill_tool, serialize_result
-
+from .safety import PreviewStore
 
 class IkuaiAssistant(_PluginBase):
     """ikuai-cli助手插件。"""
@@ -32,7 +32,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.1.4"
+    plugin_version = "2.1.5"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"

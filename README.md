@@ -21,7 +21,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.2` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.1.6` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.1.3` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
-| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.4` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
+| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
 ## 插件详情
 
@@ -108,7 +108,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IkuaiAssistant`
 
-- `2.1.4`：增强安全执行策略：写操作支持 `dry_run` 预览和一次性 `preview_id` 确认，高风险命令直接拦截，未知命令与参数默认拒绝；同时增强请求错误分类、分页限制和响应大小保护。
+- `2.1.5`：修复阶段 3 结构拆分后遗漏 `PreviewStore` 导入导致插件无法加载的问题；完成 CLI、格式化器、API 和 Agent 入口拆分。
 
 - `2.1.3`：增加内置 CLI 实际版本探测、页面版本显示和可读的执行错误分类。
 - `2.1.2`：修复内置 `ikuai-cli` 二进制损坏并恢复可执行权限，升级至官方 `v1.0.18`。
