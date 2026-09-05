@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from urllib.request import Request, urlopen
 
 from apscheduler.triggers.cron import CronTrigger
-from fastapi import Response
+from fastapi import Body, Response
 
 from app.sdk.config import settings
 from app.sdk.events import Event, eventmanager
@@ -54,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.2.0"
+    plugin_version = "1.2.1"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -458,8 +458,12 @@ class weiyuncookie(_PluginBase):
             self._cookie_reveal_tokens[token] = (now + 30, self.get_data("cookie") or "")
         return {"success": True, "message": "授权已创建，仅三十秒内可使用一次", "data": {"reveal_token": token, "expires_in": 30}}
 
-    def __api_reveal_cookie(self, reveal_token: str = "") -> Dict[str, Any]:
+    def __api_reveal_cookie(self, payload: Any = Body(default=None)) -> Dict[str, Any]:
         """校验短时一次性令牌并返回 Cookie 原文。"""
+        if isinstance(payload, dict):
+            reveal_token = str(payload.get("reveal_token") or "")
+        else:
+            reveal_token = str(payload or "")
         now = time.monotonic()
         with self._cookie_reveal_lock or threading.Lock():
             expires, cookie = self._cookie_reveal_tokens.pop(str(reveal_token or ""), (0, ""))
