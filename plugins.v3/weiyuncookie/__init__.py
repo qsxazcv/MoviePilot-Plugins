@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import os
+import secrets
 import threading
 import time
 import traceback
@@ -53,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.1.3"
+    plugin_version = "1.1.4"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -94,6 +95,8 @@ class weiyuncookie(_PluginBase):
     _login_thread: Optional[threading.Thread] = None
     _login_lock: Optional[threading.Lock] = None
     _stop_event: Optional[threading.Event] = None
+    _cookie_reveal_lock: Optional[threading.Lock] = None
+    _cookie_reveal_tokens: Dict[str, Tuple[float, str]] = {}
     _browser_context = None
     _browser = None
     _playwright = None
@@ -232,6 +235,20 @@ class weiyuncookie(_PluginBase):
                 "methods": ["GET"],
                 "auth": "bear",
                 "summary": "读取已保存的微云 Cookie",
+            },
+            {
+                "path": "/request_cookie_reveal",
+                "endpoint": self.__api_request_cookie_reveal,
+                "methods": ["POST"],
+                "auth": "bear",
+                "summary": "申请一次性 Cookie 读取授权",
+            },
+            {
+                "path": "/reveal_cookie",
+                "endpoint": self.__api_reveal_cookie,
+                "methods": ["POST"],
+                "auth": "bear",
+                "summary": "短时一次性读取已保存的微云 Cookie",
             },
             {
                 "path": "/clear_cookie",
@@ -413,15 +430,46 @@ class weiyuncookie(_PluginBase):
         }
 
     def __api_cookie(self) -> Dict[str, Any]:
+        """返回脱敏后的 Cookie 状态，不通过普通接口暴露 Cookie 原文。"""
         cookie = self.get_data("cookie") or ""
+        names = cookie_names(cookie)
+        masked = "; ".join(f"{name}=***" for name in sorted(names))
         return {
             "success": True,
             "has_cookie": bool(cookie),
-            "cookie": cookie,
+            "cookie_names": sorted(names),
+            "masked_cookie": masked,
             "cookie_length": len(cookie),
         }
 
+    def __api_request_cookie_reveal(self) -> Dict[str, Any]:
+        """创建有效期三十秒且只能消费一次的 Cookie 读取授权。"""
+        if not self.get_data("cookie"):
+            return {"success": False, "message": "当前没有已保存的 Cookie", "data": None}
+        if self._cookie_reveal_lock is None:
+            self._cookie_reveal_lock = threading.Lock()
+        token = secrets.token_urlsafe(32)
+        with self._cookie_reveal_lock:
+            now = time.monotonic()
+            self._cookie_reveal_tokens = {
+                key: item for key, item in self._cookie_reveal_tokens.items() if item[0] > now
+            }
+            self._cookie_reveal_tokens[token] = (now + 30, self.get_data("cookie") or "")
+        return {"success": True, "message": "授权已创建，仅三十秒内可使用一次", "data": {"reveal_token": token, "expires_in": 30}}
+
+    def __api_reveal_cookie(self, reveal_token: str = "") -> Dict[str, Any]:
+        """校验短时一次性令牌并返回 Cookie 原文。"""
+        now = time.monotonic()
+        with self._cookie_reveal_lock or threading.Lock():
+            expires, cookie = self._cookie_reveal_tokens.pop(str(reveal_token or ""), (0, ""))
+        if not expires or expires < now:
+            return {"success": False, "message": "读取授权已失效，请重新申请", "data": None}
+        if not cookie:
+            return {"success": False, "message": "当前没有已保存的 Cookie", "data": None}
+        return {"success": True, "message": "", "data": {"cookie": cookie, "expires_in": 0}}
+
     def __api_clear_cookie(self) -> Dict[str, Any]:
+        """清除已保存的 Cookie 和相关登录状态。"""
         logger.info("微云 Cookie 助手收到清除 Cookie 请求")
         self.del_data("cookie")
         self.del_data("cookies_json")

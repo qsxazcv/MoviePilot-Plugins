@@ -99,6 +99,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `weiyuncookie`
 
+- `1.1.4`：新增点击复制时的短时一次性 Cookie 授权读取流程，令牌仅内存保存、30 秒有效且只能使用一次。
 - `1.1.3`：完善登录流程结束后的浏览器资源引用清理与异常记录。
 - `1.1.2`：加强登录线程、浏览器和 Playwright 资源的停止清理与生命周期管理。
 - `1.1.1`：适配 V3 插件开发文档 7.5：补充 `pyproject.toml` 依赖清单（`apscheduler` / `fastapi`）。

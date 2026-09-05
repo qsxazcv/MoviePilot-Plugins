@@ -110,7 +110,11 @@ export default defineComponent({
           has_cookie: !!latest.has_cookie,
           cookie_length: latest.cookie_length ?? status.value.cookie_length,
         };
-        text = latest.cookie || '';
+        const grant = await postPluginApi(props.api, 'request_cookie_reveal');
+        const token = grant?.reveal_token;
+        if (!token) throw new Error(grant?.message || '未取得一次性授权');
+        const revealed = await postPluginApi(props.api, 'reveal_cookie', { reveal_token: token });
+        text = revealed?.cookie || '';
       } catch (err) {
         error.value = '读取 Cookie 失败：' + (err?.message || err);
         return;
