@@ -22,6 +22,8 @@ from .media import pick_media_id, pick_title, pick_year, to_media
 from .recognize import request_avlist, strip_episode_noise, year_from_publish_time
 from .ui import iqiyi_filter_ui
 
+IQIYI_MEDIA_SOURCES = {"iqiyidiscover", "iqiyi"}
+
 class IqiyiDiscover(_PluginBase):
     """
     爱奇艺探索插件，让探索支持爱奇艺片库数据浏览。
@@ -177,7 +179,7 @@ class IqiyiDiscover(_PluginBase):
             media_source=media_source,
             media_id=media_id,
         )
-        if source != MediaSource.Iqiyi or not normalized_media_id:
+        if str(source) not in IQIYI_MEDIA_SOURCES or not normalized_media_id:
             return None
         try:
             return self.__recognize_iqiyi(normalized_media_id, meta)
@@ -210,7 +212,7 @@ class IqiyiDiscover(_PluginBase):
             media_source=media_source,
             media_id=media_id,
         )
-        if source != MediaSource.Iqiyi or not normalized_media_id:
+        if str(source) not in IQIYI_MEDIA_SOURCES or not normalized_media_id:
             return None
         try:
             return self.__recognize_iqiyi(normalized_media_id, meta)
@@ -563,7 +565,7 @@ class IqiyiDiscover(_PluginBase):
 
         :param overview: 反查命中时携带的简介文本，识别结果缺简介时补全
         """
-        mediainfo.media_source = MediaSource.Iqiyi
+        mediainfo.media_source = "iqiyidiscover"
         mediainfo.media_id = mediaid
         media_type = IqiyiDiscover.__normalize_mtype(media_type)
         if overview and not mediainfo.overview:
@@ -708,7 +710,7 @@ class IqiyiDiscover(_PluginBase):
         depends["subgenre"] = ["mtype", "genre", FILTER_EXPAND_MODEL]
         iqiyi_source = schemas.DiscoverMediaSource(
             name="爱奇艺",
-            media_source=MediaSource.Iqiyi,
+            media_source="iqiyidiscover",
             mediaid_prefix="iqiyidiscover",
             api_path=f"plugin/IqiyiDiscover/iqiyi_discover?apikey={settings.API_TOKEN}",
             filter_params={
@@ -741,7 +743,7 @@ class IqiyiDiscover(_PluginBase):
             return
         if event_data.target_media_source != MediaSource.TMDB:
             return
-        if event_data.media_source != MediaSource.Iqiyi:
+        if str(event_data.media_source) not in IQIYI_MEDIA_SOURCES:
             return
         try:
             mediainfo = self.__recognize_iqiyi(event_data.media_id)

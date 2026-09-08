@@ -1,7 +1,7 @@
 """将爱奇艺条目转换为 MoviePilot 媒体信息。"""
 
 from app import schemas
-from app.schemas.types import MediaSource
+
 
 from .constants import MOVIEPILOT_MEDIA_TYPES
 
@@ -75,11 +75,11 @@ def to_media(item: dict, mtype: str) -> schemas.MediaInfo:
         title=title,
         year=year,
         title_year=f"{title} ({year})" if year else title,
-        # v3 统一媒体身份：media_source 用官方收编的 MediaSource.Iqiyi 枚举，
+        # v3 统一媒体身份：使用稳定的爱奇艺来源字符串，
         # media_id 为爱奇艺 albumId。缺身份会导致 /mediaserver/notexists
         # 无法识别该来源，订阅弹窗媒体库状态为空而兜底默认「全集洗版」；
         # 补上后订阅默认恢复「普通订阅」。
-        media_source=MediaSource.Iqiyi,
+        media_source="iqiyidiscover",
         media_id=pick_media_id(item),
         poster_path=image_url,
         overview=item.get("description") or item.get("desc") or "",
