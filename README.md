@@ -19,7 +19,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件 | 插件 ID | 类型 | V3 | 简介 |
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.2` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
-| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.0` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
+| 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 
@@ -87,6 +87,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IqiyiDiscover`
 
+- `2.2.1`：修复 V3 正式媒体源枚举变化后的来源判断与身份回填，统一使用稳定的 `iqiyidiscover` 来源标识，避免探索识别和订阅转换失败。
 - `2.2.0`：采用策略B缓存：短期缓存直读，中期缓存定期反查，接口失败保留旧缓存并增加短期负缓存。
 - `2.1.6`：优化识别缓存类型注解，明确识别失败返回值，并限制探索分页参数范围。
 - `2.1.5`：增强异常 JSON 响应防护，避免爱奇艺接口返回非对象数据时触发解析错误。
