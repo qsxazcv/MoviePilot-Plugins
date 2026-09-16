@@ -22,6 +22,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.0` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -66,6 +67,18 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 默认按只读方式排查问题；修改路由、规则、用户和系统配置等写操作需在插件配置开启并二次确认。
 - 自带 17 个领域技能文档（monitor / network / routing / security / vpn / users 等）。
 - V3 适配：`plugins.v3` + `package.v3.json`，`get_api()` 端点带 `x-moviepilot-raw-response` 标记保持自定义响应格式。
+
+### MediaWarp
+
+适合把 Emby / Jellyfin 前面套一层中间件，优化 Strm 播放与前端样式的用户。
+
+- **上游原作者**：`AkimioJR` — [AkimioJR/MediaWarp](https://github.com/AkimioJR/MediaWarp)（MediaWarp 二进制本体）。
+- **插件原版作者**：`DDSRem` — [DDSRem-Dev/MoviePilot-Plugins](https://github.com/DDSRem-Dev/MoviePilot-Plugins)（本插件所基于的 MoviePilot 插件实现）。
+- **本插件基于 `DDSRem-Dev/MoviePilot-Plugins` 作者版本做 V3 升级维护，在此感谢原作者提供的插件实现，以及 `AkimioJR` 提供的 MediaWarp 二进制。** 本仓库仅做 MoviePilot V3 代际适配与二进制版本跟进维护，核心功能与设计均来自原作者。
+- 下载并常驻运行 MediaWarp 二进制，作为 Emby / Jellyfin 反向代理中间件。
+- 优化 Strm 文件播放；支持自定义前端样式（CRX 增强、演员页、Fanart、弹幕、外部播放器）、自定义允许访问客户端与访问日志、字幕 `SRT2ASS` 转换。
+- 自动读取 MoviePilot 已配置的媒体服务器（Emby / Jellyfin）地址与认证信息。
+- V3 适配：`plugins.v3` + `package.v3.json`（`system_version >=3.0.0`）；二进制升级至上游 `AkimioJR/MediaWarp` **v0.2.4**；配置字段迁移为 v0.2.4 小写下划线格式；SDK 导入迁移至 `app.sdk` 体系。
 
 ## 安全提醒
 
@@ -119,3 +132,8 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - `2.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.events` / `app.sdk.plugins` / `app.sdk.logging`），去除对旧版兼容层的依赖。
 - `2.0.0`：V3 代际迁移版（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`）：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式；纯工具插件，不涉及媒体身份/识别/订阅链路；版本按官方规则跃迁 `1.0.0 → 2.0.0`。
 - `1.0.0`：通过本地插件安装同步到 Localplugins 本地插件库；v3 环境兼容：`get_api()` 全部端点加 `x-moviepilot-raw-response` 标记，绕过 v3 `ResponseAPIRoute` 统一 envelope 自动包装，保持 `{ok: ...}` 自定义响应格式。
+
+### `MediaWarp`
+
+- `2.0.0`：**基于 `DDSRem-Dev/MoviePilot-Plugins` 作者版本做 V3 升级维护，感谢原作者。** V3 代际迁移（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`，版本按官方规则跃迁 `1.0.7 → 2.0.0`）；二进制升级到上游 `AkimioJR/MediaWarp` v0.2.4；配置字段迁移为 v0.2.4 小写下划线格式（`port` / `server.*` / `web.*` / `http_strm.*` / `subtitle.*`）；SDK 导入迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`）；补充 `pyproject.toml` 依赖清单（`ruamel.yaml` / `psutil`）。
+- `1.0.7`：DDSRem 原版（二进制 v0.1.12）。

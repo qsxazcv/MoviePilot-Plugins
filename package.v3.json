@@ -84,5 +84,21 @@
       "v2.0.5": "修复自动更新插件后动态注册插件 API 时透传 allow_anonymous 等 MoviePilot 扩展字段导致 APIRouter.add_api_route() 抛出 unexpected keyword argument 的异常；优先调用系统插件 API 注册流程，兼容旧环境时过滤非 FastAPI 原生字段。",
       "v2.0.4": "基于原作者 thsrite 版本继续维护，原插件仓库：https://github.com/thsrite/MoviePilot-Plugins，感谢原作者贡献；优化 MoviePilot 版本不兼容场景：自动更新时暂缓安装并说明当前版本、目标版本和最低要求；支持官方 >=/> 版本约束、安全读取主程序版本、持久化通知去重，等待 MoviePilot 升级兼容后自动继续更新并发送恢复成功提醒；同时增加定时任务唯一ID、replace_existing、max_instances=1、coalesce 和进程内锁，避免重复调度导致重复更新和重复通知。"
     }
+  },
+  "MediaWarp": {
+    "name": "MediaWarp",
+    "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。基于 DDSRem-Dev/MoviePilot-Plugins 作者版本做 V3 升级维护，感谢原作者。",
+    "labels": "工具,媒体服务器",
+    "version": "2.0.0",
+    "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
+    "author": "DDSRem",
+    "author_url": "https://github.com/DDSRem-Dev/MoviePilot-Plugins",
+    "level": 1,
+    "system_version": ">=3.0.0",
+    "release": true,
+    "history": {
+      "2.0.0": "基于 DDSRem-Dev/MoviePilot-Plugins 作者版本做 V3 升级维护，感谢原作者。V3 代际迁移（plugins.v3 + package.v3.json，system_version >=3.0.0）；二进制升级到上游 AkimioJR/MediaWarp v0.2.4；配置字段迁移为 v0.2.4 小写下划线格式（port / server.* / web.* / http_strm.* / subtitle.*）；SDK 导入迁移至 app.sdk 体系；补充 pyproject.toml 依赖清单（ruamel.yaml / psutil）。",
+      "1.0.7": "DDSRem 原版（二进制 v0.1.12）。"
+    }
   }
 }
