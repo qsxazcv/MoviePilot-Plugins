@@ -89,7 +89,7 @@
     "name": "MediaWarp",
     "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。基于 DDSRem-Dev/MoviePilot-Plugins 作者版本做 V3 升级维护，感谢原作者。",
     "labels": "工具,媒体服务器",
-    "version": "2.0.3",
+    "version": "2.0.4",
     "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
     "author": "DDSRem",
     "author_url": "https://github.com/DDSRem-Dev/MoviePilot-Plugins",
@@ -97,6 +97,7 @@
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "2.0.4": "「HTTPStrm 设置」标签页新增「HTTPStrm 缓存」开关，可直接控制 cache.enable（HTTPStrm 重定向内存缓存总开关，默认关闭）；该字段原为 1.0.7 → 2.0.0 表单精简后遗留的无效键，本次转正为可用开关。",
       "2.0.3": "新增「HTTPStrm 设置」标签页，把 http_strm.enable（重定向）、http_strm.proxy（代理/串流转码）、http_strm.final_url（查找最终地址）做成 UI 开关，并把「兼容模式」一起挪进该标签页，四个开关聚在一起控制 STRM 播放链路；enable / final_url 不再写死 true，proxy 不再只能手改配置文件。",
       "2.0.2": "新增插件表单「兼容模式」开关（Web页面配置标签页），可直接控制 http_strm.compatibility_mode，与 CRX 美化 / 头像过滤等开关用法一致；默认开启，避免外网播放退回 HEAD 跟链导致一直转圈。",
       "2.0.1": "参照 redwebsite/MoviePilot-Plugins 的处理方式调整配置写入：http_strm.compatibility_mode 不再写入 changes，配置文件里的值完全由用户手动决定，插件每次启动不再覆盖（公开线上播放需要该项为 true，config.yaml 重建后需手动确认）；web.enable 不再写死 true，改为按 CRX / 头像过滤 / 同人图 / 外置播放器 / 弹幕 / 共同观影六个子开关 any 计算。",

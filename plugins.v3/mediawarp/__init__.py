@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.3"
+    plugin_version = "2.0.4"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -69,6 +69,8 @@ class MediaWarp(_PluginBase):
     _http_enable = True
     _http_proxy = False
     _http_final_url = True
+    # HTTPStrm 重定向内存缓存总开关（对应 config.yaml 的 cache.enable）
+    _cache_enable = False
 
     def __init__(self):
         """
@@ -132,6 +134,8 @@ class MediaWarp(_PluginBase):
                 else bool(config.get("http_final_url"))
             )
             self._http_proxy = bool(config.get("http_proxy"))
+            # 缓存总开关默认 False（与上游 example / 现网一致）
+            self._cache_enable = bool(config.get("cache_enable"))
 
             # 获取媒体服务器
             if self._mediaservers:
@@ -187,6 +191,7 @@ class MediaWarp(_PluginBase):
                 "http_enable": self._http_enable,
                 "http_proxy": self._http_proxy,
                 "http_final_url": self._http_final_url,
+                "cache_enable": self._cache_enable,
             }
         )
 
@@ -412,6 +417,21 @@ class MediaWarp(_PluginBase):
                                     "model": "http_compatibility",
                                     "label": "兼容模式",
                                     "hint": "使用更兼容的方式获取最终 URL，外部网络播放需开启",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "cache_enable",
+                                    "label": "HTTPStrm 缓存",
+                                    "hint": "启用重定向内存缓存，重复播放更快（仅 final_url 生效时有效）",
                                     "persistent-hint": True,
                                 },
                             }
@@ -701,6 +721,7 @@ class MediaWarp(_PluginBase):
             "http_enable": True,
             "http_proxy": False,
             "http_final_url": True,
+            "cache_enable": False,
             "tab": "web-ui",
         }
 
@@ -786,6 +807,9 @@ class MediaWarp(_PluginBase):
             # http_strm.final_url：先解析重定向链找到最终地址再返回，减少客户端
             # 跳转次数（公网播放场景需要），由插件表单「查找最终地址」开关控制。
             "http_strm.final_url": bool(self._http_final_url),
+            # cache.enable：HTTPStrm 重定向内存缓存总开关，由插件表单
+            # 「HTTPStrm 缓存」开关控制（默认 False，与上游 example 一致）。
+            "cache.enable": bool(self._cache_enable),
             # http_strm.compatibility_mode：由插件表单「兼容模式」开关控制，
             # 默认 True。公开线上播放需要开启：关闭时 getFinalURL 用 HEAD
             # 请求，P115StrmHelper 的 /redirect 端点只允许 GET 会返回 405，
