@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.2"
+    plugin_version = "2.0.3"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -65,6 +65,10 @@ class MediaWarp(_PluginBase):
     _srt2ass = False
     # HTTPStrm 兼容模式（对应 config.yaml 的 http_strm.compatibility_mode）
     _http_compatibility = True
+    # HTTPStrm 其他开关（对应 config.yaml 的 http_strm.*）
+    _http_enable = True
+    _http_proxy = False
+    _http_final_url = True
 
     def __init__(self):
         """
@@ -115,6 +119,19 @@ class MediaWarp(_PluginBase):
                 if config.get("http_compatibility") is None
                 else bool(config.get("http_compatibility"))
             )
+            # HTTPStrm 其他开关：enable / final_url 默认 True（与现网一致），
+            # proxy 默认 False（仅直接播放，不允许流量经过媒体服务器）
+            self._http_enable = (
+                True
+                if config.get("http_enable") is None
+                else bool(config.get("http_enable"))
+            )
+            self._http_final_url = (
+                True
+                if config.get("http_final_url") is None
+                else bool(config.get("http_final_url"))
+            )
+            self._http_proxy = bool(config.get("http_proxy"))
 
             # 获取媒体服务器
             if self._mediaservers:
@@ -167,6 +184,9 @@ class MediaWarp(_PluginBase):
                 "video_together": self._video_together,
                 "srt2ass": self._srt2ass,
                 "http_compatibility": self._http_compatibility,
+                "http_enable": self._http_enable,
+                "http_proxy": self._http_proxy,
+                "http_final_url": self._http_final_url,
             }
         )
 
@@ -301,26 +321,6 @@ class MediaWarp(_PluginBase):
                     },
                 ],
             },
-            {
-                "component": "VRow",
-                "content": [
-                    {
-                        "component": "VCol",
-                        "props": {"cols": 12, "md": 4},
-                        "content": [
-                            {
-                                "component": "VSwitch",
-                                "props": {
-                                    "model": "http_compatibility",
-                                    "label": "兼容模式",
-                                    "hint": "使用更兼容的方式获取最终 URL，外部网络播放需开启",
-                                    "persistent-hint": True,
-                                },
-                            }
-                        ],
-                    },
-                ],
-            },
         ]
 
         subtitle = [
@@ -337,6 +337,81 @@ class MediaWarp(_PluginBase):
                                     "model": "srt2ass",
                                     "label": "SRT转ASS",
                                     "hint": "SRT 字幕转 ASS 字幕",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                ],
+            },
+        ]
+
+        # HTTPStrm 相关开关（对应 config.yaml 的 http_strm.*）：把「兼容模式」
+        # 一起挪进本标签页，四个开关聚在一起控制 STRM 播放链路。
+        http_settings = [
+            {
+                "component": "VRow",
+                "content": [
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "http_enable",
+                                    "label": "HTTPStrm 重定向",
+                                    "hint": "HTTP 类型 Strm 的 302 重定向总开关，关闭后不再处理",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "http_proxy",
+                                    "label": "HTTPStrm 代理",
+                                    "hint": "允许流量经过媒体服务器（开启可串流/转码，关闭仅直接播放）",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "http_final_url",
+                                    "label": "查找最终地址",
+                                    "hint": "先解析重定向链找到最终地址再返回，减少客户端跳转（公网播放需要）",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "component": "VRow",
+                "content": [
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "http_compatibility",
+                                    "label": "兼容模式",
+                                    "hint": "使用更兼容的方式获取最终 URL，外部网络播放需开启",
                                     "persistent-hint": True,
                                 },
                             }
@@ -557,6 +632,21 @@ class MediaWarp(_PluginBase):
                                     {"component": "span", "text": "字体相关设置"},
                                 ],
                             },
+                            {
+                                "component": "VTab",
+                                "props": {"value": "http-settings"},
+                                "content": [
+                                    {
+                                        "component": "VIcon",
+                                        "props": {
+                                            "icon": "mdi-redirect",
+                                            "start": True,
+                                            "color": "#FF9800",
+                                        },
+                                    },
+                                    {"component": "span", "text": "HTTPStrm 设置"},
+                                ],
+                            },
                         ],
                     },
                     {"component": "VDivider"},
@@ -581,6 +671,16 @@ class MediaWarp(_PluginBase):
                                     {"component": "VCardText", "content": subtitle}
                                 ],
                             },
+                            {
+                                "component": "VWindowItem",
+                                "props": {"value": "http-settings"},
+                                "content": [
+                                    {
+                                        "component": "VCardText",
+                                        "content": http_settings,
+                                    }
+                                ],
+                            },
                         ],
                     },
                 ],
@@ -598,6 +698,9 @@ class MediaWarp(_PluginBase):
             "video_together": False,
             "srt2ass": False,
             "http_compatibility": True,
+            "http_enable": True,
+            "http_proxy": False,
+            "http_final_url": True,
             "tab": "web-ui",
         }
 
@@ -674,8 +777,15 @@ class MediaWarp(_PluginBase):
             # web.custom 必须为 True：自定义注入（web.head 里的 emby-front-end-mod
             # 系列脚本）依赖它，若被 example 默认值 False 覆盖，前端增强模块会全部失效。
             "web.custom": True,
-            "http_strm.enable": True,
-            "http_strm.final_url": True,
+            # http_strm.enable：HTTP 类型 Strm 的 302 重定向总开关，
+            # 由插件表单「HTTPStrm 重定向」开关控制（默认 True）。
+            "http_strm.enable": bool(self._http_enable),
+            # http_strm.proxy：是否允许流量经过媒体服务器（True 允许串流/转码，
+            # False 仅直接播放），由插件表单「HTTPStrm 代理」开关控制（默认 False）。
+            "http_strm.proxy": bool(self._http_proxy),
+            # http_strm.final_url：先解析重定向链找到最终地址再返回，减少客户端
+            # 跳转次数（公网播放场景需要），由插件表单「查找最终地址」开关控制。
+            "http_strm.final_url": bool(self._http_final_url),
             # http_strm.compatibility_mode：由插件表单「兼容模式」开关控制，
             # 默认 True。公开线上播放需要开启：关闭时 getFinalURL 用 HEAD
             # 请求，P115StrmHelper 的 /redirect 端点只允许 GET 会返回 405，

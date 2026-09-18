@@ -22,7 +22,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
-| MediaWarp | `MediaWarp` | 工具 | `2.0.2` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.3` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -80,7 +80,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 自动读取 MoviePilot 已配置的媒体服务器（Emby / Jellyfin）地址与认证信息。
 - V3 适配：`plugins.v3` + `package.v3.json`（`system_version >=3.0.0`）；二进制升级至上游 `AkimioJR/MediaWarp` **v0.2.4**；配置字段迁移为 v0.2.4 小写下划线格式；SDK 导入迁移至 `app.sdk` 体系。
 - `web.enable` 参照 [redwebsite/MoviePilot-Plugins](https://github.com/RedWebsite/MoviePilot-Plugins) 的做法，按各前端子开关（CRX / 头像过滤 / 同人图 / 外置播放器 / 弹幕 / 共同观影）自动计算，不再无条件写死。
-- 「Web页面配置」标签页提供「兼容模式」开关，可直接控制 `http_strm.compatibility_mode`（默认开启，外部网络播放需保持开启）。
+- 「HTTPStrm 设置」标签页提供 `http_strm` 四个开关：「HTTPStrm 重定向」（`enable`）、「HTTPStrm 代理」（`proxy`，开启可串流/转码）、「查找最终地址」（`final_url`）、「兼容模式」（`compatibility_mode`，默认开启，外部网络播放需保持开启）。
 
 ## 安全提醒
 
@@ -137,6 +137,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.3`：新增「HTTPStrm 设置」标签页，把 `http_strm.enable`（重定向）、`http_strm.proxy`（代理/串流转码）、`http_strm.final_url`（查找最终地址）做成 UI 开关，并把「兼容模式」一起挪进该标签页，四个开关聚在一起控制 STRM 播放链路；`enable` / `final_url` 不再写死 `true`，`proxy` 不再只能手改配置文件。
 - `2.0.2`：新增插件表单「兼容模式」开关（`Web页面配置` 标签页），可直接控制 `http_strm.compatibility_mode`，与 CRX 美化 / 头像过滤等开关用法一致；默认开启，避免外网播放退回 HEAD 跟链导致一直转圈。
 - `2.0.1`：参照 `redwebsite/MoviePilot-Plugins` 的处理方式调整配置写入——`http_strm.compatibility_mode` 不再写入 `changes`（配置文件里的值由用户手动决定，插件每次启动不再覆盖；公开线上播放需要该项为 `true`，`config.yaml` 被重建后需手动确认）；`web.enable` 不再写死 `true`，改为按 CRX / 头像过滤 / 同人图 / 外置播放器 / 弹幕 / 共同观影六个子开关 `any` 计算。
 - `2.0.0`：**基于 `DDSRem-Dev/MoviePilot-Plugins` 作者版本做 V3 升级维护，感谢原作者。** V3 代际迁移（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`，版本按官方规则跃迁 `1.0.7 → 2.0.0`）；二进制升级到上游 `AkimioJR/MediaWarp` v0.2.4；配置字段迁移为 v0.2.4 小写下划线格式（`port` / `server.*` / `web.*` / `http_strm.*` / `subtitle.*`）；SDK 导入迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`）；补充 `pyproject.toml` 依赖清单（`ruamel.yaml` / `psutil`）。
