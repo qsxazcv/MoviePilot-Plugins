@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.0"
+    plugin_version = "2.0.1"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -615,7 +615,17 @@ class MediaWarp(_PluginBase):
             else "Emby",
             "server.addr": self._emby_host,
             "server.auth": self._emby_apikey,
-            "web.enable": True,
+            # web.enable：Web 前端注入总开关，改由各子开关 any 计算（参照
+            # redwebsite/MoviePilot-Plugins 的处理方式），不再无条件写死 True。
+            # 全部子开关关闭时自动为 False，与界面上的开关状态保持一致。
+            "web.enable": bool(
+                self._crx
+                or self._actor_plus
+                or self._fanart_show
+                or self._external_player_url
+                or self._danmaku
+                or self._video_together
+            ),
             "web.index": bool(
                 Path(self.__config_path / "static" / "index.html").exists()
             ),
@@ -635,12 +645,14 @@ class MediaWarp(_PluginBase):
             "web.custom": True,
             "http_strm.enable": True,
             "http_strm.final_url": True,
-            # v0.2.4 的 v0.1.12 对应字段 HTTPStrm 里没有兼容模式开关。
-            # 公开线上播放场景必须开启兼容模式（GET 跟随重定向链）：
-            # 关闭时 getFinalURL 用 HEAD 请求，P115StrmHelper 的 /redirect 端点
-            # 只允许 GET，会返回 405，getFinalURL 把 405 当成"已到终点"原样返回
-            # 局域网 STRM 地址，导致外网客户端无法播放（一直转圈无速度）。
-            "http_strm.compatibility_mode": True,
+            # http_strm.compatibility_mode：刻意不写入 changes（参照
+            # redwebsite/MoviePilot-Plugins 的处理方式），配置文件里的值
+            # 完全由用户手动决定，插件每次启动不再覆盖它。
+            # 注意：公开线上播放需要该项为 true。关闭时 getFinalURL 用 HEAD
+            # 请求，P115StrmHelper 的 /redirect 端点只允许 GET 会返回 405，
+            # getFinalURL 把 405 当成"已到终点"原样返回局域网 STRM 地址，
+            # 导致外网客户端无法播放、一直转圈。config.yaml 被重建后（从
+            # config.yaml.example 复制）该值会回落为官方默认 false，需手动确认。
             # 前缀列表必须过滤空行：_media_strm_path 为空或含空行时，
             # split("\n") 会产出 ['']，MediaWarp 会把它当成合法前缀，
             # 导致所有 HTTP 类型 Strm 都被误路由到 http_strm 规则下。

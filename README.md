@@ -22,7 +22,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
-| MediaWarp | `MediaWarp` | 工具 | `2.0.0` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.1` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -79,6 +79,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 优化 Strm 文件播放；支持自定义前端样式（CRX 增强、演员页、Fanart、弹幕、外部播放器）、自定义允许访问客户端与访问日志、字幕 `SRT2ASS` 转换。
 - 自动读取 MoviePilot 已配置的媒体服务器（Emby / Jellyfin）地址与认证信息。
 - V3 适配：`plugins.v3` + `package.v3.json`（`system_version >=3.0.0`）；二进制升级至上游 `AkimioJR/MediaWarp` **v0.2.4**；配置字段迁移为 v0.2.4 小写下划线格式；SDK 导入迁移至 `app.sdk` 体系。
+- 配置写入策略参照 [redwebsite/MoviePilot-Plugins](https://github.com/RedWebsite/MoviePilot-Plugins)：`http_strm.compatibility_mode` 不再由插件写入，配置文件里的值由用户手动决定，插件启动不再覆盖；`web.enable` 改为按各前端子开关自动计算。
 
 ## 安全提醒
 
@@ -135,5 +136,6 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.1`：参照 `redwebsite/MoviePilot-Plugins` 的处理方式调整配置写入——`http_strm.compatibility_mode` 不再写入 `changes`（配置文件里的值由用户手动决定，插件每次启动不再覆盖；公开线上播放需要该项为 `true`，`config.yaml` 被重建后需手动确认）；`web.enable` 不再写死 `true`，改为按 CRX / 头像过滤 / 同人图 / 外置播放器 / 弹幕 / 共同观影六个子开关 `any` 计算。
 - `2.0.0`：**基于 `DDSRem-Dev/MoviePilot-Plugins` 作者版本做 V3 升级维护，感谢原作者。** V3 代际迁移（`plugins.v3` + `package.v3.json`，`system_version >=3.0.0`，版本按官方规则跃迁 `1.0.7 → 2.0.0`）；二进制升级到上游 `AkimioJR/MediaWarp` v0.2.4；配置字段迁移为 v0.2.4 小写下划线格式（`port` / `server.*` / `web.*` / `http_strm.*` / `subtitle.*`）；SDK 导入迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.services` / `app.sdk.logging`）；补充 `pyproject.toml` 依赖清单（`ruamel.yaml` / `psutil`）。
 - `1.0.7`：DDSRem 原版（二进制 v0.1.12）。
