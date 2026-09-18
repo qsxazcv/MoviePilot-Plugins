@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.4"
+    plugin_version = "2.0.5"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -659,7 +659,7 @@ class MediaWarp(_PluginBase):
                                     {
                                         "component": "VIcon",
                                         "props": {
-                                            "icon": "mdi-redirect",
+                                            "icon": "mdi-swap-horizontal",
                                             "start": True,
                                             "color": "#FF9800",
                                         },

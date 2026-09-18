@@ -22,7 +22,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
-| MediaWarp | `MediaWarp` | 工具 | `2.0.4` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.5` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -137,6 +137,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.5`：修复「HTTPStrm 设置」标签页图标不显示的问题——原图标名 `mdi-redirect` 在 Material Design Icons 图标库中不存在，导致该标签页前方空白、与前两个标签页不对齐；改用 `mdi-swap-horizontal`。
 - `2.0.4`：「HTTPStrm 设置」标签页新增「HTTPStrm 缓存」开关，可直接控制 `cache.enable`（HTTPStrm 重定向内存缓存总开关，默认关闭）；该字段原为 `1.0.7 → 2.0.0` 表单精简后遗留的无效键，本次转正为可用开关。
 - `2.0.3`：新增「HTTPStrm 设置」标签页，把 `http_strm.enable`（重定向）、`http_strm.proxy`（代理/串流转码）、`http_strm.final_url`（查找最终地址）做成 UI 开关，并把「兼容模式」一起挪进该标签页，四个开关聚在一起控制 STRM 播放链路；`enable` / `final_url` 不再写死 `true`，`proxy` 不再只能手改配置文件。
 - `2.0.2`：新增插件表单「兼容模式」开关（`Web页面配置` 标签页），可直接控制 `http_strm.compatibility_mode`，与 CRX 美化 / 头像过滤等开关用法一致；默认开启，避免外网播放退回 HEAD 跟链导致一直转圈。
