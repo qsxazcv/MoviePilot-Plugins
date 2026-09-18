@@ -22,7 +22,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
-| MediaWarp | `MediaWarp` | 工具 | `2.0.5` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.6` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -81,6 +81,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - V3 适配：`plugins.v3` + `package.v3.json`（`system_version >=3.0.0`）；二进制升级至上游 `AkimioJR/MediaWarp` **v0.2.4**；配置字段迁移为 v0.2.4 小写下划线格式；SDK 导入迁移至 `app.sdk` 体系。
 - `web.enable` 参照 [redwebsite/MoviePilot-Plugins](https://github.com/RedWebsite/MoviePilot-Plugins) 的做法，按各前端子开关（CRX / 头像过滤 / 同人图 / 外置播放器 / 弹幕 / 共同观影）自动计算，不再无条件写死。
 - 「HTTPStrm 设置」标签页提供五个开关：「HTTPStrm 重定向」（`http_strm.enable`）、「HTTPStrm 代理」（`http_strm.proxy`，开启可串流/转码）、「查找最终地址」（`http_strm.final_url`）、「兼容模式」（`http_strm.compatibility_mode`，默认开启，外部网络播放需保持开启）、「HTTPStrm 缓存」（`cache.enable`，默认关闭）。
+- 「基础设置」的「Emby STRM 媒体库路径」上方提供四个缓存有效期输入框（重定向 / Alist API / 图片 / 字幕），对应 `cache.http_strm_ttl`、`cache.alist_api_ttl`、`cache.image_ttl`、`cache.subtitle_ttl`；按 Go duration 格式校验（如 `30s`、`1m`、`2h`、`1h30m`），留空或格式不合法时回退默认值并写日志提示。
 
 ## 安全提醒
 
@@ -137,6 +138,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.6`：「基础设置」新增四个缓存有效期输入框（重定向缓存 / Alist API 缓存 / 图片缓存 / 字幕缓存），位于「Emby STRM 媒体库路径」上方，可直接控制 `cache.http_strm_ttl` / `cache.alist_api_ttl` / `cache.image_ttl` / `cache.subtitle_ttl`（默认 `1m` / `10m` / `0m` / `2h`）；按 Go duration 格式校验，留空或格式不合法时回退默认值并写日志提示。
 - `2.0.5`：修复「HTTPStrm 设置」标签页图标不显示的问题——原图标名 `mdi-redirect` 在 Material Design Icons 图标库中不存在，导致该标签页前方空白、与前两个标签页不对齐；改用 `mdi-swap-horizontal`。
 - `2.0.4`：「HTTPStrm 设置」标签页新增「HTTPStrm 缓存」开关，可直接控制 `cache.enable`（HTTPStrm 重定向内存缓存总开关，默认关闭）；该字段原为 `1.0.7 → 2.0.0` 表单精简后遗留的无效键，本次转正为可用开关。
 - `2.0.3`：新增「HTTPStrm 设置」标签页，把 `http_strm.enable`（重定向）、`http_strm.proxy`（代理/串流转码）、`http_strm.final_url`（查找最终地址）做成 UI 开关，并把「兼容模式」一起挪进该标签页，四个开关聚在一起控制 STRM 播放链路；`enable` / `final_url` 不再写死 `true`，`proxy` 不再只能手改配置文件。

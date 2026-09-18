@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 import tarfile
 import tempfile
 import shutil
@@ -32,7 +33,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.5"
+    plugin_version = "2.0.6"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -71,6 +72,24 @@ class MediaWarp(_PluginBase):
     _http_final_url = True
     # HTTPStrm 重定向内存缓存总开关（对应 config.yaml 的 cache.enable）
     _cache_enable = False
+    # 缓存有效期（Go duration 字串，对应 config.yaml 的 cache.*_ttl）
+    _cache_http_strm_ttl = "1m"
+    _cache_alist_api_ttl = "10m"
+    _cache_image_ttl = "0m"
+    _cache_subtitle_ttl = "2h"
+
+    # 缓存有效期默认值：留空或格式不合法时回退到这里的值
+    __CACHE_TTL_DEFAULTS = {
+        "cache_http_strm_ttl": "1m",
+        "cache_alist_api_ttl": "10m",
+        "cache_image_ttl": "0m",
+        "cache_subtitle_ttl": "2h",
+    }
+    # Go time.ParseDuration 可接受的格式（含纯 0，以及 1h30m 这类复合写法；
+    # 除 0 外必须带单位，否则上游会报 invalid duration）
+    __DURATION_PATTERN = re.compile(
+        r"^(?:[+-]?(?:\d+(?:\.\d+)?(?:ns|us|µs|ms|s|m|h))+|[+-]?0)$"
+    )
 
     def __init__(self):
         """
@@ -136,6 +155,17 @@ class MediaWarp(_PluginBase):
             self._http_proxy = bool(config.get("http_proxy"))
             # 缓存总开关默认 False（与上游 example / 现网一致）
             self._cache_enable = bool(config.get("cache_enable"))
+            # 缓存有效期：Go duration 字串，留空或格式不合法时回退默认值
+            self._cache_http_strm_ttl = self.__pick_duration(
+                config, "cache_http_strm_ttl"
+            )
+            self._cache_alist_api_ttl = self.__pick_duration(
+                config, "cache_alist_api_ttl"
+            )
+            self._cache_image_ttl = self.__pick_duration(config, "cache_image_ttl")
+            self._cache_subtitle_ttl = self.__pick_duration(
+                config, "cache_subtitle_ttl"
+            )
 
             # 获取媒体服务器
             if self._mediaservers:
@@ -192,8 +222,40 @@ class MediaWarp(_PluginBase):
                 "http_proxy": self._http_proxy,
                 "http_final_url": self._http_final_url,
                 "cache_enable": self._cache_enable,
+                "cache_http_strm_ttl": self._cache_http_strm_ttl,
+                "cache_alist_api_ttl": self._cache_alist_api_ttl,
+                "cache_image_ttl": self._cache_image_ttl,
+                "cache_subtitle_ttl": self._cache_subtitle_ttl,
             }
         )
+
+    def __pick_duration(self, config: dict, key: str) -> str:
+        """
+        读取并校验 Go duration 格式的缓存有效期配置
+
+        留空或格式不合法时回退该字段默认值，并写日志说明原因，避免把
+        MediaWarp 无法解析的值写进 config.yaml（上游解析失败会报
+        invalid duration）。
+
+        :param config: 插件配置字典
+        :param key: 配置键名
+        :return: 合法的 duration 字串
+        """
+        default = self.__CACHE_TTL_DEFAULTS[key]
+        value = config.get(key)
+        if value is None:
+            return default
+        text = str(value).strip()
+        if not text:
+            logger.warning(f"{key} 为空，已回退默认值 {default}")
+            return default
+        if not self.__DURATION_PATTERN.match(text):
+            logger.warning(
+                f"{key} 的值 {text!r} 不是合法的时长格式"
+                f"（如 30s / 1m / 2h / 1h30m），已回退默认值 {default}"
+            )
+            return default
+        return text
 
     def get_state(self) -> bool:
         """
@@ -538,6 +600,75 @@ class MediaWarp(_PluginBase):
                                 "content": [
                                     {
                                         "component": "VCol",
+                                        "props": {"cols": 12, "md": 3},
+                                        "content": [
+                                            {
+                                                "component": "VTextField",
+                                                "props": {
+                                                    "model": "cache_http_strm_ttl",
+                                                    "label": "重定向缓存有效期",
+                                                    "hint": "仅当「查找最终地址」开启时生效",
+                                                    "placeholder": "1m",
+                                                    "persistent-hint": True,
+                                                },
+                                            }
+                                        ],
+                                    },
+                                    {
+                                        "component": "VCol",
+                                        "props": {"cols": 12, "md": 3},
+                                        "content": [
+                                            {
+                                                "component": "VTextField",
+                                                "props": {
+                                                    "model": "cache_alist_api_ttl",
+                                                    "label": "Alist API 缓存有效期",
+                                                    "hint": "Alist API 结果缓存时间",
+                                                    "placeholder": "10m",
+                                                    "persistent-hint": True,
+                                                },
+                                            }
+                                        ],
+                                    },
+                                    {
+                                        "component": "VCol",
+                                        "props": {"cols": 12, "md": 3},
+                                        "content": [
+                                            {
+                                                "component": "VTextField",
+                                                "props": {
+                                                    "model": "cache_image_ttl",
+                                                    "label": "图片缓存有效期",
+                                                    "hint": "0m 表示不缓存图片",
+                                                    "placeholder": "0m",
+                                                    "persistent-hint": True,
+                                                },
+                                            }
+                                        ],
+                                    },
+                                    {
+                                        "component": "VCol",
+                                        "props": {"cols": 12, "md": 3},
+                                        "content": [
+                                            {
+                                                "component": "VTextField",
+                                                "props": {
+                                                    "model": "cache_subtitle_ttl",
+                                                    "label": "字幕缓存有效期",
+                                                    "hint": "字幕文件缓存时间",
+                                                    "placeholder": "2h",
+                                                    "persistent-hint": True,
+                                                },
+                                            }
+                                        ],
+                                    },
+                                ],
+                            },
+                            {
+                                "component": "VRow",
+                                "content": [
+                                    {
+                                        "component": "VCol",
                                         "props": {"cols": 12},
                                         "content": [
                                             {
@@ -722,6 +853,10 @@ class MediaWarp(_PluginBase):
             "http_proxy": False,
             "http_final_url": True,
             "cache_enable": False,
+            "cache_http_strm_ttl": "1m",
+            "cache_alist_api_ttl": "10m",
+            "cache_image_ttl": "0m",
+            "cache_subtitle_ttl": "2h",
             "tab": "web-ui",
         }
 
@@ -810,6 +945,12 @@ class MediaWarp(_PluginBase):
             # cache.enable：HTTPStrm 重定向内存缓存总开关，由插件表单
             # 「HTTPStrm 缓存」开关控制（默认 False，与上游 example 一致）。
             "cache.enable": bool(self._cache_enable),
+            # cache.*_ttl：各类缓存有效期（Go duration 字串），由插件表单的
+            # 四个输入框控制；已在 __pick_duration 校验过格式，非法值不会写到这里。
+            "cache.http_strm_ttl": self._cache_http_strm_ttl,
+            "cache.alist_api_ttl": self._cache_alist_api_ttl,
+            "cache.image_ttl": self._cache_image_ttl,
+            "cache.subtitle_ttl": self._cache_subtitle_ttl,
             # http_strm.compatibility_mode：由插件表单「兼容模式」开关控制，
             # 默认 True。公开线上播放需要开启：关闭时 getFinalURL 用 HEAD
             # 请求，P115StrmHelper 的 /redirect 端点只允许 GET 会返回 405，
