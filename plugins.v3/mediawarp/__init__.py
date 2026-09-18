@@ -32,7 +32,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.1"
+    plugin_version = "2.0.2"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -63,6 +63,8 @@ class MediaWarp(_PluginBase):
     _danmaku = False
     _video_together = False
     _srt2ass = False
+    # HTTPStrm 兼容模式（对应 config.yaml 的 http_strm.compatibility_mode）
+    _http_compatibility = True
 
     def __init__(self):
         """
@@ -106,6 +108,13 @@ class MediaWarp(_PluginBase):
             self._danmaku = config.get("danmaku")
             self._video_together = config.get("video_together")
             self._srt2ass = config.get("srt2ass")
+            # 兼容模式默认 True：配置里没有该键（老配置或首次加载）时保持开启，
+            # 避免外网播放退回 HEAD 跟链导致一直转圈
+            self._http_compatibility = (
+                True
+                if config.get("http_compatibility") is None
+                else bool(config.get("http_compatibility"))
+            )
 
             # 获取媒体服务器
             if self._mediaservers:
@@ -157,6 +166,7 @@ class MediaWarp(_PluginBase):
                 "danmaku": self._danmaku,
                 "video_together": self._video_together,
                 "srt2ass": self._srt2ass,
+                "http_compatibility": self._http_compatibility,
             }
         )
 
@@ -284,6 +294,26 @@ class MediaWarp(_PluginBase):
                                     "model": "video_together",
                                     "label": "共同观影",
                                     "hint": "共同观影",
+                                    "persistent-hint": True,
+                                },
+                            }
+                        ],
+                    },
+                ],
+            },
+            {
+                "component": "VRow",
+                "content": [
+                    {
+                        "component": "VCol",
+                        "props": {"cols": 12, "md": 4},
+                        "content": [
+                            {
+                                "component": "VSwitch",
+                                "props": {
+                                    "model": "http_compatibility",
+                                    "label": "兼容模式",
+                                    "hint": "使用更兼容的方式获取最终 URL，外部网络播放需开启",
                                     "persistent-hint": True,
                                 },
                             }
@@ -567,6 +597,7 @@ class MediaWarp(_PluginBase):
             "danmaku": False,
             "video_together": False,
             "srt2ass": False,
+            "http_compatibility": True,
             "tab": "web-ui",
         }
 
@@ -645,14 +676,12 @@ class MediaWarp(_PluginBase):
             "web.custom": True,
             "http_strm.enable": True,
             "http_strm.final_url": True,
-            # http_strm.compatibility_mode：刻意不写入 changes（参照
-            # redwebsite/MoviePilot-Plugins 的处理方式），配置文件里的值
-            # 完全由用户手动决定，插件每次启动不再覆盖它。
-            # 注意：公开线上播放需要该项为 true。关闭时 getFinalURL 用 HEAD
+            # http_strm.compatibility_mode：由插件表单「兼容模式」开关控制，
+            # 默认 True。公开线上播放需要开启：关闭时 getFinalURL 用 HEAD
             # 请求，P115StrmHelper 的 /redirect 端点只允许 GET 会返回 405，
             # getFinalURL 把 405 当成"已到终点"原样返回局域网 STRM 地址，
-            # 导致外网客户端无法播放、一直转圈。config.yaml 被重建后（从
-            # config.yaml.example 复制）该值会回落为官方默认 false，需手动确认。
+            # 导致外网客户端无法播放、一直转圈。
+            "http_strm.compatibility_mode": bool(self._http_compatibility),
             # 前缀列表必须过滤空行：_media_strm_path 为空或含空行时，
             # split("\n") 会产出 ['']，MediaWarp 会把它当成合法前缀，
             # 导致所有 HTTP 类型 Strm 都被误路由到 http_strm 规则下。
