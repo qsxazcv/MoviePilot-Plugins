@@ -1,5 +1,6 @@
+import asyncio
 from datetime import datetime, timedelta
-from threading import Lock
+from threading import Lock, Thread
 import re
 import traceback
 
@@ -15,6 +16,9 @@ from fastapi import APIRouter
 
 from app.sdk.config import settings
 from app.sdk.plugins import PluginManager
+from app.application.plugin.catalog import get_plugin_catalog_query
+from app.application.plugin.transaction import get_plugin_persistence
+from app.runtime.loop import main_loop_registry
 from app.db.oper.systemconfig import SystemConfigOper
 from app.adapters.external.market import PluginHelper
 from app.plugins import _PluginBase
@@ -38,7 +42,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "3.1.2"
+    plugin_version = "3.1.3"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -175,14 +179,90 @@ class PluginAutoUpdate(_PluginBase):
         finally:
             self._update_lock.release()
 
+    def __run_async_catalog_query(self, coroutine):
+        """在同步插件任务中执行异步插件目录查询。
+
+        插件任务运行在调度线程中，宿主数据库 worker 绑定主事件循环，
+        因此必须把协程投递回主循环执行，不能自建事件循环或新线程，
+        否则数据库 worker 会判定循环不匹配并拒绝任务。
+        """
+        try:
+            running_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            running_loop = None
+
+        try:
+            loop = main_loop_registry.require()
+        except RuntimeError:
+            loop = None
+
+        if loop is not None and loop is not running_loop:
+            return asyncio.run_coroutine_threadsafe(coroutine, loop).result()
+        if running_loop is None:
+            return asyncio.run(coroutine)
+        # 已在主循环线程内，只能新建任务避免自等待死锁。
+        return running_loop.create_task(coroutine)
+
+    def __get_update_candidates(self):
+        """获取宿主已按插件来源绑定收敛后的更新候选。"""
+        try:
+            candidates = self.__run_async_catalog_query(
+                get_plugin_catalog_query().query(state="all", force=False)
+            )
+        except Exception as err:
+            logger.error(f"获取宿主收敛插件候选失败，停止插件更新检查：{err}")
+            return []
+        logger.info(f"获取到 {len(candidates or [])} 个宿主收敛插件候选")
+        return candidates or []
+
+    def __get_bound_plugin_ids(self, plugin_ids):
+        """批量读取已绑定可信在线来源的插件 ID。
+
+        宿主对未绑定插件不会收敛跨库高版本，本插件需自行排除，
+        避免「没有绑定库也提示升级」。
+        """
+        ids = [pid for pid in plugin_ids if pid]
+        if not ids:
+            return set()
+        try:
+            identities = self.__run_async_catalog_query(
+                get_plugin_persistence().list_identities(ids)
+            )
+        except Exception as err:
+            logger.error(f"读取插件来源绑定失败，本次不执行更新检查：{err}")
+            return None
+        return {
+            str(identity.normalized_plugin_id).lower()
+            for identity in (identities or [])
+            if getattr(identity, "trusted_source_key", None)
+        }
+
     def __plugin_update(self, event: Event = None, update_forced: bool = False, manual_once: bool = False):
+        """按宿主收敛后的候选目录执行插件更新检查。"""
         # 已安装插件
         install_plugins = SystemConfigOper().get(SystemConfigKey.UserInstalledPlugins) or []
 
-        # 在线插件
-        online_plugins = PluginManager().get_online_plugins()
+        # 使用宿主插件页已收敛的目录，避免跨来源同 ID 高版本绕过可信来源绑定
+        online_plugins = self.__get_update_candidates()
         if not online_plugins:
-            logger.error("未获取到在线插件，停止运行")
+            logger.error("未获取到宿主收敛插件候选，停止运行")
+            return
+
+        # 只提示绑定来源的插件：未绑定（无绑定库或仅本地）的插件不参与更新检查。
+        # 宿主对未绑定插件不收敛跨库高版本，若在此再做同 ID 最大版本筛选，
+        # 会把别的仓库高版本挑出来，因此先按绑定关系过滤。
+        bound_ids = self.__get_bound_plugin_ids(
+            [plugin.id for plugin in online_plugins]
+        )
+        if bound_ids is None:
+            logger.error("插件来源绑定读取失败，跳过本次更新检查")
+            return
+        online_plugins = [
+            plugin for plugin in online_plugins
+            if str(plugin.id).lower() in bound_ids
+        ]
+        if not online_plugins:
+            logger.info("没有已绑定来源的插件候选，跳过更新检查")
             return
 
         # 使用字典来存储每个插件的最大版本号
