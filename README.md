@@ -18,7 +18,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | V3 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.2` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.3` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.1` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
@@ -33,6 +33,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - 原作者：`thsrite`，原插件仓库：[thsrite/MoviePilot-Plugins](https://github.com/thsrite/MoviePilot-Plugins)。感谢原作者提供插件更新管理能力，本版本在原作基础上做兼容性和通知体验优化。
 - 监测已安装插件，支持仅提醒或自动更新。
 - 自动更新前会跳过正在运行的插件，避免任务执行中被覆盖。
+- 只对**已绑定可信在线来源**的插件提示更新；未绑定（仅本地安装或无来源绑定）的插件不参与更新检查，避免跨库高版本绕过来源绑定。
 - 当目标插件要求更高 MoviePilot 版本时，会标记为暂缓更新并说明最低版本要求。
 - MoviePilot 升级到兼容版本后，下次自动更新任务会继续安装待更新版本。
 - V3 适配：`plugins.v3` + `package.v3.json`（`system_version >=3.0.0`），纯工具插件代码零改动代际迁移。
@@ -95,6 +96,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `3.1.3`：① 修复插件更新检查在调度线程中执行宿主异步查询失败的问题——新增 `__run_async_catalog_query()`，把协程投递回宿主主事件循环执行（禁止自建事件循环或新线程，否则数据库 worker 会判定循环不匹配并拒绝任务）；② 插件更新候选改读宿主插件页已收敛的目录，并新增 `__get_bound_plugin_ids()` 按可信来源绑定过滤，**只对已绑定在线来源的插件提示更新**，未绑定（仅本地或无绑定）的插件不再提示任何升级，避免跨库高版本绕过来源绑定。
 - `3.1.2`：将运行态可变字段改为实例级状态，补充生命周期文档并记录停止调度器异常。
 - `3.1.1`：适配 V3 插件开发文档 7.5：补充 `pyproject.toml` 依赖清单（pytz/apscheduler/fastapi）。
 - `3.1.0`：适配 V3 SDK 导入规范：插件内部导入全面迁移至 `app.sdk` 体系（`app.sdk.config` / `app.sdk.plugins` / `app.sdk.events` / `app.sdk.logging` + `app.db.oper.systemconfig` / `app.adapters.external.market`），去除对旧版兼容层的依赖。
