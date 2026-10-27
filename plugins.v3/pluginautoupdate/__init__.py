@@ -42,7 +42,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "3.1.3"
+    plugin_version = "3.1.4"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -68,6 +68,7 @@ class PluginAutoUpdate(_PluginBase):
     # 定时器
     _scheduler: Optional[BackgroundScheduler] = None
     _plugin_version = None
+    _disk_versions = None
     _update_lock = None
     _waiting_notified = None
     _waiting_updates_data_key = "waiting_updates"
@@ -237,6 +238,85 @@ class PluginAutoUpdate(_PluginBase):
             if getattr(identity, "trusted_source_key", None)
         }
 
+    @staticmethod
+    def _version_tuple(raw: Any) -> Optional[Tuple[int, ...]]:
+        """
+        把插件版本号解析为可比较的数字元组。
+
+        非数字段（如 v 前缀、rc 后缀）在遇到时截断，无法解析时返回 None 交由调用方跳过判断。
+        """
+        if raw is None:
+            return None
+        parts = []
+        for token in str(raw).strip().lstrip("vV").split("."):
+            digits = "".join(ch for ch in token if ch.isdigit())
+            if not digits:
+                break
+            parts.append(int(digits))
+        return tuple(parts) or None
+
+    @classmethod
+    def _is_not_newer(cls, target: Any, current: Any) -> bool:
+        """
+        判断目标版本是否并不高于现有版本，用于拦截无意义的重装。
+
+        任一侧无法解析时返回 False，保持原有行为，避免误拦真正的升级。
+        """
+        target_tuple = cls._version_tuple(target)
+        current_tuple = cls._version_tuple(current)
+        if target_tuple is None or current_tuple is None:
+            return False
+        return target_tuple <= current_tuple
+
+    def __get_installed_versions_on_disk(self, plugin_ids) -> Dict[str, Dict[str, Any]]:
+        """
+        读取插件身份表中已落盘的版本，作为内存版本的兜底事实来源。
+
+        启动备份恢复可能把运行目录换回旧版本，而内存中的插件类未必与磁盘一致，
+        这里以身份表记录的版本为准，读取失败时返回空映射而不影响本轮检查。
+        """
+        ids = [pid for pid in plugin_ids if pid]
+        if not ids:
+            return {}
+        try:
+            identities = self.__run_async_catalog_query(
+                get_plugin_persistence().list_identities(ids)
+            )
+        except Exception as err:
+            logger.warning(f"读取已安装插件版本失败，本次仅使用内存版本判断：{err}")
+            return {}
+        versions: Dict[str, Dict[str, Any]] = {}
+        for identity in identities or []:
+            key = str(getattr(identity, "normalized_plugin_id", "") or "").lower()
+            if not key:
+                continue
+            versions[key] = {
+                "plugin_id": getattr(identity, "plugin_id", None),
+                "version": getattr(identity, "declared_version", None),
+                "applied_at": getattr(identity, "payload_applied_at", None),
+            }
+        return versions
+
+    def __get_current_version(self, plugin_id: str) -> Optional[str]:
+        """
+        返回插件当前实际版本：优先磁盘身份记录，缺失时回退到内存中已加载的版本。
+        """
+        record = (self._disk_versions or {}).get(str(plugin_id).lower()) or {}
+        memory_versions = self._plugin_version or {}
+        return record.get("version") or memory_versions.get(str(plugin_id))
+
+    def __is_stale_memory_version(self, plugin_id: str, memory_version: Any) -> bool:
+        """
+        判断内存版本是否落后于磁盘记录，用于把陈旧版本纠正为磁盘事实。
+        """
+        record = (self._disk_versions or {}).get(str(plugin_id).lower()) or {}
+        disk_version = record.get("version")
+        if not disk_version or not memory_version:
+            return False
+        return self._is_not_newer(memory_version, disk_version) and not self._is_not_newer(
+            disk_version, memory_version
+        )
+
     def __plugin_update(self, event: Event = None, update_forced: bool = False, manual_once: bool = False):
         """按宿主收敛后的候选目录执行插件更新检查。"""
         # 已安装插件
@@ -276,6 +356,10 @@ class PluginAutoUpdate(_PluginBase):
 
         # 已安装插件版本
         self.__get_install_plugin_version()
+        # 磁盘身份表记录的版本，用于纠正内存版本落后与无意义重装
+        self._disk_versions = self.__get_installed_versions_on_disk(
+            [plugin.id for plugin in online_plugins] + list(install_plugins)
+        )
 
         # 系统运行的服务
         schedulers = Scheduler().list()
@@ -296,6 +380,27 @@ class PluginAutoUpdate(_PluginBase):
                     # 已安装插件版本
                     install_plugin_version = self._plugin_version.get(str(plugin.id))
                     if not install_plugin_version or str(install_plugin_version) == "None":
+                        continue
+
+                    current_version = self.__get_current_version(plugin.id)
+                    if self.__is_stale_memory_version(plugin.id, install_plugin_version):
+                        # 内存版本落后于磁盘事实，说明运行目录已被写回旧版本，
+                        # 此时按当前实际版本重装即可，不对外声称这是一次版本升级。
+                        logger.warning(
+                            f"插件 {plugin.plugin_name} 内存版本 {install_plugin_version} "
+                            f"落后于磁盘版本 {current_version}，将按磁盘版本校正运行时"
+                        )
+                        install_plugin_version = current_version
+                        plugin.has_update = True
+
+                    if plugin.has_update and self._is_not_newer(
+                            plugin.plugin_version, current_version
+                    ):
+                        # 目标版本不高于当前实际版本：无需重装，也不应发出更新通知
+                        logger.info(
+                            f"插件 {plugin.plugin_name} 当前版本 {current_version} "
+                            f"已不低于目标版本 {plugin.plugin_version}，跳过更新"
+                        )
                         continue
 
                     version_text = f"更新版本：v{install_plugin_version} -> v{plugin.plugin_version}"
