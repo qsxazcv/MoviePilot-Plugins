@@ -31,7 +31,8 @@ def test_metadata_and_vue_assets_match():
 def test_commands_api_service_and_render_mode_contracts():
     source = (PLUGIN_DIR / "__init__.py").read_text(encoding="utf-8")
     assert source.count('"cmd": "/weiyun_') == 3
-    assert source.count('"path": "/') == 7
+    # 端点数量随功能演进：1.2.0 新增 request_cookie_reveal / reveal_cookie，实际为 9 个。
+    assert source.count('"path": "/') == 9
     assert '"id": "weiyuncookie_check"' in source
     assert 'return "vue", "dist/assets"' in source
 

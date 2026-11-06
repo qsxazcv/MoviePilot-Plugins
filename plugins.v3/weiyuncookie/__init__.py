@@ -54,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.2.1"
+    plugin_version = "1.2.2"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -935,6 +935,14 @@ class weiyuncookie(_PluginBase):
             try:
                 locator = page.locator(selector).first
                 if locator.count():
+                    # 只认接近正方形的元素：登录框里的小图标、logo 也是 img/canvas，
+                    # 截到它们再强行裁剪就是「半张二维码」的另一种来源。
+                    box = locator.bounding_box()
+                    if not box or not self.__is_square_box(box):
+                        logger.debug(
+                            "微云 Cookie 助手跳过非方形候选：%s, box=%s", selector, box,
+                        )
+                        continue
                     data = locator.screenshot(type="png", timeout=5000)
                     data = crop_qrcode_png(data, logger=logger)
                     logger.info("微云 Cookie 助手二维码截图命中选择器：%s", selector)
@@ -947,24 +955,38 @@ class weiyuncookie(_PluginBase):
                 locator = page.locator(selector).first
                 if locator.count():
                     box = locator.bounding_box()
-                    if box:
-                        pad = 18
-                        clip = {
-                            "x": max(box["x"] + box["width"] / 2 - 120, 0),
-                            "y": max(box["y"] + box["height"] / 2 - 120, 0),
-                            "width": 240,
-                            "height": 240,
-                        }
-                        data = page.screenshot(type="png", clip=clip)
-                        data = crop_qrcode_png(data, logger=logger)
-                        logger.info("微云 Cookie 助手二维码截图从 iframe 中心裁剪：%s", selector)
-                        return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+                    if box and box["width"] >= 120 and box["height"] >= 120:
+                        # 早期版本只截 iframe 中心 ±120px（240x240），
+                        # 二维码比这个范围大时会被截掉边缘，扫码必然失败。
+                        # 改为整框截图，再按方形外接框裁切，保证二维码完整。
+                        screenshot = getattr(page, "screenshot", None)
+                        clip = {"x": box["x"], "y": box["y"], "width": box["width"], "height": box["height"]}
+                        data = screenshot(type="png", clip=clip) if screenshot else None
+                        if data:
+                            data = crop_qrcode_png(data, logger=logger)
+                            logger.info(
+                                "微云 Cookie 助手二维码截图从 iframe 全框裁剪：%s, box=%sx%s",
+                                selector, round(box["width"]), round(box["height"]),
+                            )
+                            return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
             except Exception as err:
                 logger.debug("微云 Cookie 助手 iframe 二维码裁剪失败：%s, err=%s", selector, err)
         data = page.screenshot(type="png", clip={"x": 440, "y": 180, "width": 360, "height": 360})
         data = crop_qrcode_png(data, logger=logger)
-        logger.info("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
+        logger.warning("微云 Cookie 助手未命中二维码元素，已裁剪页面中心区域")
         return "data:image/png;base64," + base64.b64encode(data).decode("ascii")
+
+    @staticmethod
+    def __is_square_box(box: dict, tolerance: float = 0.12, min_side: float = 80) -> bool:
+        """判断元素外框是否接近正方形且足够大，用于筛掉图标、横条等非二维码元素。"""
+        try:
+            width = float(box.get("width") or 0)
+            height = float(box.get("height") or 0)
+        except (TypeError, ValueError):
+            return False
+        if width < min_side or height < min_side:
+            return False
+        return abs(width - height) / max(width, height) <= tolerance
 
     def __update_config(self):
         self.update_config({
