@@ -54,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.2.2"
+    plugin_version = "1.2.3"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -357,11 +357,9 @@ class weiyuncookie(_PluginBase):
             logger.info("微云 Cookie 助手收到远程命令：/weiyun_login")
             started = self.__start_login_thread(source="command")
             if started:
-                self.__post_mp_notification(
-                    title="微云登录已启动",
-                    text="正在生成微云登录二维码，请稍候。",
-                    enabled=self._notify_login_result,
-                )
+                # 不再单独推送「已启动」：同一次扫码里二维码消息必然紧随其后，
+                # 这条通知只会多占一条消息位（见 __notify_qrcode）。
+                logger.info("微云 Cookie 助手登录任务已启动，跳过单独通知，等待二维码推送")
             else:
                 self.__post_mp_notification(
                     title="微云登录任务正在运行",
@@ -499,14 +497,20 @@ class weiyuncookie(_PluginBase):
         result = self.sync_cookie_to_openlist(source="api")
         return {"success": result.get("success", False), **result}
 
-    def sync_cookie_to_openlist(self, source: str = "manual") -> Dict[str, Any]:
-        """将插件保存的完整 Cookie 写入 OpenList 指定存储。"""
+    def sync_cookie_to_openlist(self, source: str = "manual", notify_merged: bool = True) -> Dict[str, Any]:
+        """
+        将插件保存的完整 Cookie 写入 OpenList 指定存储。
+
+        :param source: 触发来源，仅用于日志区分（manual / login_success / relogin_success）
+        :param notify_merged: 为 False 时不单独推送同步结果，由调用方合并进一条摘要通知；
+            失败时仍会推送，避免同步异常被静默吞掉
+        """
         if self._openlist_sync_lock is None:
             self._openlist_sync_lock = threading.Lock()
         with self._openlist_sync_lock:
-            return self.__sync_cookie_to_openlist_locked(source)
+            return self.__sync_cookie_to_openlist_locked(source, notify_merged)
 
-    def __sync_cookie_to_openlist_locked(self, source: str) -> Dict[str, Any]:
+    def __sync_cookie_to_openlist_locked(self, source: str, notify_merged: bool = True) -> Dict[str, Any]:
         """在 OpenList 同步锁内执行完整的读取、修改和写回流程。"""
         self._last_openlist_sync = self.__now()
         cookie = self.get_data("cookie") or ""
@@ -533,16 +537,20 @@ class weiyuncookie(_PluginBase):
             client.update_storage(updated, self._openlist_storage_id)
             self._last_openlist_sync_status = f"同步成功：已更新 OpenList 存储 {self._openlist_storage_id} 的 Cookie"
             logger.info("微云 Cookie 助手 OpenList 同步成功：source=%s, storage_id=%s", source, self._openlist_storage_id)
-            self.__post_mp_notification(
-                title="微云 Cookie 已同步到 OpenList",
-                text=f"已将最新微云 Cookie 写入 OpenList 存储 {self._openlist_storage_id}。",
-                enabled=self._notify_openlist_result,
-            )
+            if notify_merged:
+                self.__post_mp_notification(
+                    title="微云 Cookie 已同步到 OpenList",
+                    text=f"已将最新微云 Cookie 写入 OpenList 存储 {self._openlist_storage_id}。",
+                    enabled=self._notify_openlist_result,
+                )
+            else:
+                logger.info("微云 Cookie 助手 OpenList 同步结果已合并进登录摘要通知，跳过单独推送")
             self.__update_config()
             return {"success": True, "message": self._last_openlist_sync_status}
         except Exception as err:
             self._last_openlist_sync_status = f"同步失败：{err}"
             logger.error("微云 Cookie 助手 OpenList 同步失败：%s\n%s", err, traceback.format_exc())
+            # 失败始终单独推送：合并模式只合并成功结果，不能让异常被摘要吞掉。
             self.__post_mp_notification(
                 title="微云 Cookie 同步 OpenList 失败",
                 text=f"同步到 OpenList 存储 {self._openlist_storage_id} 失败：{err}",
@@ -604,6 +612,30 @@ class weiyuncookie(_PluginBase):
         if any(marker.lower() in low_body for marker in invalid_markers) and not ({"TOK", "wyctoken", "uid"}.intersection(names)):
             return "invalid", "微云页面提示需要重新登录"
         return "valid", f"Cookie 有效，微云页面响应正常（HTTP {status}）"
+
+    def __login_summary_title(self, openlist_state: Optional[str]) -> str:
+        """
+        生成登录结果的合并通知标题。
+
+        :param openlist_state: ok 表示已同步、failed 表示同步未完成、pending 表示按配置未同步、None 表示未启用同步
+        :return: 一条能直接看出结果的标题
+        """
+        if openlist_state == "failed":
+            return "微云 Cookie 已更新（OpenList 同步失败）"
+        return "微云 Cookie 已更新"
+
+    def __login_summary_text(self, cookie_count: int, openlist_detail: Optional[str]) -> str:
+        """
+        生成登录结果的合并通知正文：Cookie 数量与 OpenList 同步状态放在同一条里。
+
+        :param cookie_count: 本次提取到的 Cookie 条数
+        :param openlist_detail: OpenList 同步状态描述；None 表示未启用同步
+        :return: 正文文本
+        """
+        lines = [f"已通过{self.__login_type_title()}完成登录，提取并保存微云 Cookie，共 {cookie_count} 项。"]
+        if openlist_detail:
+            lines.append(openlist_detail)
+        return "\n".join(lines)
 
     def __post_mp_notification(
             self,
@@ -816,13 +848,31 @@ class weiyuncookie(_PluginBase):
             self._last_status = f"Cookie 提取成功，共 {len(extracted)} 项"
             logger.info("微云 Cookie 提取成功，已保存到插件数据")
             relogin_pending = bool(self.get_data("openlist_sync_after_relogin_pending"))
-            if self._openlist_enabled and (self._openlist_auto_sync or (self._openlist_sync_after_relogin and relogin_pending)):
-                result = self.sync_cookie_to_openlist(source="relogin_success" if relogin_pending else "login_success")
+            openlist_state: Optional[str] = None
+            openlist_detail: Optional[str] = None
+            sync_triggered = self._openlist_enabled and (
+                self._openlist_auto_sync or (self._openlist_sync_after_relogin and relogin_pending)
+            )
+            if sync_triggered:
+                # 先完成 OpenList 同步再发通知：合并成一条摘要，顺序天然正确，
+                # notify_merged=False 让同步流程不再单独推送「已同步到 OpenList」。
+                result = self.sync_cookie_to_openlist(
+                    source="relogin_success" if relogin_pending else "login_success",
+                    notify_merged=False,
+                )
                 if result.get("success"):
                     self.del_data("openlist_sync_after_relogin_pending")
+                    openlist_state = "ok"
+                    openlist_detail = f"已同步 OpenList 存储 {self._openlist_storage_id}"
+                else:
+                    openlist_state = "failed"
+                    openlist_detail = f"OpenList 同步未完成：{result.get('message') or self._last_openlist_sync_status}"
+            elif self._openlist_enabled:
+                openlist_state = "pending"
+                openlist_detail = "OpenList 未自动同步（按配置跳过）"
             self.__post_mp_notification(
-                title="微云 Cookie 提取成功",
-                text=f"已通过{self.__login_type_title(login_type)}提取并保存微云 Cookie，共 {len(extracted)} 项。",
+                title=self.__login_summary_title(openlist_state),
+                text=self.__login_summary_text(len(extracted), openlist_detail),
                 enabled=self._notify_login_result,
             )
         except Exception as err:
