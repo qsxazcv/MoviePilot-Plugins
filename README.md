@@ -21,7 +21,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.4` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.8` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
-| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
+| ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.6` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 | MediaWarp | `MediaWarp` | 工具 | `2.0.6` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
@@ -138,6 +138,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `IkuaiAssistant`
 
+- `2.1.6`：界面优化（Vuetify JSON 表单，不涉及业务逻辑）。① 设置页新增「基本设置」「爱快连接」分组标题，三个开关改为带说明的开关卡片，地址与 Token 补充字段提示；② 详情页四张状态卡增加图标，便于扫读；③ Agent Skill 领域数改为读取 `agent_guide` 实际文件数，不再写死；④ 能力标签改用 flex 换行容器，移除手写 `ma-1` 边距；⑤ 合并详情页两段重复的提示说明。
 - `2.1.5`：修复阶段 3 结构拆分后遗漏 `PreviewStore` 导入导致插件无法加载的问题；完成 CLI、格式化器、API 和 Agent 入口拆分。
 
 - `2.1.3`：增加内置 CLI 实际版本探测、页面版本显示和可读的执行错误分类。

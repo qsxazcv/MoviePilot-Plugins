@@ -32,7 +32,7 @@ class IkuaiAssistant(_PluginBase):
     plugin_name = "ikuai-cli助手"
     plugin_desc = "iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。"
     plugin_icon = "https://www.ikuai8.com/favicon.ico"
-    plugin_version = "2.1.5"
+    plugin_version = "2.1.6"
     plugin_label = "网络,诊断,爱快"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
@@ -277,48 +277,126 @@ class IkuaiAssistant(_PluginBase):
                         "props": {
                             "type": "info",
                             "variant": "tonal",
-                            "text": "这里只配置爱快连接和 CLI 桥接信息。设备 IP、MAC、规则 ID 在查询或操作时临时传入，不会固定写死。",
+                            "density": "comfortable",
+                            "text": (
+                                "这里只配置爱快连接与 CLI 桥接信息。"
+                                "设备 IP、MAC、规则 ID 在查询或操作时临时传入，不会写死在这里。"
+                            ),
                         },
                     },
                     {
+                        "component": "div",
+                        "props": {"class": "text-subtitle-2 font-weight-bold text-medium-emphasis mt-3 mb-2"},
+                        "text": "基本设置",
+                    },
+                    {
                         "component": "VRow",
-                        "props": {"class": "mt-2"},
                         "content": [
                             {
                                 "component": "VCol",
-                                "props": {"cols": 12, "md": 3},
+                                "props": {"cols": 12, "sm": 6, "md": 3},
                                 "content": [
                                     {
-                                        "component": "VSwitch",
-                                        "props": {
-                                            "model": "enabled",
-                                            "label": "启用插件",
-                                            "color": "primary",
-                                            "inset": True,
-                                            "hide-details": True,
-                                        },
+                                        "component": "div",
+                                        "props": {"class": "d-flex align-center justify-space-between ga-3"},
+                                        "content": [
+                                            {
+                                                "component": "div",
+                                                "props": {"class": "min-width-0"},
+                                                "content": [
+                                                    {"component": "div", "props": {"class": "text-body-2"}, "text": "启用插件"},
+                                                    {
+                                                        "component": "div",
+                                                        "props": {"class": "text-caption text-medium-emphasis"},
+                                                        "text": "关闭后详情页与 Agent 工具停止工作",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                "component": "VSwitch",
+                                                "props": {
+                                                    "model": "enabled",
+                                                    "color": "primary",
+                                                    "inset": True,
+                                                    "hide-details": True,
+                                                    "density": "compact",
+                                                },
+                                            },
+                                        ],
                                     }
                                 ],
                             },
                             {
                                 "component": "VCol",
-                                "props": {"cols": 12, "md": 3},
+                                "props": {"cols": 12, "sm": 6, "md": 3},
                                 "content": [
                                     {
-                                        "component": "VSwitch",
-                                        "props": {
-                                            "model": "verify_ssl",
-                                            "label": "校验 HTTPS 证书",
-                                            "color": "primary",
-                                            "inset": True,
-                                            "hide-details": True,
-                                        },
+                                        "component": "div",
+                                        "props": {"class": "d-flex align-center justify-space-between ga-3"},
+                                        "content": [
+                                            {
+                                                "component": "div",
+                                                "props": {"class": "min-width-0"},
+                                                "content": [
+                                                    {"component": "div", "props": {"class": "text-body-2"}, "text": "校验 HTTPS 证书"},
+                                                    {
+                                                        "component": "div",
+                                                        "props": {"class": "text-caption text-medium-emphasis"},
+                                                        "text": "爱快使用自签证书时请关闭",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                "component": "VSwitch",
+                                                "props": {
+                                                    "model": "verify_ssl",
+                                                    "color": "primary",
+                                                    "inset": True,
+                                                    "hide-details": True,
+                                                    "density": "compact",
+                                                },
+                                            },
+                                        ],
                                     }
                                 ],
                             },
                             {
                                 "component": "VCol",
-                                "props": {"cols": 12, "md": 3},
+                                "props": {"cols": 12, "sm": 6, "md": 3},
+                                "content": [
+                                    {
+                                        "component": "div",
+                                        "props": {"class": "d-flex align-center justify-space-between ga-3"},
+                                        "content": [
+                                            {
+                                                "component": "div",
+                                                "props": {"class": "min-width-0"},
+                                                "content": [
+                                                    {"component": "div", "props": {"class": "text-body-2"}, "text": "允许 CLI 写操作"},
+                                                    {
+                                                        "component": "div",
+                                                        "props": {"class": "text-caption text-medium-emphasis"},
+                                                        "text": "默认拦截修改类命令，开启后仍需 confirm=true",
+                                                    },
+                                                ],
+                                            },
+                                            {
+                                                "component": "VSwitch",
+                                                "props": {
+                                                    "model": "allow_cli_write",
+                                                    "color": "warning",
+                                                    "inset": True,
+                                                    "hide-details": True,
+                                                    "density": "compact",
+                                                },
+                                            },
+                                        ],
+                                    }
+                                ],
+                            },
+                            {
+                                "component": "VCol",
+                                "props": {"cols": 12, "sm": 6, "md": 3},
                                 "content": [
                                     {
                                         "component": "VTextField",
@@ -327,27 +405,20 @@ class IkuaiAssistant(_PluginBase):
                                             "label": "请求超时秒数",
                                             "type": "number",
                                             "min": 1,
-                                        },
-                                    }
-                                ],
-                            },
-                            {
-                                "component": "VCol",
-                                "props": {"cols": 12, "md": 3},
-                                "content": [
-                                    {
-                                        "component": "VSwitch",
-                                        "props": {
-                                            "model": "allow_cli_write",
-                                            "label": "允许 CLI 写操作",
-                                            "color": "warning",
-                                            "inset": True,
-                                            "hide-details": True,
+                                            "hint": "单次命令最长等待时间",
+                                            "persistent-hint": True,
+                                            "variant": "outlined",
+                                            "density": "comfortable",
                                         },
                                     }
                                 ],
                             },
                         ],
+                    },
+                    {
+                        "component": "div",
+                        "props": {"class": "text-subtitle-2 font-weight-bold text-medium-emphasis mt-4 mb-2"},
+                        "text": "爱快连接",
                     },
                     {
                         "component": "VRow",
@@ -362,6 +433,11 @@ class IkuaiAssistant(_PluginBase):
                                             "model": "base_url",
                                             "label": "爱快地址",
                                             "placeholder": "http://192.168.5.1",
+                                            "hint": "带协议头，例如 http://192.168.5.1",
+                                            "persistent-hint": True,
+                                            "variant": "outlined",
+                                            "density": "comfortable",
+                                            "clearable": True,
                                         },
                                     }
                                 ],
@@ -376,6 +452,10 @@ class IkuaiAssistant(_PluginBase):
                                             "model": "token",
                                             "label": "API Token",
                                             "type": "password",
+                                            "hint": "在爱快「系统设置 → 远程访问 → API」中生成",
+                                            "persistent-hint": True,
+                                            "variant": "outlined",
+                                            "density": "comfortable",
                                         },
                                     }
                                 ],
@@ -420,10 +500,28 @@ class IkuaiAssistant(_PluginBase):
                 "component": "VRow",
                 "props": {"class": "mb-3"},
                 "content": [
-                    self.__status_card("连接状态", "已配置", self._base_url or "未配置爱快地址", "success"),
-                    self.__status_card(*self.__cli_status_card()),
-                    self.__status_card("Agent Skill", "17 个领域", "monitor / network / routing / security", "info"),
-                    self.__status_card("写操作保护", write_status, "默认拦截修改类命令", write_color),
+                    self.__status_card(
+                        "连接状态",
+                        "已配置" if self._base_url else "未配置",
+                        self._base_url or "尚未填写爱快地址",
+                        "success" if self._base_url else "warning",
+                        icon="mdi-lan-connect",
+                    ),
+                    self.__status_card(*self.__cli_status_card(), icon="mdi-console"),
+                    self.__status_card(
+                        "Agent Skill",
+                        self.__skill_domain_label()[0],
+                        self.__skill_domain_label()[1],
+                        "info",
+                        icon="mdi-book-open-variant",
+                    ),
+                    self.__status_card(
+                        "写操作保护",
+                        write_status,
+                        "默认拦截修改类命令" if not self._allow_cli_write else "已放开写操作，调用仍需 confirm=true",
+                        write_color,
+                        icon="mdi-shield-lock-outline",
+                    ),
                 ],
             },
             {
@@ -435,39 +533,45 @@ class IkuaiAssistant(_PluginBase):
                         "component": "VCardText",
                         "content": [
                             {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "系统监控",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "在线设备",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "WAN/路由",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "分流规则",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "安全策略",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "日志分析",
-                            },
-                            {
-                                "component": "VChip",
-                                "props": {"class": "ma-1", "color": "primary", "variant": "tonal"},
-                                "text": "VPN/无线/QoS",
+                                "component": "div",
+                                "props": {"class": "d-flex flex-wrap ga-2"},
+                                "content": [
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "系统监控",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "在线设备",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "WAN/路由",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "分流规则",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "安全策略",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "日志分析",
+                                    },
+                                    {
+                                        "component": "VChip",
+                                        "props": {"color": "primary", "variant": "tonal", "size": "small"},
+                                        "text": "VPN/无线/QoS",
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -478,38 +582,65 @@ class IkuaiAssistant(_PluginBase):
                 "props": {
                     "type": "info",
                     "variant": "tonal",
-                    "text": "你可以直接让 AI 分析爱快网络。AI 会先读取 ikuai_skill 官方领域说明，再通过 ikuai_cli 执行只读命令获取证据。",
-                },
-            },
-            {
-                "component": "VAlert",
-                "props": {
-                    "type": "warning",
-                    "variant": "tonal",
-                    "class": "mt-3",
-                    "text": "修改配置、踢用户、启停规则等写操作默认关闭；即使开启，也必须在具体调用时传 confirm=true。",
+                    "density": "comfortable",
+                    "text": (
+                        "你可以直接让 AI 分析爱快网络：AI 会先读取 ikuai_skill 官方领域说明，"
+                        "再通过 ikuai_cli 执行只读命令获取证据。"
+                        "修改配置、踢用户、启停规则等写操作默认关闭；即使开启，也必须在调用时传 confirm=true。"
+                    ),
                 },
             },
         ]
 
+    def __skill_domain_label(self) -> Tuple[str, str]:
+        """
+        读取 ikuai_skill 实际领域数量，避免详情页把领域数写死而与真实情况脱节。
+
+        :return: (主值, 副标题)；目录不存在时降级为「已载入」
+        """
+        try:
+            skill_dir = Path(__file__).parent / "agent_guide"
+            files = [p for p in skill_dir.glob("*") if p.is_file()] if skill_dir.is_dir() else []
+            if not files:
+                return "已载入", "monitor / network / routing / security"
+            return f"{len(files)} 个领域", "monitor / network / routing / security"
+        except OSError:
+            return "已载入", "monitor / network / routing / security"
+
     @staticmethod
-    def __status_card(title: str, value: str, subtitle: str, color: str) -> Dict[str, Any]:
-        """构建详情页状态卡片。"""
+    def __status_card(
+        title: str,
+        value: str,
+        subtitle: str,
+        color: str,
+        icon: str = "mdi-circle-outline",
+    ) -> Dict[str, Any]:
+        """构建详情页状态卡片：带图标便于扫读，副标题过长时自动换行。"""
         return {
             "component": "VCol",
             "props": {"cols": 12, "sm": 6, "md": 3},
             "content": [
                 {
                     "component": "VCard",
-                    "props": {"variant": "outlined"},
+                    "props": {"variant": "outlined", "class": "h-100"},
                     "content": [
                         {
                             "component": "VCardText",
                             "content": [
                                 {
                                     "component": "div",
-                                    "props": {"class": "text-caption text-medium-emphasis mb-1"},
-                                    "text": title,
+                                    "props": {"class": "d-flex align-center ga-2 mb-1"},
+                                    "content": [
+                                        {
+                                            "component": "VIcon",
+                                            "props": {"icon": icon, "size": 16, "color": color},
+                                        },
+                                        {
+                                            "component": "div",
+                                            "props": {"class": "text-caption text-medium-emphasis"},
+                                            "text": title,
+                                        },
+                                    ],
                                 },
                                 {
                                     "component": "VChip",
@@ -518,7 +649,7 @@ class IkuaiAssistant(_PluginBase):
                                 },
                                 {
                                     "component": "div",
-                                    "props": {"class": "text-body-2"},
+                                    "props": {"class": "text-body-2 text-break"},
                                     "text": subtitle,
                                 },
                             ],
