@@ -108,11 +108,54 @@ export default defineComponent({
     }, { immediate: true, deep: true });
 
     const loginTypeText = computed(() => form.login_type === 'wechat' ? '微信扫码' : 'QQ 扫码');
-    const browserModeText = computed(() => form.browser_mode === 'cloakbrowser' ? 'CloakBrowser' : 'Playwright');
+    const browserModeText = computed(() => 'CloakBrowser');
     const cookieCountText = computed(() => String(form.last_cookie_count ?? 0));
+
+    // 把 cron 表达式翻成一句人话，避免顶栏直接甩出 "0 */6 * * *"。
+    const checkCycleText = computed(() => humanizeCron(form.check_cron));
+
+    // Cookie 卡片同时体现"有没有"和"数量"，失效时不再只显示一个 0。
+    const cookieStateText = computed(() => {
+      const count = Number(form.last_cookie_count ?? 0);
+      const status = String(form.last_status || '');
+      if (!count) return '未获取';
+      if (status.indexOf('失败') >= 0) return `可能失效（${count} 项）`;
+      return `${count} 项`;
+    });
+    const cookieStateColor = computed(() => {
+      const count = Number(form.last_cookie_count ?? 0);
+      const status = String(form.last_status || '');
+      if (!count || status.indexOf('失败') >= 0) return 'warning';
+      return 'success';
+    });
+
+    const saving = reactive({ value: false });
+    const savedHint = reactive({ value: '' });
+    let savedTimer = null;
+
+    function humanizeCron(expr) {
+      const raw = String(expr || '').trim();
+      if (!raw) return '未启用';
+      if (raw === '0 */6 * * *') return '每 6 小时';
+      const hourly = raw.match(/^0 \*\/(\d+) \* \* \*$/);
+      if (hourly) return `每 ${hourly[1]} 小时`;
+      const everyMinutes = raw.match(/^\*\/(\d+) \* \* \* \*$/);
+      if (everyMinutes) return `每 ${everyMinutes[1]} 分钟`;
+      const daily = raw.match(/^(\d+) (\d+) \* \* \*$/);
+      if (daily) return `每天 ${String(daily[2]).padStart(2, '0')}:${String(daily[1]).padStart(2, '0')}`;
+      return raw;
+    }
 
     function save() {
       emit('save', { ...form });
+      // 保存后给出明确回馈：原来点完几乎没有任何反应，用户不知道成没成。
+      saving.value = true;
+      savedHint.value = '正在保存…';
+      if (savedTimer) clearTimeout(savedTimer);
+      savedTimer = setTimeout(() => {
+        saving.value = false;
+        savedHint.value = '已提交保存，配置将在插件重载后生效。';
+      }, 700);
     }
 
     function stat(label, value, icon, color = 'primary') {
@@ -222,22 +265,43 @@ export default defineComponent({
         h('div', { class: 'wy-console-hero' }, [
           h('div', [
             h('div', { class: 'text-h6' }, '微云 Cookie 助手 · 设置'),
-            h('div', { class: 'wy-hint' }, `按使用频率分区：先配置扫码登录，再按需调整检测通知和 OpenList。最近状态：${form.last_status || '未运行'}`),
+            h('div', { class: 'wy-hint' }, `扫码登录分成两步：先在上方打开「启用插件」，再勾选「保存后立即运行一次」并保存。最近状态：${form.last_status || '未运行'}`),
           ]),
           h('div', { class: 'wy-hero-actions' }, [
             h(VChip, { color: form.enabled ? 'success' : 'default', variant: 'tonal', size: 'small' }, () => form.enabled ? '已启用' : '未启用'),
-            h(VBtn, { size: 'small', color: 'primary', prependIcon: 'mdi-content-save-outline', onClick: save }, () => '保存设置'),
             h(VBtn, { size: 'small', variant: 'text', prependIcon: 'mdi-close', onClick: () => emit('close') }, () => '关闭'),
           ]),
         ]),
         h('div', { class: 'wy-console-stats' }, [
           stat('登录方式', loginTypeText.value, 'mdi-login-variant'),
           stat('浏览器', browserModeText.value, 'mdi-web'),
-          stat('检测周期', form.check_cron, 'mdi-clock-outline'),
-          stat('Cookie', `${cookieCountText.value} 个`, 'mdi-cookie-outline', Number(form.last_cookie_count || 0) > 0 ? 'success' : 'grey'),
+          stat('检测周期', checkCycleText.value, 'mdi-clock-outline'),
+          stat('Cookie', cookieStateText.value, 'mdi-cookie-outline', cookieStateColor.value),
           stat('OpenList', form.openlist_enabled ? '已启用' : '未启用', 'mdi-cloud-sync-outline', form.openlist_enabled ? 'info' : 'grey'),
         ]),
-        h('div', { class: 'wy-settings-sheet' }, groups.map(section)),
+        h('div', { class: 'wy-quick-bar' }, [
+          h('div', { class: 'wy-quick-main' }, [
+            h('div', { class: 'wy-quick-switch' }, [
+              h('div', { class: 'wy-quick-copy' }, [
+                h('div', { class: 'wy-switch-title' }, '启用插件'),
+                h('div', { class: 'wy-switch-hint' }, '关闭后命令与周期检测停止。'),
+              ]),
+              h(VSwitch, { modelValue: !!form.enabled, 'onUpdate:modelValue': (v) => form.enabled = v, color: 'primary', density: 'comfortable', hideDetails: true }),
+            ]),
+            h('div', { class: 'wy-quick-switch' }, [
+              h('div', { class: 'wy-quick-copy' }, [
+                h('div', { class: 'wy-switch-title' }, '保存后立即运行一次'),
+                h('div', { class: 'wy-switch-hint' }, '保存后跑一次扫码登录，结束后自动关闭。'),
+              ]),
+              h(VSwitch, { modelValue: !!form.onlyonce, 'onUpdate:modelValue': (v) => form.onlyonce = v, color: 'primary', density: 'comfortable', hideDetails: true }),
+            ]),
+          ]),
+          h('div', { class: 'wy-quick-actions' }, [
+            h(VBtn, { color: 'primary', prependIcon: 'mdi-content-save-outline', onClick: save, loading: saving.value }, () => '保存设置'),
+            h('div', { class: 'wy-quick-hint' }, savedHint.value),
+          ]),
+        ]),
+        h('div', { class: 'wy-settings-sheet' }, groups.filter((group) => group.key !== 'primary').map(section)),
       ]),
     ]);
   },

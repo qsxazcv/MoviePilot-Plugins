@@ -20,7 +20,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 | --- | --- | --- | --- | --- |
 | 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.4` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
-| 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.5` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
+| 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.6` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.5` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
 | MediaWarp | `MediaWarp` | 工具 | `2.0.6` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
@@ -118,6 +118,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 - `1.0.45`：v3 兼容改造：识别方法 `recognize_media` / `async_recognize_media` 签名双参数兼容——新增 `media_source` / `media_id`（v3 分支 MediaChain 传参）并保留 `source` / `mediaid`（当前中间态传参），内部归一化后统一识别；配合官方 v3 分支收编 `iqiyi` / `iqiyidiscover`（`MediaSource.Iqiyi`），同一份代码跨中间态与 v3 分支可用。
 
 ### `weiyuncookie`
+- `1.2.6`：设置页改为两段式布局。① 顶部新增常驻操作栏：启用插件、保存后立即运行一次、保存设置三个高频动作直接可见，不用再展开分区查找；②「常用设置」不再作为折叠分区，避免高频项藏在折叠区里；③ 状态卡改成人话：检测周期显示「每 6 小时」而非 cron 原文，Cookie 卡同时体现数量与是否可能失效；④ 保存后给出「正在保存 / 已提交」的即时反馈；⑤ 分区之间补分隔线，长页面更易定位。
 - `1.2.5`：修正 1.2.4 遗漏的浏览器模式默认值——类默认值与状态接口兜底仍写作 `playwright`，导致缺少 `browser_mode` 配置时下拉框可能显示为空。现类默认值、兜底值与归一函数全部统一为 `cloakbrowser`。
 - `1.2.4`：界面与登录环境优化。① 浏览器模式只保留 CloakBrowser，移除 Playwright 选项；后端默认值与历史配置同步归一为 `cloakbrowser`，旧配置无需手动调整；② 提高分区标题、描述与提示文字的对比度，未展开的分区更易辨认；③ 精简各分区说明文案，检测 Cron 的默认值补充「每 6 小时一次」的白话说明；④ 扫码超时提示与实际建议值对齐（建议 180 秒，范围 30-600）；⑤ 「通知 OpenList 同步结果」说明补充：登录时的同步结果已并入登录摘要，该开关仅用于手动同步。
 - `1.2.3`：优化扫码登录通知，一次登录不再推送多条消息。①「微云 Cookie 提取成功」与「已同步到 OpenList」合并为一条摘要，标题统一为「微云 Cookie 已更新」，正文同时给出 Cookie 数量与 OpenList 同步状态，通知顺序不再错乱；② OpenList 同步失败时标题显式标注并在正文说明原因，失败仍单独告警，不会被合并吞掉；③ 去掉价值较低的「微云登录已启动」通知（同一次扫码必然紧跟二维码推送）；④ 修正结果文案中「扫码登录」重复出现的问题；⑤ 手动同步接口行为保持不变。
