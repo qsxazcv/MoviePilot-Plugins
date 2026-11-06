@@ -54,7 +54,7 @@ class weiyuncookie(_PluginBase):
     plugin_name = "微云Cookie助手"
     plugin_desc = "扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。"
     plugin_icon = "https://raw.githubusercontent.com/qsxazcv/MoviePilot-Plugins/main/icons/weiyuncookie.png"
-    plugin_version = "1.2.4"
+    plugin_version = "1.2.5"
     plugin_author = "qsxazcv"
     author_url = "https://github.com/qsxazcv/MoviePilot-Plugins"
     plugin_config_prefix = "weiyuncookie_"
@@ -68,7 +68,7 @@ class weiyuncookie(_PluginBase):
     _login_url: str = "https://www.weiyun.com/"
     _timeout_seconds: int = 180
     _include_qq_domain: bool = True
-    _browser_mode: str = "playwright"
+    _browser_mode: str = "cloakbrowser"
     _notify_enabled: bool = True
     _notify_login_result: bool = True
     _notify_openlist_result: bool = True
@@ -405,7 +405,7 @@ class weiyuncookie(_PluginBase):
     def __api_status(self) -> Dict[str, Any]:
         cookie = self.get_data("cookie") or ""
         qrcode = self.get_data("qrcode") or ""
-        browser_mode = self._browser_mode or "playwright"
+        browser_mode = self._browser_mode or "cloakbrowser"
         return {
             "success": True,
             "enabled": self._enabled,
@@ -413,7 +413,7 @@ class weiyuncookie(_PluginBase):
             "login_type": self._login_type,
             "login_type_title": self.__login_type_title(),
             "browser_mode": browser_mode,
-            "browser_mode_title": "CloakBrowser" if browser_mode == "cloakbrowser" else "Playwright",
+            "browser_mode_title": "CloakBrowser",
             "last_status": self._last_status,
             "last_run": self._last_run,
             "cookie_count": self._last_cookie_count,
@@ -1093,10 +1093,13 @@ class weiyuncookie(_PluginBase):
 
     @staticmethod
     def __normalize_browser_mode(value: Any) -> str:
-        value = str(value or "playwright").strip().lower()
-        if value in {"cloak", "cloakbrowser", "mp", "mp_cloakbrowser"}:
-            return "cloakbrowser"
-        return "playwright"
+        """
+        统一浏览器模式为 CloakBrowser。
+
+        1.2.4 起登录统一走 MP CloakBrowser，界面与后端都不再提供 Playwright 启动方式；
+        历史配置里遗留的 playwright 值在此一并归一，避免下拉框出现空白项。
+        """
+        return "cloakbrowser"
 
     @staticmethod
     def __now() -> str:
