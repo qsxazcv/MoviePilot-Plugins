@@ -27,7 +27,7 @@ async function getPluginApi(api, path) {
 
 const page = '';
 
-const Page_vue_vue_type_style_index_0_scoped_b73349d5_lang = '';
+const Page_vue_vue_type_style_index_0_scoped_05b0d5ea_lang = '';
 
 const {ref,computed,onMounted,onBeforeUnmount} = await importShared('vue');
 
@@ -48,20 +48,37 @@ const _sfc_main = {
     const stateColor = computed(() => (status.value.running ? 'warning' : status.value.has_cookie ? 'success' : 'default'));
     const stateText = computed(() => (status.value.running ? '扫码进行中' : status.value.has_cookie ? 'Cookie 已保存' : '等待登录'));
 
+    // 状态卡只放"当前值"，历史时间统一收到运行记录里，避免同一信息出现两次。
     const statusStats = computed(() => [
       { label: '登录方式', value: status.value.login_type_title, icon: 'mdi-login-variant', color: 'primary' },
       { label: '浏览器', value: status.value.browser_mode_title, icon: 'mdi-web', color: 'primary' },
-      { label: 'Cookie 数量', value: String(status.value.cookie_count ?? 0), icon: 'mdi-counter', color: status.value.has_cookie ? 'success' : 'grey' },
+      { label: 'Cookie 数量', value: `${status.value.cookie_count ?? 0} 个`, icon: 'mdi-counter', color: status.value.has_cookie ? 'success' : 'grey' },
       { label: '检测周期', value: humanizeCron(status.value.check_cron), icon: 'mdi-clock-outline', color: 'primary' },
     ]);
 
+    // 运行记录：合并原先「近期结果」与「Cookie 管理」的重复项，只保留一份。
     const timeline = computed(() => [
       { label: '最近登录', value: status.value.last_run, icon: 'mdi-history', color: 'primary' },
-      { label: '检测结果', value: status.value.last_check_status, icon: 'mdi-shield-check-outline', color: status.value.last_check_status ? 'success' : 'grey' },
       { label: '最近检测', value: status.value.last_check, icon: 'mdi-clock-check-outline', color: 'primary' },
-      { label: 'OpenList 同步', value: status.value.last_openlist_sync_status, icon: 'mdi-cloud-sync-outline', color: status.value.last_openlist_sync_status ? 'info' : 'grey' },
-      { label: '同步时间', value: status.value.last_openlist_sync, icon: 'mdi-calendar-clock', color: 'primary' },
+      { label: '检测结果', value: status.value.last_check_status, icon: 'mdi-shield-check-outline', color: status.value.last_check_status ? 'success' : 'grey' },
+      { label: '最近同步', value: status.value.last_openlist_sync, icon: 'mdi-calendar-clock', color: 'primary' },
+      { label: '同步结果', value: status.value.last_openlist_sync_status, icon: 'mdi-cloud-sync-outline', color: status.value.last_openlist_sync_status ? 'info' : 'grey' },
     ]);
+
+    // 底部把空白换成一句有用的话，而不是留一大片空。
+    const tipText = computed(() => {
+      if (status.value.running) return '二维码有效期较短，请尽快用微信或 QQ 扫码。'
+      if (!status.value.has_cookie) return '扫码成功后会自动保存 Cookie，并按配置同步到 OpenList。'
+      if (status.value.enabled) return '插件已启用，会按检测周期自动检查 Cookie 是否失效。'
+      return '插件当前未启用，仅手动操作可用；到「设置」里可以开启。'
+    });
+
+    // 未生成二维码时的三步引导，把左侧空白变成有用的说明
+    const steps = [
+      { icon: 'mdi-numeric-1-circle-outline', title: '启动扫码', desc: '点击上方按钮，自动打开微云登录页并生成二维码。' },
+      { icon: 'mdi-numeric-2-circle-outline', title: '扫码登录', desc: '用微信或 QQ 扫描二维码，二维码有时效，请尽快完成。' },
+      { icon: 'mdi-numeric-3-circle-outline', title: '自动保存', desc: '登录成功后自动保存 Cookie，并按配置同步到 OpenList。' },
+    ];
 
     function clearMessage() {
       if (messageTimer) {
@@ -165,7 +182,7 @@ const _sfc_main = {
           return
         }
       } catch (err) {
-        /* 回退到 execCommand 已失败，继续走统一错误提示 */
+        /* 回退失败则走统一错误提示 */
       }
       error.value = '复制失败，请刷新页面后重试';
     }
@@ -191,6 +208,8 @@ const _sfc_main = {
       stateText,
       statusStats,
       timeline,
+      tipText,
+      steps,
       clearMessage,
       load,
       action,
@@ -199,7 +218,7 @@ const _sfc_main = {
   },
 };
 
-const {createTextVNode:_createTextVNode,resolveComponent:_resolveComponent,withCtx:_withCtx,createVNode:_createVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createBlock:_createBlock,createCommentVNode:_createCommentVNode,createElementVNode:_createElementVNode,createElementBlock:_createElementBlock,renderList:_renderList,Fragment:_Fragment} = await importShared('vue');
+const {createTextVNode:_createTextVNode,resolveComponent:_resolveComponent,withCtx:_withCtx,createVNode:_createVNode,toDisplayString:_toDisplayString,openBlock:_openBlock,createBlock:_createBlock,createCommentVNode:_createCommentVNode,createElementVNode:_createElementVNode,createElementBlock:_createElementBlock,renderList:_renderList,Fragment:_Fragment,normalizeClass:_normalizeClass} = await importShared('vue');
 
 
 const _hoisted_1 = { class: "wy-page" };
@@ -214,30 +233,30 @@ const _hoisted_6 = { class: "wy-summary-sub" };
 const _hoisted_7 = { class: "wy-summary-actions" };
 const _hoisted_8 = { class: "wy-status-strip" };
 const _hoisted_9 = { class: "wy-status-label" };
-const _hoisted_10 = { class: "wy-status-value" };
-const _hoisted_11 = { class: "wy-timeline-grid" };
-const _hoisted_12 = { class: "wy-timeline-body" };
-const _hoisted_13 = { class: "wy-timeline-label" };
-const _hoisted_14 = { class: "wy-timeline-value" };
-const _hoisted_15 = { class: "wy-section-line" };
-const _hoisted_16 = { class: "wy-qr-panel" };
-const _hoisted_17 = ["src"];
-const _hoisted_18 = {
-  key: 1,
-  class: "wy-qr-empty"
+const _hoisted_10 = ["title"];
+const _hoisted_11 = { class: "wy-section-line" };
+const _hoisted_12 = {
+  key: 0,
+  class: "wy-qr-panel"
 };
-const _hoisted_19 = { class: "wy-action-row wy-action-row--stack" };
-const _hoisted_20 = { class: "wy-section-line" };
-const _hoisted_21 = { class: "wy-cookie-private" };
-const _hoisted_22 = { class: "wy-cookie-private-title" };
-const _hoisted_23 = { class: "wy-cookie-private-desc" };
-const _hoisted_24 = { class: "wy-cookie-meta" };
-const _hoisted_25 = { class: "wy-cookie-meta-row" };
-const _hoisted_26 = { class: "wy-cookie-meta-value" };
-const _hoisted_27 = { class: "wy-cookie-meta-row" };
-const _hoisted_28 = { class: "wy-cookie-meta-value" };
-const _hoisted_29 = { class: "wy-cookie-meta-row" };
-const _hoisted_30 = { class: "wy-cookie-meta-value" };
+const _hoisted_13 = ["src"];
+const _hoisted_14 = ["disabled"];
+const _hoisted_15 = {
+  key: 2,
+  class: "wy-steps"
+};
+const _hoisted_16 = { class: "wy-step-title" };
+const _hoisted_17 = { class: "wy-step-desc" };
+const _hoisted_18 = { class: "wy-action-row wy-action-row--stack" };
+const _hoisted_19 = { class: "wy-action-pair" };
+const _hoisted_20 = { class: "wy-cookie-state-body" };
+const _hoisted_21 = { class: "wy-cookie-state-title" };
+const _hoisted_22 = { class: "wy-cookie-state-desc" };
+const _hoisted_23 = { class: "wy-timeline-grid" };
+const _hoisted_24 = { class: "wy-timeline-body" };
+const _hoisted_25 = { class: "wy-timeline-label" };
+const _hoisted_26 = ["title"];
+const _hoisted_27 = { class: "wy-tip" };
 
 function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
   const _component_VToolbarTitle = _resolveComponent("VToolbarTitle");
@@ -259,7 +278,7 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     }, {
       default: _withCtx(() => [
         _createVNode(_component_VToolbarTitle, null, {
-          default: _withCtx(() => [...(_cache[10] || (_cache[10] = [
+          default: _withCtx(() => [...(_cache[12] || (_cache[12] = [
             _createTextVNode("微云 Cookie 助手", -1)
           ]))]),
           _: 1
@@ -342,12 +361,12 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
               indeterminate: "",
               color: "primary"
             }),
-            _cache[11] || (_cache[11] = _createElementVNode("span", null, "正在读取微云状态...", -1))
+            _cache[13] || (_cache[13] = _createElementVNode("span", null, "正在读取微云状态...", -1))
           ]))
         : _createCommentVNode("", true),
       _createElementVNode("div", _hoisted_4, [
         _createElementVNode("div", _hoisted_5, [
-          _cache[12] || (_cache[12] = _createElementVNode("div", { class: "wy-summary-title" }, "扫码登录与 Cookie 状态", -1)),
+          _cache[14] || (_cache[14] = _createElementVNode("div", { class: "wy-summary-title" }, "扫码登录与 Cookie 状态", -1)),
           _createElementVNode("div", _hoisted_6, _toDisplayString($setup.status.last_status || '尚未运行'), 1)
         ]),
         _createElementVNode("div", _hoisted_7, [
@@ -370,7 +389,31 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
               _createTextVNode(_toDisplayString($setup.status.enabled ? '已启用' : '未启用'), 1)
             ]),
             _: 1
-          }, 8, ["color"])
+          }, 8, ["color"]),
+          _createVNode(_component_VBtn, {
+            size: "small",
+            color: "primary",
+            "prepend-icon": "mdi-play-circle-outline",
+            loading: $setup.busy,
+            onClick: _cache[6] || (_cache[6] = $event => ($setup.action('start_login', '已启动微云扫码登录')))
+          }, {
+            default: _withCtx(() => [...(_cache[15] || (_cache[15] = [
+              _createTextVNode(" 启动扫码 ", -1)
+            ]))]),
+            _: 1
+          }, 8, ["loading"]),
+          _createVNode(_component_VBtn, {
+            size: "small",
+            variant: "tonal",
+            "prepend-icon": "mdi-content-copy",
+            disabled: !$setup.status.has_cookie,
+            onClick: $setup.copyCookie
+          }, {
+            default: _withCtx(() => [...(_cache[16] || (_cache[16] = [
+              _createTextVNode(" 复制 Cookie ", -1)
+            ]))]),
+            _: 1
+          }, 8, ["disabled", "onClick"])
         ])
       ]),
       _createElementVNode("div", _hoisted_8, [
@@ -388,44 +431,13 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
               }, null, 8, ["icon", "color"]),
               _createTextVNode(_toDisplayString(item.label), 1)
             ]),
-            _createElementVNode("div", _hoisted_10, _toDisplayString(item.value || '—'), 1)
+            _createElementVNode("div", {
+              class: "wy-status-value",
+              title: item.value
+            }, _toDisplayString(item.value || '—'), 9, _hoisted_10)
           ]))
         }), 128))
       ]),
-      _createVNode(_component_VCard, {
-        variant: "outlined",
-        class: "wy-card-panel wy-timeline-panel mt-2"
-      }, {
-        default: _withCtx(() => [
-          _createVNode(_component_VCardText, null, {
-            default: _withCtx(() => [
-              _cache[13] || (_cache[13] = _createElementVNode("div", { class: "wy-section-line" }, [
-                _createElementVNode("span", null, "近期结果")
-              ], -1)),
-              _createElementVNode("div", _hoisted_11, [
-                (_openBlock(true), _createElementBlock(_Fragment, null, _renderList($setup.timeline, (item) => {
-                  return (_openBlock(), _createElementBlock("div", {
-                    key: item.label,
-                    class: "wy-timeline-row"
-                  }, [
-                    _createVNode(_component_VIcon, {
-                      icon: item.icon,
-                      color: item.color,
-                      size: "18"
-                    }, null, 8, ["icon", "color"]),
-                    _createElementVNode("div", _hoisted_12, [
-                      _createElementVNode("div", _hoisted_13, _toDisplayString(item.label), 1),
-                      _createElementVNode("div", _hoisted_14, _toDisplayString(item.value || '—'), 1)
-                    ])
-                  ]))
-                }), 128))
-              ])
-            ]),
-            _: 1
-          })
-        ]),
-        _: 1
-      }),
       _createVNode(_component_VRow, {
         dense: "",
         class: "wy-main-grid mt-2"
@@ -433,85 +445,111 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
         default: _withCtx(() => [
           _createVNode(_component_VCol, {
             cols: "12",
-            md: "4"
+            md: "5",
+            class: "wy-col-flex"
           }, {
             default: _withCtx(() => [
               _createVNode(_component_VCard, {
                 variant: "outlined",
-                class: "wy-card-panel"
+                class: "wy-card-panel wy-card-fill"
               }, {
                 default: _withCtx(() => [
-                  _createVNode(_component_VCardText, null, {
+                  _createVNode(_component_VCardText, { class: "wy-card-body" }, {
                     default: _withCtx(() => [
-                      _createElementVNode("div", _hoisted_15, [
-                        _cache[15] || (_cache[15] = _createElementVNode("span", null, "二维码", -1)),
+                      _createElementVNode("div", _hoisted_11, [
+                        _cache[18] || (_cache[18] = _createElementVNode("span", null, "二维码", -1)),
                         _createVNode(_component_VBtn, {
                           size: "small",
-                          variant: "tonal",
+                          variant: "text",
                           "prepend-icon": "mdi-delete-outline",
                           color: "error",
                           loading: $setup.busy,
-                          onClick: _cache[6] || (_cache[6] = $event => ($setup.action('clear_cookie', '已清除 Cookie')))
+                          onClick: _cache[7] || (_cache[7] = $event => ($setup.action('clear_cookie', '已清除 Cookie')))
                         }, {
-                          default: _withCtx(() => [...(_cache[14] || (_cache[14] = [
+                          default: _withCtx(() => [...(_cache[17] || (_cache[17] = [
                             _createTextVNode(" 清除 ", -1)
                           ]))]),
                           _: 1
                         }, 8, ["loading"])
                       ]),
-                      _createElementVNode("div", _hoisted_16, [
-                        ($setup.qrcodeSrc)
-                          ? (_openBlock(), _createElementBlock("img", {
-                              key: 0,
+                      ($setup.qrcodeSrc)
+                        ? (_openBlock(), _createElementBlock("div", _hoisted_12, [
+                            _createElementVNode("img", {
                               src: $setup.qrcodeSrc,
                               class: "wy-qr-img",
                               alt: "微云登录二维码"
-                            }, null, 8, _hoisted_17))
-                          : (_openBlock(), _createElementBlock("div", _hoisted_18, [
-                              _createVNode(_component_VIcon, {
-                                icon: "mdi-qrcode-scan",
-                                size: "44"
-                              }),
-                              _cache[16] || (_cache[16] = _createElementVNode("span", null, "启动扫码后显示二维码", -1))
-                            ]))
-                      ]),
-                      _createElementVNode("div", _hoisted_19, [
+                            }, null, 8, _hoisted_13)
+                          ]))
+                        : (_openBlock(), _createElementBlock("button", {
+                            key: 1,
+                            type: "button",
+                            class: "wy-qr-idle",
+                            disabled: $setup.busy,
+                            onClick: _cache[8] || (_cache[8] = $event => ($setup.action('start_login', '已启动微云扫码登录')))
+                          }, [
+                            _createVNode(_component_VIcon, {
+                              icon: "mdi-qrcode-scan",
+                              size: "26"
+                            }),
+                            _cache[19] || (_cache[19] = _createElementVNode("span", null, "点击生成登录二维码", -1))
+                          ], 8, _hoisted_14)),
+                      (!$setup.qrcodeSrc)
+                        ? (_openBlock(), _createElementBlock("ol", _hoisted_15, [
+                            (_openBlock(true), _createElementBlock(_Fragment, null, _renderList($setup.steps, (step) => {
+                              return (_openBlock(), _createElementBlock("li", {
+                                key: step.title
+                              }, [
+                                _createVNode(_component_VIcon, {
+                                  icon: step.icon,
+                                  size: "16"
+                                }, null, 8, ["icon"]),
+                                _createElementVNode("div", null, [
+                                  _createElementVNode("div", _hoisted_16, _toDisplayString(step.title), 1),
+                                  _createElementVNode("div", _hoisted_17, _toDisplayString(step.desc), 1)
+                                ])
+                              ]))
+                            }), 128))
+                          ]))
+                        : _createCommentVNode("", true),
+                      _createElementVNode("div", _hoisted_18, [
                         _createVNode(_component_VBtn, {
                           color: "primary",
                           "prepend-icon": "mdi-play-circle-outline",
                           loading: $setup.busy,
                           block: "",
-                          onClick: _cache[7] || (_cache[7] = $event => ($setup.action('start_login', '已启动微云扫码登录')))
+                          onClick: _cache[9] || (_cache[9] = $event => ($setup.action('start_login', '已启动微云扫码登录')))
                         }, {
-                          default: _withCtx(() => [...(_cache[17] || (_cache[17] = [
-                            _createTextVNode("启动扫码", -1)
-                          ]))]),
+                          default: _withCtx(() => [
+                            _createTextVNode(_toDisplayString($setup.qrcodeSrc ? '重新生成二维码' : '启动扫码'), 1)
+                          ]),
                           _: 1
                         }, 8, ["loading"]),
-                        _createVNode(_component_VBtn, {
-                          variant: "tonal",
-                          "prepend-icon": "mdi-shield-check-outline",
-                          loading: $setup.busy,
-                          block: "",
-                          onClick: _cache[8] || (_cache[8] = $event => ($setup.action('check_cookie', '检测完成')))
-                        }, {
-                          default: _withCtx(() => [...(_cache[18] || (_cache[18] = [
-                            _createTextVNode("检测 Cookie", -1)
-                          ]))]),
-                          _: 1
-                        }, 8, ["loading"]),
-                        _createVNode(_component_VBtn, {
-                          variant: "tonal",
-                          "prepend-icon": "mdi-cloud-sync-outline",
-                          loading: $setup.busy,
-                          block: "",
-                          onClick: _cache[9] || (_cache[9] = $event => ($setup.action('sync_openlist', '同步完成')))
-                        }, {
-                          default: _withCtx(() => [...(_cache[19] || (_cache[19] = [
-                            _createTextVNode("同步 OpenList", -1)
-                          ]))]),
-                          _: 1
-                        }, 8, ["loading"])
+                        _createElementVNode("div", _hoisted_19, [
+                          _createVNode(_component_VBtn, {
+                            variant: "text",
+                            size: "small",
+                            "prepend-icon": "mdi-shield-check-outline",
+                            loading: $setup.busy,
+                            onClick: _cache[10] || (_cache[10] = $event => ($setup.action('check_cookie', '检测完成')))
+                          }, {
+                            default: _withCtx(() => [...(_cache[20] || (_cache[20] = [
+                              _createTextVNode(" 检测 Cookie ", -1)
+                            ]))]),
+                            _: 1
+                          }, 8, ["loading"]),
+                          _createVNode(_component_VBtn, {
+                            variant: "text",
+                            size: "small",
+                            "prepend-icon": "mdi-cloud-sync-outline",
+                            loading: $setup.busy,
+                            onClick: _cache[11] || (_cache[11] = $event => ($setup.action('sync_openlist', '同步完成')))
+                          }, {
+                            default: _withCtx(() => [...(_cache[21] || (_cache[21] = [
+                              _createTextVNode(" 同步 OpenList ", -1)
+                            ]))]),
+                            _: 1
+                          }, 8, ["loading"])
+                        ])
                       ])
                     ]),
                     _: 1
@@ -524,55 +562,62 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
           }),
           _createVNode(_component_VCol, {
             cols: "12",
-            md: "8"
+            md: "7",
+            class: "wy-col-flex"
           }, {
             default: _withCtx(() => [
               _createVNode(_component_VCard, {
                 variant: "outlined",
-                class: "wy-card-panel"
+                class: "wy-card-panel wy-card-fill"
               }, {
                 default: _withCtx(() => [
-                  _createVNode(_component_VCardText, null, {
+                  _createVNode(_component_VCardText, { class: "wy-card-body" }, {
                     default: _withCtx(() => [
-                      _createElementVNode("div", _hoisted_20, [
-                        _cache[21] || (_cache[21] = _createElementVNode("span", null, "Cookie 管理", -1)),
-                        _createVNode(_component_VBtn, {
-                          size: "small",
-                          variant: "tonal",
-                          "prepend-icon": "mdi-content-copy",
-                          disabled: !$setup.status.has_cookie,
-                          onClick: $setup.copyCookie
-                        }, {
-                          default: _withCtx(() => [...(_cache[20] || (_cache[20] = [
-                            _createTextVNode("复制", -1)
-                          ]))]),
-                          _: 1
-                        }, 8, ["disabled", "onClick"])
-                      ]),
-                      _createElementVNode("div", _hoisted_21, [
+                      _cache[22] || (_cache[22] = _createElementVNode("div", { class: "wy-section-line" }, [
+                        _createElementVNode("span", null, "运行记录")
+                      ], -1)),
+                      _createElementVNode("div", {
+                        class: _normalizeClass(["wy-cookie-state", { 'is-empty': !$setup.status.has_cookie }])
+                      }, [
                         _createVNode(_component_VIcon, {
                           icon: $setup.status.has_cookie ? 'mdi-shield-lock-outline' : 'mdi-cookie-alert-outline',
-                          size: "42",
+                          size: "24",
                           color: $setup.status.has_cookie ? 'success' : 'grey'
                         }, null, 8, ["icon", "color"]),
-                        _createElementVNode("div", _hoisted_22, _toDisplayString($setup.status.has_cookie ? 'Cookie 已安全保存' : '暂无 Cookie'), 1),
-                        _createElementVNode("div", _hoisted_23, _toDisplayString($setup.status.has_cookie
-                    ? `已保存 ${$setup.status.cookie_count ?? 0} 个 Cookie，主页默认隐藏明文。`
-                    : '启动扫码登录后会自动保存 Cookie。'), 1)
-                      ]),
-                      _createElementVNode("div", _hoisted_24, [
-                        _createElementVNode("div", _hoisted_25, [
-                          _cache[22] || (_cache[22] = _createElementVNode("span", { class: "wy-cookie-meta-label" }, "最近状态", -1)),
-                          _createElementVNode("span", _hoisted_26, _toDisplayString($setup.status.last_status || '—'), 1)
-                        ]),
-                        _createElementVNode("div", _hoisted_27, [
-                          _cache[23] || (_cache[23] = _createElementVNode("span", { class: "wy-cookie-meta-label" }, "最近检测", -1)),
-                          _createElementVNode("span", _hoisted_28, _toDisplayString($setup.status.last_check_status || $setup.status.last_check || '—'), 1)
-                        ]),
-                        _createElementVNode("div", _hoisted_29, [
-                          _cache[24] || (_cache[24] = _createElementVNode("span", { class: "wy-cookie-meta-label" }, "OpenList 同步", -1)),
-                          _createElementVNode("span", _hoisted_30, _toDisplayString($setup.status.last_openlist_sync_status || $setup.status.last_openlist_sync || '—'), 1)
+                        _createElementVNode("div", _hoisted_20, [
+                          _createElementVNode("div", _hoisted_21, _toDisplayString($setup.status.has_cookie ? 'Cookie 已安全保存' : '暂无 Cookie'), 1),
+                          _createElementVNode("div", _hoisted_22, _toDisplayString($setup.status.has_cookie
+                      ? `已保存 ${$setup.status.cookie_count ?? 0} 个 Cookie，明文默认隐藏。`
+                      : '启动扫码登录后会自动保存 Cookie。'), 1)
                         ])
+                      ], 2),
+                      _createElementVNode("div", _hoisted_23, [
+                        (_openBlock(true), _createElementBlock(_Fragment, null, _renderList($setup.timeline, (item) => {
+                          return (_openBlock(), _createElementBlock("div", {
+                            key: item.label,
+                            class: "wy-timeline-row"
+                          }, [
+                            _createVNode(_component_VIcon, {
+                              icon: item.icon,
+                              color: item.color,
+                              size: "16"
+                            }, null, 8, ["icon", "color"]),
+                            _createElementVNode("div", _hoisted_24, [
+                              _createElementVNode("div", _hoisted_25, _toDisplayString(item.label), 1),
+                              _createElementVNode("div", {
+                                class: "wy-timeline-value",
+                                title: item.value
+                              }, _toDisplayString(item.value || '—'), 9, _hoisted_26)
+                            ])
+                          ]))
+                        }), 128))
+                      ]),
+                      _createElementVNode("div", _hoisted_27, [
+                        _createVNode(_component_VIcon, {
+                          icon: "mdi-lightbulb-on-outline",
+                          size: "15"
+                        }),
+                        _createElementVNode("span", null, _toDisplayString($setup.tipText), 1)
                       ])
                     ]),
                     _: 1
@@ -589,6 +634,6 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     ])
   ]))
 }
-const Page = /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render],['__scopeId',"data-v-b73349d5"]]);
+const Page = /*#__PURE__*/_export_sfc(_sfc_main, [['render',_sfc_render],['__scopeId',"data-v-05b0d5ea"]]);
 
 export { Page as default };

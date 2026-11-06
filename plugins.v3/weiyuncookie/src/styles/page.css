@@ -313,3 +313,236 @@
 .wy-main-grid>[class*=v-col-]:nth-child(2) .wy-cookie-meta {
   min-height:112px;
 }
+
+/* VRow 在宿主里不一定带 display:flex（被上游样式覆盖成 block 时列会堆叠），这里显式声明 */
+.wy-main-grid {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+/* 注意：v-col 自带 flex:0 0 auto 与百分比宽度，直接改成 display:flex 会破坏宽度计算，
+   因此只覆盖 flex 基准为 0，让 md-5 / md-7 的百分比宽度真正参与分配。 */
+.wy-main-grid > .wy-col-flex {
+  min-width: 0;
+  flex-basis: 0;
+  flex-grow: 1;
+}
+@media (max-width: 960px) {
+  .wy-main-grid {
+    flex-wrap: wrap;
+  }
+}
+.wy-card-fill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+.wy-card-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+/* 未生成二维码时的紧凑入口，替代固定 198px 的空白面板 */
+.wy-qr-idle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 64px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px dashed rgba(var(--v-border-color), var(--v-border-opacity));
+  border-radius: 12px;
+  background: rgba(var(--v-theme-on-surface), .025);
+  color: rgba(var(--v-theme-on-surface), .72);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .16s ease, color .16s ease;
+}
+.wy-qr-idle:hover:not(:disabled) {
+  border-color: rgba(var(--v-theme-primary), .7);
+  color: rgb(var(--v-theme-primary));
+}
+.wy-qr-idle:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+/* 主次按钮：主操作整行实心，次要操作并排文字按钮 */
+.wy-action-pair {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+.wy-action-pair > * {
+  flex: 1 1 0;
+}
+
+/* Cookie 状态改成横向一条，比原来居中大图标省一半高度 */
+.wy-cookie-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(var(--v-theme-on-surface), .025);
+}
+.wy-cookie-state.is-empty {
+  background: rgba(var(--v-theme-on-surface), .018);
+}
+.wy-cookie-state-body {
+  min-width: 0;
+}
+.wy-cookie-state-title {
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.3;
+  color: rgb(var(--v-theme-on-surface));
+}
+.wy-cookie-state-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(var(--v-theme-on-surface), .68);
+}
+
+/* 长文本单行省略，悬停看全文，避免撑歪卡片高度 */
+.wy-status-value,
+.wy-timeline-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 底部提示条，替代大片留白 */
+.wy-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(var(--v-theme-on-surface), .62);
+}
+.wy-tip .v-icon {
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 960px) {
+  .wy-action-pair {
+    flex-direction: column;
+  }
+}
+
+/* —— 布局修正 —— */
+/* 卡片内只留 padding，标题行不再顶到边缘 */
+.wy-card-body {
+  padding: 12px 14px !important;
+  box-sizing: border-box;
+}
+.wy-section-line {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+/* 时间轴改两列，避免 5 项被挤成三行、卡片高低不齐 */
+.wy-timeline-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 1200px) {
+  .wy-timeline-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 左栏内容少时，让按钮组沉到卡片底部，避免中间空一大块 */
+.wy-action-row--stack {
+  margin-top: auto;
+}
+.wy-card-body > .wy-action-row {
+  margin-top: auto;
+}
+
+/* 卡片内部左右两侧各留一点，清除按钮不再压出边界 */
+.wy-card-panel .wy-section-line {
+  padding-right: 2px;
+}
+.wy-card-panel {
+  min-width: 0;
+}
+
+/* —— 收尾微调：时间轴横排 5 格，避免最后半行孤单 —— */
+.wy-card-body .wy-timeline-grid {
+  /* 至少 210px 才放得下完整时间，放不下就换行，避免被截成 12:4… */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin-top: 10px;
+}
+.wy-card-body .wy-timeline-value {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-all;
+}
+.wy-card-body .wy-timeline-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.wy-card-body .wy-timeline-row .v-icon {
+  margin-bottom: 2px;
+}
+.wy-card-body .wy-timeline-label {
+  font-size: 11px;
+  color: rgba(var(--v-theme-on-surface), .62);
+}
+.wy-card-body .wy-timeline-value {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 三步引导：填住左栏空白 */
+.wy-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 6px 0 14px;
+  padding: 0;
+  list-style: none;
+}
+.wy-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.wy-steps li > .v-icon {
+  margin-top: 1px;
+  flex: 0 0 auto;
+  color: rgba(var(--v-theme-primary), .85);
+}
+.wy-step-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: rgb(var(--v-theme-on-surface));
+}
+.wy-step-desc {
+  margin-top: 1px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: rgba(var(--v-theme-on-surface), .64);
+}
+
+/* 5 格时让最后一格跨满整行，避免右下角缺一块 */
+.wy-card-body .wy-timeline-grid {
+  grid-auto-rows: 1fr;
+}
+.wy-card-body .wy-timeline-row:last-child:nth-child(2n + 1) {
+  grid-column: 1 / -1;
+}
