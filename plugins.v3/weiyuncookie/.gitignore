@@ -1,0 +1,6 @@
+# 构建依赖与本地缓存，不入库
+node_modules/
+__pycache__/
+*.pyc
+.vite/
+dist/.vite/
