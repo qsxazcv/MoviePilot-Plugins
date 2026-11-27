@@ -64,10 +64,22 @@ def main() -> int:
         if after_versions.get(target) is None:
             print(f"插件未设置 release: true，跳过：{target}", file=sys.stderr)
             return 1
-        plugins = [{"id": target, "dir": target.lower(), "version": after_versions[target]}]
+        plugins = [
+            {
+                "id": target,
+                "dir": target.lower(),
+                "version": after_versions[target],
+                "tag": f"{target}_v{after_versions[target]}",
+            }
+        ]
     else:
         plugins = [
-            {"id": plugin_id, "dir": plugin_id.lower(), "version": version}
+            {
+                "id": plugin_id,
+                "dir": plugin_id.lower(),
+                "version": version,
+                "tag": f"{plugin_id}_v{version}",
+            }
             for plugin_id, version in after_versions.items()
             if before_versions.get(plugin_id) != version
         ]
