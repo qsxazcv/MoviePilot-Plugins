@@ -1,0 +1,134 @@
+name: Plugin Release
+
+# 当 package.v3.json 的插件版本变化时，自动为该插件创建 tag 与带 zip 的 GitHub Release。
+# 只处理显式设置 "release": true 的插件；已存在的 tag 会被跳过，不会覆盖历史发布。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.v3.json
+      - plugins.v3/**
+  workflow_dispatch:
+    inputs:
+      plugin_id:
+        description: "只发布指定插件 ID（留空则按版本变化自动检测）"
+        required: false
+        default: ""
+      dry_run:
+        description: "仅构建并校验，不创建 Release"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: plugin-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  detect:
+    name: Detect changed plugins
+    runs-on: ubuntu-latest
+    outputs:
+      plugins: ${{ steps.detect.outputs.plugins }}
+      has_plugins: ${{ steps.detect.outputs.has_plugins }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect version changes
+        id: detect
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          PLUGIN_ID: ${{ github.event.inputs.plugin_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${PLUGIN_ID:-}" ]]; then
+            python scripts/detect_release_changes.py --plugin-id "${PLUGIN_ID}"
+          elif [[ -n "${BEFORE_SHA:-}" && "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ]]; then
+            python scripts/detect_release_changes.py --before "${BEFORE_SHA}"
+          else
+            # 手动触发且未指定插件时，与上一提交比较
+            python scripts/detect_release_changes.py --before HEAD^
+          fi
+
+  release:
+    name: Release ${{ matrix.plugin.id }} ${{ matrix.plugin.version }}
+    needs: detect
+    if: needs.detect.outputs.has_plugins == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin: ${{ fromJson(needs.detect.outputs.plugins) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build Release archive
+        run: |
+          python scripts/build_release.py \
+            --plugin-id "${{ matrix.plugin.id }}" \
+            --version "${{ matrix.plugin.version }}" \
+            --output dist/releases
+
+      - name: Skip when tag already exists
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ matrix.plugin.dir }}_v${{ matrix.plugin.version }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Release $tag 已存在，跳过"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare release notes
+        if: steps.existing.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "${{ matrix.plugin.id }}" "${{ matrix.plugin.version }}" <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          plugin_id, version = sys.argv[1], sys.argv[2]
+          package = json.loads(Path("package.v3.json").read_text(encoding="utf-8"))
+          notes = package[plugin_id]["history"].get(version, "")
+          Path("release_notes.md").write_text(notes or f"{plugin_id} {version}", encoding="utf-8")
+          PY
+
+      - name: Publish Release
+        if: steps.existing.outputs.skip != 'true' && github.event.inputs.dry_run != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ matrix.plugin.dir }}_v${{ matrix.plugin.version }}"
+          archive="dist/releases/${tag}.zip"
+          gh release create "$tag" "$archive" \
+            --title "$tag" \
+            --notes-file release_notes.md \
+            --target "${{ github.sha }}"
+          echo "已发布 $tag"
+
+      - name: Dry run summary
+        if: steps.existing.outputs.skip != 'true' && github.event.inputs.dry_run == 'true'
+        shell: bash
+        run: |
+          echo "dry_run：已构建 dist/releases/${{ matrix.plugin.dir }}_v${{ matrix.plugin.version }}.zip，未创建 Release"
+          ls -l dist/releases
