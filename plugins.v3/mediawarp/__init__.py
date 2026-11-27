@@ -4,6 +4,7 @@ import re
 import tarfile
 import tempfile
 import shutil
+import threading
 from typing import Any, List, Dict, Tuple
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -13,9 +14,9 @@ import psutil
 import requests
 from ruamel.yaml import YAML
 from ruamel.yaml.representer import RoundTripRepresenter
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.sdk.config import settings
+from app.sdk import scheduler as scheduler_sdk
 from app.sdk.logging import logger
 from app.sdk.services import MediaServerHelper
 from app.plugins import _PluginBase
@@ -33,7 +34,7 @@ class MediaWarp(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png"
     # 插件版本
-    plugin_version = "2.0.6"
+    plugin_version = "2.0.7"
     # 插件作者
     plugin_author = "DDSRem"
     # 作者主页
@@ -52,7 +53,6 @@ class MediaWarp(_PluginBase):
     _emby_host = None
     _emby_apikey = None
     # 私有属性
-    _scheduler = None
     process = None
     _enabled = False
     _port = None
@@ -189,19 +189,23 @@ class MediaWarp(_PluginBase):
         self.stop_service()
 
         if self._enabled:
-            self._scheduler = BackgroundScheduler(timezone=settings.TZ)
             logger.info("MediaWarp 服务启动中...")
-            self._scheduler.add_job(
-                func=self.__run_service,
-                trigger="date",
-                run_date=datetime.now(tz=pytz.timezone(settings.TZ))
-                + timedelta(seconds=2),
-                name="MediaWarp启动服务",
-            )
-
-            if self._scheduler.get_jobs():
-                self._scheduler.print_jobs()
-                self._scheduler.start()
+            # 优先交给宿主调度器延迟启动；宿主调度器未就绪时用本地线程兜底，确保服务能起来
+            if scheduler_sdk.add_plugin_once_job(
+                self.__class__.__name__,
+                "start_service",
+                self.__run_service,
+                "MediaWarp 启动服务",
+                delay_seconds=2,
+            ):
+                logger.info("MediaWarp 启动服务已注册到宿主调度器")
+            else:
+                logger.warning("宿主调度器未就绪，改用本地线程启动 MediaWarp 服务")
+                threading.Thread(
+                    target=self.__run_service,
+                    daemon=True,
+                    name="MediaWarp-start",
+                ).start()
 
     def __update_config(self):
         self.update_config(
@@ -1100,11 +1104,7 @@ class MediaWarp(_PluginBase):
         退出插件
         """
         try:
-            if self._scheduler:
-                self._scheduler.remove_all_jobs()
-                if self._scheduler.running:
-                    self._scheduler.shutdown()
-                self._scheduler = None
+            scheduler_sdk.remove_plugin_once_job(self.__class__.__name__, "start_service")
             if self.process:
                 if self.process.is_running():
                     self.process.terminate()

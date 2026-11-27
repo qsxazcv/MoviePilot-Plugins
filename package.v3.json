@@ -100,7 +100,7 @@
     "name": "MediaWarp",
     "description": "EmbyServer/Jellyfin 中间件：优化播放 Strm 文件、自定义前端样式、自定义允许访问客户端、嵌入脚本。基于 DDSRem-Dev/MoviePilot-Plugins 作者版本做 V3 升级维护，感谢原作者。",
     "labels": "工具,媒体服务器",
-    "version": "2.0.6",
+    "version": "2.0.7",
     "icon": "https://raw.githubusercontent.com/jxxghp/MoviePilot-Plugins/refs/heads/main/icons/cloud.png",
     "author": "DDSRem",
     "author_url": "https://github.com/DDSRem-Dev/MoviePilot-Plugins",
@@ -108,6 +108,7 @@
     "system_version": ">=3.0.0",
     "release": true,
     "history": {
+      "2.0.7": "按 MoviePilot V3 插件开发指南 9.3 适配调度实现：启用后的「延迟 2 秒启动服务」优先通过 app.sdk.scheduler.add_plugin_once_job 交给宿主调度器执行，宿主调度器尚未就绪时回退为本地守护线程，确保 MediaWarp 服务启动不被调度器状态阻塞；移除自建 BackgroundScheduler 及相关启停逻辑，stop_service 改为取消尚未执行的一次性任务，并继续终止 MediaWarp 子进程。",
       "2.0.6": "「基础设置」新增四个缓存有效期输入框（重定向缓存 / Alist API 缓存 / 图片缓存 / 字幕缓存），位于「Emby STRM 媒体库路径」上方，可直接控制 cache.http_strm_ttl / cache.alist_api_ttl / cache.image_ttl / cache.subtitle_ttl（默认 1m / 10m / 0m / 2h）；按 Go duration 格式校验，留空或格式不合法时回退默认值并写日志提示，避免把上游无法解析的值写入 config.yaml。",
       "2.0.5": "修复「HTTPStrm 设置」标签页图标不显示的问题：原图标名 mdi-redirect 在 Material Design Icons 图标库中不存在，导致该标签页前方空白、与前两个标签页不对齐；改用 mdi-swap-horizontal。",
       "2.0.4": "「HTTPStrm 设置」标签页新增「HTTPStrm 缓存」开关，可直接控制 cache.enable（HTTPStrm 重定向内存缓存总开关，默认关闭）；该字段原为 1.0.7 → 2.0.0 表单精简后遗留的无效键，本次转正为可用开关。",
