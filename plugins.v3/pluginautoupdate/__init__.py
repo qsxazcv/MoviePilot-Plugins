@@ -10,11 +10,11 @@ except Exception:
     APP_VERSION = ""
 
 import pytz
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from fastapi import APIRouter
 
 from app.sdk.config import settings
+from app.sdk import scheduler as scheduler_sdk
 from app.sdk.plugins import PluginManager
 from app.application.plugin.catalog import get_plugin_catalog_query
 from app.application.plugin.transaction import get_plugin_persistence
@@ -42,7 +42,7 @@ class PluginAutoUpdate(_PluginBase):
     # 插件图标
     plugin_icon = "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png"
     # 插件版本
-    plugin_version = "3.1.4"
+    plugin_version = "3.1.5"
     # 插件作者
     plugin_author = "thsrite"
     # 作者主页
@@ -65,8 +65,6 @@ class PluginAutoUpdate(_PluginBase):
     _update_ids = None
     _exclude_ids = None
 
-    # 定时器
-    _scheduler: Optional[BackgroundScheduler] = None
     _plugin_version = None
     _disk_versions = None
     _update_lock = None
@@ -83,7 +81,6 @@ class PluginAutoUpdate(_PluginBase):
         self._plugin_version = {}
         self._update_lock = Lock()
         self._waiting_notified = set()
-        self._scheduler = None
 
     def init_plugin(self, config: dict = None):
         """读取配置并启动插件更新检查任务。"""
@@ -101,23 +98,7 @@ class PluginAutoUpdate(_PluginBase):
             self._exclude_ids = config.get("exclude_ids")
 
         if self._enabled:
-            # 定时服务
-            self._scheduler = BackgroundScheduler(timezone=settings.TZ)
-
-            if self._cron:
-                try:
-                    self._scheduler.add_job(func=self.plugin_update,
-                                            trigger=CronTrigger.from_crontab(self._cron),
-                                            id="pluginautoupdate_cron",
-                                            name="插件自动更新",
-                                            replace_existing=True,
-                                            max_instances=1,
-                                            coalesce=True)
-                except Exception as err:
-                    logger.error(f"定时任务配置错误：{str(err)}")
-
             if self._onlyonce:
-                logger.info(f"插件自动更新服务启动，立即运行一次")
                 # 关闭一次性开关
                 self._onlyonce = False
                 self.update_config({
@@ -131,18 +112,37 @@ class PluginAutoUpdate(_PluginBase):
                     "exclude_ids": self._exclude_ids,
                 })
 
-                self._scheduler.add_job(func=self.plugin_update, trigger='date',
-                                        run_date=datetime.now(tz=pytz.timezone(settings.TZ)) + timedelta(seconds=1),
-                                        id="pluginautoupdate_once",
-                                        name="插件自动更新",
-                                        kwargs={"manual_once": True},
-                                        replace_existing=True,
-                                        max_instances=1)
+                # 交给宿主调度器执行一次，避免自建调度器常驻线程
+                if scheduler_sdk.add_plugin_once_job(
+                    self.__class__.__name__,
+                    "update_once",
+                    self.plugin_update,
+                    "插件自动更新（立即运行一次）",
+                    delay_seconds=1,
+                    func_kwargs={"manual_once": True},
+                ):
+                    logger.info("插件自动更新服务启动，立即运行一次")
+                else:
+                    logger.warning("插件自动更新：宿主调度器未运行，本次立即运行未提交")
 
-            # 启动任务
-            if self._scheduler.get_jobs():
-                self._scheduler.print_jobs()
-                self._scheduler.start()
+    def get_service(self) -> List[Dict[str, Any]]:
+        """注册插件自动更新的周期任务。"""
+        if not self._enabled or not self._cron:
+            return []
+        try:
+            trigger = CronTrigger.from_crontab(self._cron)
+        except Exception as err:
+            logger.error(f"定时任务配置错误：{str(err)}")
+            return []
+        return [
+            {
+                "id": "PluginAutoUpdate.Cron",
+                "name": "插件自动更新",
+                "trigger": trigger,
+                "func": self.plugin_update,
+                "kwargs": {},
+            }
+        ]
 
     @eventmanager.register(EventType.PluginAction)
     def plugin_update(self, event: Event = None, manual_once: bool = False):
@@ -1170,10 +1170,6 @@ class PluginAutoUpdate(_PluginBase):
         退出插件
         """
         try:
-            if self._scheduler:
-                self._scheduler.remove_all_jobs()
-                if self._scheduler.running:
-                    self._scheduler.shutdown()
-                self._scheduler = None
+            scheduler_sdk.remove_plugin_once_job(self.__class__.__name__, "update_once")
         except Exception as e:
             logger.error("插件更新管理器退出失败：%s", e, exc_info=True)

@@ -73,15 +73,16 @@
   },
   "PluginAutoUpdate": {
     "name": "插件更新管理",
-    "description": "监测已安装插件，推送更新提醒，可配置自动更新（本地维护版 3.1.4：新增磁盘版本校验，拦截无意义重装与误报升级通知）",
+    "description": "监测已安装插件，推送更新提醒，可配置自动更新（本地维护版 3.1.5：周期任务与立即运行改由宿主调度器托管）",
     "labels": "插件,更新,自动更新,兼容性",
-    "version": "3.1.4",
+    "version": "3.1.5",
     "icon": "https://raw.githubusercontent.com/thsrite/MoviePilot-Plugins/main/icons/pluginupdate.png",
     "author": "thsrite",
     "level": 1,
     "release": true,
     "system_version": ">=3.0.0",
     "history": {
+      "3.1.5": "本地维护版：按 MoviePilot V3 插件开发指南 9.3 适配调度实现。① 周期检查改由 get_service() 交给宿主调度器注册，任务 ID 为 PluginAutoUpdate.Cron，可在仪表盘看到执行状态与下次运行时间；② 「立即运行一次」改用 app.sdk.scheduler.add_plugin_once_job 追加一次性任务，保留原有 1 秒延迟与 manual_once 参数；③ 移除自建 BackgroundScheduler 及其启动/停止逻辑，stop_service 改为取消尚未执行的一次性任务，避免后台调度线程常驻。cron 表达式仍在 get_service 内做 try/except 校验，非法表达式只记录错误、不再影响插件加载。",
       "3.1.4": "本地维护版：新增版本守卫，修复插件被启动备份恢复回旧版本后误报升级通知的问题。① 已安装版本改以插件身份表 pluginidentity.declared_version 为准，内存版本仅作兜底；② 目标版本不高于当前实际版本时直接跳过，不重装也不发送更新通知；③ 内存版本落后于磁盘版本时按磁盘版本校正运行时，日志如实记为版本校正而非升级；④ 版本号无法解析时保持原有行为，避免误拦真实升级。",
       "3.1.2": "将运行态可变字段改为实例级状态，补充生命周期文档并记录停止调度器异常。",
       "3.1.1": "适配 V3 插件开发文档 7.5：补充 pyproject.toml 依赖清单（pytz/apscheduler/fastapi）。",
