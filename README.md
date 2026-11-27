@@ -18,11 +18,11 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 | 插件 | 插件 ID | 类型 | V3 | 简介 |
 | --- | --- | --- | --- | --- |
-| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.4` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
+| 插件更新管理 | `PluginAutoUpdate` | 工具 | `3.1.5` | 监测已安装插件，推送更新提醒，可配置自动更新。 |
 | 爱奇艺探索 | `IqiyiDiscover` | 探索 | `2.2.1` | 让 MoviePilot 探索支持爱奇艺视频的数据浏览。 |
 | 微云Cookie助手 | `weiyuncookie` | 工具 | `1.2.8` | 扫码登录 QQ/微信微云，一键提取 Cookie，支持有效性检测、隐藏展示和同步到 OpenList。 |
 | ikuai-cli助手 | `IkuaiAssistant` | 工具 | `2.1.6` | iKuai 路由器命令行工具 — 在终端管理网络、用户、VPN、防火墙等。 |
-| MediaWarp | `MediaWarp` | 工具 | `2.0.6` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
+| MediaWarp | `MediaWarp` | 工具 | `2.0.7` | Emby/Jellyfin 中间件：优化 Strm 播放、自定义前端样式与客户端。基于 DDSRem 作者版本维护。 |
 
 ## 插件详情
 
@@ -96,6 +96,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `PluginAutoUpdate`
 
+- `3.1.5`：按 MoviePilot V3 插件开发指南 9.3 适配调度实现。① 周期检查改由 `get_service()` 交给宿主调度器注册（任务 ID `PluginAutoUpdate.Cron`），仪表盘可见执行状态与下次运行时间；② 「立即运行一次」改用 `app.sdk.scheduler.add_plugin_once_job` 追加一次性任务，保留原有 1 秒延迟与 `manual_once` 参数；③ 移除自建 `BackgroundScheduler` 及启停逻辑，`stop_service()` 改为取消尚未执行的一次性任务，避免后台调度线程常驻。cron 表达式仍在 `get_service()` 内做 `try/except` 校验，非法表达式只记录错误、不再影响插件加载。
 - `3.1.4`：新增版本守卫，修复插件被启动备份恢复回旧版本后误报「更新成功」通知的问题。① 已安装版本改以插件身份表 `pluginidentity.declared_version` 为准，内存版本仅作兜底；② 目标版本不高于当前实际版本时直接跳过，不重装也不发送更新通知；③ 内存版本落后于磁盘版本时按磁盘版本校正运行时，日志如实记为版本校正而非升级；④ 版本号无法解析时保持原有行为，避免误拦真实升级。
 - `3.1.3`：① 修复插件更新检查在调度线程中执行宿主异步查询失败的问题——新增 `__run_async_catalog_query()`，把协程投递回宿主主事件循环执行（禁止自建事件循环或新线程，否则数据库 worker 会判定循环不匹配并拒绝任务）；② 插件更新候选改读宿主插件页已收敛的目录，并新增 `__get_bound_plugin_ids()` 按可信来源绑定过滤，**只对已绑定在线来源的插件提示更新**，未绑定（仅本地或无绑定）的插件不再提示任何升级，避免跨库高版本绕过来源绑定。
 - `3.1.2`：将运行态可变字段改为实例级状态，补充生命周期文档并记录停止调度器异常。
@@ -149,6 +150,7 @@ https://github.com/qsxazcv/MoviePilot-Plugins
 
 ### `MediaWarp`
 
+- `2.0.7`：按 MoviePilot V3 插件开发指南 9.3 适配调度实现。启用后的「延迟 2 秒启动服务」优先通过 `app.sdk.scheduler.add_plugin_once_job` 交给宿主调度器执行；宿主调度器尚未就绪时回退为本地守护线程，确保服务启动不被调度器状态阻塞。移除自建 `BackgroundScheduler` 及相关启停逻辑，`stop_service()` 改为取消尚未执行的一次性任务，并继续终止 MediaWarp 子进程。
 - `2.0.6`：「基础设置」新增四个缓存有效期输入框（重定向缓存 / Alist API 缓存 / 图片缓存 / 字幕缓存），位于「Emby STRM 媒体库路径」上方，可直接控制 `cache.http_strm_ttl` / `cache.alist_api_ttl` / `cache.image_ttl` / `cache.subtitle_ttl`（默认 `1m` / `10m` / `0m` / `2h`）；按 Go duration 格式校验，留空或格式不合法时回退默认值并写日志提示。
 - `2.0.5`：修复「HTTPStrm 设置」标签页图标不显示的问题——原图标名 `mdi-redirect` 在 Material Design Icons 图标库中不存在，导致该标签页前方空白、与前两个标签页不对齐；改用 `mdi-swap-horizontal`。
 - `2.0.4`：「HTTPStrm 设置」标签页新增「HTTPStrm 缓存」开关，可直接控制 `cache.enable`（HTTPStrm 重定向内存缓存总开关，默认关闭）；该字段原为 `1.0.7 → 2.0.0` 表单精简后遗留的无效键，本次转正为可用开关。
